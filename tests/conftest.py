@@ -152,7 +152,7 @@ def unfit_visit(db, sample_employee):
 
     visit = MedicalVisit.create(
         employee=sample_employee,
-        visit_type='recovery',
+        visit_type='periodic',  # Changed from 'recovery' (recovery must have restrictions)
         visit_date=date(2023, 1, 1),
         result='unfit',
         document_path='/documents/medical/unfit.pdf'
