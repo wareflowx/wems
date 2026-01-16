@@ -84,16 +84,16 @@ class AppLock(Model):
         Raises:
             RuntimeError: If lock is already held by active host
         """
-        # Check for existing active lock
-        existing = cls.get_active_lock()
-        if existing and not existing.is_stale:
-            raise RuntimeError(
-                f"Lock is held by {existing.hostname} "
-                f"(since {existing.locked_at.strftime('%H:%M:%S')})"
-            )
-
-        # Remove stale lock if exists
+        # Check for existing lock (including stale ones)
+        existing = cls.select().order_by(cls.locked_at.desc()).first()
         if existing:
+            if not existing.is_stale:
+                # Lock is active and held by another process
+                raise RuntimeError(
+                    f"Lock is held by {existing.hostname} "
+                    f"(since {existing.locked_at.strftime('%H:%M:%S')})"
+                )
+            # Lock is stale, delete it
             existing.delete_instance()
 
         # Create new lock
