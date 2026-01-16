@@ -1,28 +1,44 @@
 """Test configuration and shared fixtures."""
 
 import pytest
+import tempfile
 from datetime import date, datetime, timedelta
 from pathlib import Path
+
 from peewee import SqliteDatabase
 
-# Use in-memory SQLite for fast, isolated tests
-test_db = SqliteDatabase(':memory:', pragmas={'foreign_keys': 1})
+
+@pytest.fixture(scope='session')
+def test_database_file():
+    """Create a temporary database file for tests."""
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.db') as f:
+        db_path = Path(f.name)
+    yield db_path
+    # Cleanup
+    try:
+        db_path.unlink()
+    except:
+        pass
 
 
 @pytest.fixture(scope='function')
-def db():
+def db(test_database_file):
     """Create a fresh database for each test."""
-    # Import here to avoid circular imports
-    import sys
-    sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
-
+    # Import database connection
+    from database.connection import database
     from employee.models import Employee, Caces, MedicalVisit, OnlineTraining
     from lock.models import AppLock
 
-    # Bind models to test database BEFORE creating tables
-    test_db.bind([Employee, Caces, MedicalVisit, OnlineTraining, AppLock])
+    # Initialize database with temporary file
+    database.init(test_database_file)
 
-    test_db.create_tables([
+    # Enable WAL mode
+    database.execute_sql('PRAGMA journal_mode=WAL')
+    database.execute_sql('PRAGMA synchronous=NORMAL')
+    database.execute_sql('PRAGMA busy_timeout=5000')
+
+    # Create all tables
+    database.create_tables([
         Employee,
         Caces,
         MedicalVisit,
@@ -30,10 +46,10 @@ def db():
         AppLock,
     ], safe=True)
 
-    yield test_db
+    yield database
 
     # Clean up after test
-    test_db.drop_tables([
+    database.drop_tables([
         Employee,
         Caces,
         MedicalVisit,
@@ -41,7 +57,12 @@ def db():
         AppLock,
     ])
 
-    test_db.close()
+    # Close database
+    database.close()
+
+
+# Keep old test_db for backward compatibility (but not used anymore)
+test_db = SqliteDatabase(':memory:', pragmas={'foreign_keys': 1})
 
 
 @pytest.fixture
