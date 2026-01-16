@@ -1,8 +1,9 @@
 """Employee data models using Peewee ORM."""
 
+import uuid
 from peewee import *
-from datetime import date, datetime
-from dateutil.relativedelta import relativedelta, timedelta
+from datetime import date, datetime, timedelta
+from dateutil.relativedelta import relativedelta
 
 from database.connection import database
 from employee.constants import (
@@ -18,7 +19,7 @@ class Employee(Model):
 
     # Primary Key - UUIDField is native in Peewee
     # In SQLite/MySQL it's stored as VARCHAR, in Postgres as native UUID
-    id = UUIDField(primary=True)
+    id = UUIDField(primary_key=True, default=uuid.uuid4)
 
     # Identification
     external_id = CharField(null=True, index=True, unique=True)  # WMS reference
@@ -133,7 +134,8 @@ class Employee(Model):
             raise ValueError("Entry date cannot be in the future")
 
     def save(self, force_insert=False, only=None):
-        """Override save to update updated_at timestamp."""
+        """Override save to update updated_at timestamp and validate."""
+        self.before_save()
         self.updated_at = datetime.now()
         return super().save(force_insert=force_insert, only=only)
 
@@ -145,7 +147,7 @@ class Caces(Model):
     French certification for operating heavy machinery and equipment.
     """
 
-    id = UUIDField(primary=True)
+    id = UUIDField(primary_key=True, default=uuid.uuid4)
     employee = ForeignKeyField(Employee, backref='caces', on_delete='CASCADE')
 
     # Certification Details
@@ -253,6 +255,11 @@ class Caces(Model):
                 self.completion_date
             )
 
+    def save(self, force_insert=False, only=None):
+        """Override save to calculate expiration_date automatically."""
+        self.before_save()
+        return super().save(force_insert=force_insert, only=only)
+
 
 class MedicalVisit(Model):
     """
@@ -261,7 +268,7 @@ class MedicalVisit(Model):
     French labor law requires periodic medical examinations for workers.
     """
 
-    id = UUIDField(primary=True)
+    id = UUIDField(primary_key=True, default=uuid.uuid4)
     employee = ForeignKeyField(Employee, backref='medical_visits', on_delete='CASCADE')
 
     # Visit Details
@@ -360,6 +367,11 @@ class MedicalVisit(Model):
                 self.visit_date
             )
 
+    def save(self, force_insert=False, only=None):
+        """Override save to calculate expiration_date automatically."""
+        self.before_save()
+        return super().save(force_insert=force_insert, only=only)
+
 
 class OnlineTraining(Model):
     """
@@ -368,7 +380,7 @@ class OnlineTraining(Model):
     Some trainings have expiration dates, others are permanent.
     """
 
-    id = UUIDField(primary=True)
+    id = UUIDField(primary_key=True, default=uuid.uuid4)
     employee = ForeignKeyField(Employee, backref='trainings', on_delete='CASCADE')
 
     # Training Details
@@ -475,3 +487,8 @@ class OnlineTraining(Model):
                 self.completion_date,
                 self.validity_months
             )
+
+    def save(self, force_insert=False, only=None):
+        """Override save to calculate expiration_date automatically."""
+        self.before_save()
+        return super().save(force_insert=force_insert, only=only)

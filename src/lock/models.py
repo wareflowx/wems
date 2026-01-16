@@ -1,5 +1,6 @@
 """Lock mechanism data models."""
 
+import uuid
 from peewee import *
 from datetime import datetime, timedelta
 
@@ -14,7 +15,7 @@ class AppLock(Model):
     Uses heartbeat mechanism to detect stale locks from crashed applications.
     """
 
-    id = UUIDField(primary=True)
+    id = UUIDField(primary_key=True, default=uuid.uuid4)
 
     # Lock holder identification
     hostname = CharField(index=True)  # Machine name
