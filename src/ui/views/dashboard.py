@@ -100,10 +100,9 @@ class DashboardView:
                 ft.Container(
                     content=ft.Column(
                         [
-                            ft.Icon(
-                                ft.icons.CHECK_CIRCLE,
+                            ft.Text(
+                                "✅",
                                 size=48,
-                                color=ft.Colors.GREEN
                             ),
                             ft.Text(
                                 "No alerts at the moment!",
