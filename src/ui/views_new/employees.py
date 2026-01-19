@@ -13,6 +13,7 @@ from ui.components.icons import Icons
 from ui.components.cards import AppCard
 from ui.constants import Spacing
 from ui.navigation.router import get_router
+from ui.theme_colors import get_theme_colors, get_success_color, get_warning_color, get_error_color
 
 
 class EmployeesListView:
@@ -37,6 +38,7 @@ class EmployeesListView:
         self.search_text = ""
         self.filter_status = "all"  # all, active, inactive
         self.employees_data = []
+        self._colors = get_theme_colors(page)
 
     def build(self) -> ft.Column:
         """
@@ -154,19 +156,19 @@ class EmployeesListView:
                         ft.Icon(
                             Icons.SEARCH,
                             size=48,
-                            color=ft.Colors.GREY_400,
+                            color=self._colors["on_surface_variant"],
                         ),
                         ft.Container(height=Spacing.SM.value),
                         ft.Text(
                             "No employees found",
                             size=16,
-                            color=ft.Colors.GREY_700,
+                            color=self._colors["on_surface"],
                             weight=ft.FontWeight.W_500,
                         ),
                         ft.Text(
                             "Try adjusting your filters or search",
                             size=12,
-                            color=ft.Colors.GREY_500,
+                            color=self._colors["on_surface_variant"],
                         ),
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -195,7 +197,7 @@ class EmployeesListView:
                         ft.Text(
                             count_text,
                             size=13,
-                            color=ft.Colors.GREY_600,
+                            color=self._colors["on_surface_variant"],
                         ),
                     ],
                 ),
@@ -215,13 +217,13 @@ class EmployeesListView:
         """Build a single employee list item."""
         # Determine styling based on compliance
         if emp_data['compliance_score'] >= 70:
-            compliance_variant = "success"
+            compliance_color = get_success_color()
             compliance_text = "Compliant"
         elif emp_data['compliance_score'] >= 50:
-            compliance_variant = "warning"
+            compliance_color = get_warning_color()
             compliance_text = "Warning"
         else:
-            compliance_variant = "error"
+            compliance_color = get_error_color()
             compliance_text = "Critical"
 
         return ft.Container(
@@ -237,7 +239,7 @@ class EmployeesListView:
                         ft.Text(
                             f"{emp_data['workspace']} • {emp_data['role']}",
                             size=12,
-                            color=ft.Colors.GREY_700,
+                            color=self._colors["on_surface_variant"],
                         ),
                         ft.Container(height=2),
                         ft.Row(
@@ -252,6 +254,7 @@ class EmployeesListView:
                                     f"{emp_data['compliance_score']}%",
                                     size=11,
                                     weight=ft.FontWeight.BOLD,
+                                    color=compliance_color,
                                 ),
                             ],
                             spacing=0,
@@ -262,10 +265,10 @@ class EmployeesListView:
                 trailing=ft.Icon(
                     Icons.CHEVRON_RIGHT,
                     size=20,
-                    color=ft.Colors.GREY_400,
+                    color=self._colors["on_surface_variant"],
                 ),
             ),
-            bgcolor=ft.Colors.GREY_100 if emp_data['status'] == 'inactive' else None,
+            bgcolor=self._colors["surface_variant"] if emp_data['status'] == 'inactive' else None,
             border_radius=8,
             on_click=lambda e: self._navigate_to_employee(emp_data['id']),
             ink=True,

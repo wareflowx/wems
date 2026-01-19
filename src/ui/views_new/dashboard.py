@@ -14,6 +14,7 @@ from ui.components.icons import Icons, IconSize
 from ui.components.feedback import show_snackbar
 from ui.constants import Spacing
 from ui.navigation.router import get_router
+from ui.theme_colors import get_theme_colors, get_primary_color, get_success_color, get_warning_color, get_error_color
 
 
 class DashboardView:
@@ -33,6 +34,7 @@ class DashboardView:
         """
         self.page = page
         self.controller = DashboardController()
+        self._colors = get_theme_colors(page)
 
     def build(self) -> ft.Column:
         """
@@ -76,25 +78,25 @@ class DashboardView:
                     label="Total Employees",
                     value=stats['total_employees'],
                     icon=Icons.PEOPLE,
-                    color=ft.Colors.BLUE,
+                    color=get_primary_color(),
                 ),
                 StatCard(
                     label="Active",
                     value=stats['active_employees'],
                     icon=Icons.ACTIVE,
-                    color=ft.Colors.GREEN,
+                    color=get_success_color(),
                 ),
                 StatCard(
                     label="Alerts",
                     value=total_alerts,
                     icon=Icons.WARNING,
-                    color=ft.Colors.ORANGE,
+                    color=get_warning_color(),
                 ),
                 StatCard(
                     label="Compliance",
                     value=f"{compliance}%",
                     icon=Icons.BADGE,
-                    color=ft.Colors.GREEN if compliance >= 90 else ft.Colors.ORANGE,
+                    color=get_success_color() if compliance >= 90 else get_warning_color(),
                 ),
             ],
             spacing=Spacing.MD.value,
@@ -113,19 +115,19 @@ class DashboardView:
                         ft.Icon(
                             Icons.SUCCESS,
                             size=48,
-                            color=ft.Colors.GREEN,
+                            color=get_success_color(),
                         ),
                         ft.Container(height=Spacing.SM.value),
                         ft.Text(
                             "No alerts at the moment!",
                             size=16,
-                            color=ft.Colors.GREY_700,
+                            color=self._colors["on_surface"],
                             weight=ft.FontWeight.W_500,
                         ),
                         ft.Text(
                             "All certifications are up to date.",
                             size=12,
-                            color=ft.Colors.GREY_500,
+                            color=self._colors["on_surface_variant"],
                         ),
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -152,7 +154,7 @@ class DashboardView:
                         ft.Text(
                             f"({total_count} total)",
                             size=13,
-                            color=ft.Colors.GREY_600,
+                            color=self._colors["on_surface_variant"],
                         ),
                     ],
                 ),
@@ -172,8 +174,8 @@ class DashboardView:
         """Build a single alert item."""
         # Get priority color
         priority_colors = {
-            "high": ft.Colors.RED,
-            "medium": ft.Colors.ORANGE,
+            "high": get_error_color(),
+            "medium": get_warning_color(),
             "low": ft.Colors.YELLOW,
         }
         priority_color = priority_colors.get(alert['priority'], ft.Colors.GREY)
@@ -192,7 +194,7 @@ class DashboardView:
                 subtitle=ft.Text(
                     alert['description'],
                     size=12,
-                    color=ft.Colors.GREY_700,
+                    color=self._colors["on_surface_variant"],
                 ),
                 trailing=ft.Text(
                     f"{alert['days_until']}d",
@@ -201,7 +203,7 @@ class DashboardView:
                     color=priority_color,
                 ),
             ),
-            bgcolor=ft.Colors.GREY_100,
+            bgcolor=self._colors["surface_variant"],
             border_radius=8,
             padding=ft.padding.symmetric(horizontal=Spacing.SM.value, vertical=4),
             on_click=lambda e: self._navigate_to_employee(alert['employee_id']),

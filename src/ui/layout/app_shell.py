@@ -8,6 +8,7 @@ import flet as ft
 from ui.constants import Spacing, MAX_CONTENT_WIDTH, NAVBAR_HEIGHT
 from ui.theme import AppTheme
 from ui.navigation.router import get_router
+from ui.theme_colors import get_theme_colors, get_primary_color
 
 
 class AppShell(ft.Column):
@@ -26,6 +27,9 @@ class AppShell(ft.Column):
         self._page = page
         self._current_route = current_route
 
+        # Get theme colors
+        self._colors = get_theme_colors(page)
+
         # Content container (dynamic content goes here)
         self.content_container = ft.Container(
             content=ft.Container(),
@@ -42,7 +46,7 @@ class AppShell(ft.Column):
                 size=20,
                 weight=ft.FontWeight.W_600,
             ),
-            bgcolor=AppTheme.SURFACE,
+            bgcolor=self._colors["surface"],
             elevation=1,
             actions=self._build_app_bar_actions(),
         )
@@ -107,7 +111,7 @@ class AppShell(ft.Column):
                 horizontal=Spacing.MD.value,
                 vertical=Spacing.SM.value
             ),
-            bgcolor=AppTheme.SURFACE_VARIANT,
+            bgcolor=self._colors["surface_variant"],
         )
 
     def _nav_button(
@@ -123,13 +127,13 @@ class AppShell(ft.Column):
 
         # Style based on active state
         if is_active:
-            bgcolor = AppTheme.PRIMARY
+            bgcolor = get_primary_color()
             text_color = ft.Colors.WHITE
             icon_color = ft.Colors.WHITE
         else:
             bgcolor = ft.Colors.TRANSPARENT
-            text_color = AppTheme.ON_SURFACE_VARIANT
-            icon_color = AppTheme.ON_SURFACE_VARIANT
+            text_color = self._colors["on_surface_variant"]
+            icon_color = self._colors["on_surface_variant"]
 
         button = ft.Container(
             content=ft.Row(

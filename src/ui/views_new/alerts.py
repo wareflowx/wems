@@ -8,6 +8,7 @@ from ui.constants import Spacing
 from ui.components.icons import Icons
 from ui.components.buttons import AppButton
 from ui.navigation.router import get_router
+from ui.theme_colors import get_theme_colors
 
 
 class AlertsView:
@@ -15,6 +16,7 @@ class AlertsView:
 
     def __init__(self, page: ft.Page):
         self.page = page
+        self._colors = get_theme_colors(page)
 
     def build(self) -> ft.Column:
         """Build alerts view."""
@@ -24,7 +26,7 @@ class AlertsView:
                 ft.Icon(
                     Icons.WARNING,
                     size=64,
-                    color=ft.Colors.GREY_400,
+                    color=self._colors["on_surface_variant"],
                 ),
                 ft.Container(height=Spacing.MD.value),
                 ft.Text(
@@ -35,7 +37,7 @@ class AlertsView:
                 ft.Text(
                     "This view will be fully implemented in Phase 4",
                     size=14,
-                    color=ft.Colors.GREY_500,
+                    color=self._colors["on_surface_variant"],
                 ),
                 ft.Container(height=Spacing.LG.value),
                 AppButton(
