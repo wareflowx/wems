@@ -25,31 +25,43 @@ class NavigationBar(ft.Container):
         super().__init__(
             content=ft.Row(
                 [
-                    ft.TextButton(
-                        "🏠 Dashboard",
+                    ft.Container(
+                        content=ft.TextButton(
+                            "🏠 Dashboard",
+                            style=ft.ButtonStyle(
+                                color=ft.Colors.WHITE if current_view == "dashboard" else None,
+                            ),
+                            on_click=lambda e: self._navigate_to_dashboard(),
+                        ),
                         bgcolor=ft.Colors.BLUE if current_view == "dashboard" else None,
-                        style=ft.ButtonStyle(
-                            color=ft.Colors.WHITE if current_view == "dashboard" else None,
-                        ),
-                        on_click=lambda e: self._navigate_to_dashboard(),
+                        border_radius=8,
+                        padding=5,
                     ),
                     ft.Container(width=10),
-                    ft.TextButton(
-                        "👥 Employees",
+                    ft.Container(
+                        content=ft.TextButton(
+                            "👥 Employees",
+                            style=ft.ButtonStyle(
+                                color=ft.Colors.WHITE if current_view == "employees" else None,
+                            ),
+                            on_click=lambda e: self._navigate_to_employees(),
+                        ),
                         bgcolor=ft.Colors.BLUE if current_view == "employees" else None,
-                        style=ft.ButtonStyle(
-                            color=ft.Colors.WHITE if current_view == "employees" else None,
-                        ),
-                        on_click=lambda e: self._navigate_to_employees(),
+                        border_radius=8,
+                        padding=5,
                     ),
                     ft.Container(width=10),
-                    ft.TextButton(
-                        "⚠️ Alerts",
-                        bgcolor=ft.Colors.BLUE if current_view == "alerts" else None,
-                        style=ft.ButtonStyle(
-                            color=ft.Colors.WHITE if current_view == "alerts" else None,
+                    ft.Container(
+                        content=ft.TextButton(
+                            "⚠️ Alerts",
+                            style=ft.ButtonStyle(
+                                color=ft.Colors.WHITE if current_view == "alerts" else None,
+                            ),
+                            on_click=lambda e: self._navigate_to_alerts(),
                         ),
-                        on_click=lambda e: self._navigate_to_alerts(),
+                        bgcolor=ft.Colors.BLUE if current_view == "alerts" else None,
+                        border_radius=8,
+                        padding=5,
                     ),
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
