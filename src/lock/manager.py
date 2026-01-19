@@ -12,7 +12,7 @@ from lock.models import AppLock
 # Simple logger for now (will be replaced in Phase 3)
 class Logger:
     """Simple placeholder logger."""
-    def debug(self, msg): print(f"[DEBUG] {msg}")
+    def debug(self, msg): pass  # Suppress debug messages for cleaner output
     def info(self, msg): print(f"[INFO] {msg}")
     def warning(self, msg): print(f"[WARNING] {msg}")
     def error(self, msg): print(f"[ERROR] {msg}")

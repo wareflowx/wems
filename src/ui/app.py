@@ -141,9 +141,7 @@ def main(page: ft.Page):
     # Add cleanup handler to release lock when app closes
     def on_close(e):
         """Release lock when application closes."""
-        print("Releasing application lock...")
         app_state.release_lock()
-        print("Lock released.")
 
     page.on_close = on_close
 
@@ -172,8 +170,6 @@ if __name__ == "__main__":
             app_state = get_app_state()
             # Check if lock exists (lock manager has _lock attribute)
             if app_state.lock_manager._lock is not None:
-                print("Cleanup: Releasing application lock...")
                 app_state.release_lock()
-                print("Cleanup: Lock released.")
-        except Exception as e:
-            print(f"Cleanup error: {e}")
+        except Exception:
+            pass  # Silent cleanup
