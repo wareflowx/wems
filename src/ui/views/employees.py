@@ -29,6 +29,7 @@ class EmployeesListView:
         self.search_text = ""
         self.filter_status = "all"  # all, active, inactive
         self.employees_data = []
+        self.filter_chips = {}  # Will be populated in _build_filters_row
 
     def build(self) -> ft.Column:
         """
@@ -101,31 +102,36 @@ class EmployeesListView:
 
     def _build_filters_row(self) -> ft.Row:
         """Build filter buttons row."""
-        status_filter = ft.SegmentedButton(
-            width=400,
-            selected_index=0,
-            segments=[
-                ft.ButtonSegment(
-                    value="all",
-                    label=ft.Text("All", size=12),
-                ),
-                ft.ButtonSegment(
-                    value="active",
-                    label=ft.Text("Active", size=12),
-                ),
-                ft.ButtonSegment(
-                    value="inactive",
-                    label=ft.Text("Inactive", size=12),
-                ),
-            ],
-            on_change=self._on_status_filter_change,
+        # Use Chip (toggle buttons) for filtering
+        filter_chip_all = ft.Chip(
+            label=ft.Text("All", size=12),
+            selected=True,
+            on_click=lambda e: self._on_filter_click(e, "all"),
         )
+        filter_chip_active = ft.Chip(
+            label=ft.Text("Active", size=12),
+            on_click=lambda e: self._on_filter_click(e, "active"),
+        )
+        filter_chip_inactive = ft.Chip(
+            label=ft.Text("Inactive", size=12),
+            on_click=lambda e: self._on_filter_click(e, "inactive"),
+        )
+
+        # Store chip references
+        self.filter_chips = {
+            "all": filter_chip_all,
+            "active": filter_chip_active,
+            "inactive": filter_chip_inactive,
+        }
 
         return ft.Row(
             [
                 ft.Text("Filter:", size=14, weight=ft.FontWeight.BOLD),
                 ft.Container(width=10),
-                status_filter,
+                ft.Row(
+                    [filter_chip_all, filter_chip_active, filter_chip_inactive],
+                    spacing=5,
+                ),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
         )
@@ -241,12 +247,17 @@ class EmployeesListView:
         self.search_text = e.control.value
         self._refresh_list()
 
-    def _on_status_filter_change(self, e):
-        """Handle status filter change."""
-        if e.control.selected_index is not None:
-            segments = ["all", "active", "inactive"]
-            self.filter_status = segments[e.control.selected_index]
-            self._refresh_list()
+    def _on_filter_click(self, e, filter_value: str):
+        """Handle filter chip click."""
+        # Update selected state
+        self.filter_status = filter_value
+
+        # Update chip visuals
+        for key, chip in self.filter_chips.items():
+            chip.selected = (key == filter_value)
+
+        # Refresh list
+        self._refresh_list()
 
     def _refresh_list(self):
         """Refresh the employees list display."""
