@@ -5,6 +5,7 @@ from typing import List, Optional
 
 from ui.controllers.employee_controller import EmployeeController
 from ui.widgets.employee_list_item import EmployeeListItem
+from ui.widgets.navigation import NavigationBar
 
 
 class EmployeesListView:
@@ -42,13 +43,15 @@ class EmployeesListView:
         self.employees_data = self._load_employees()
 
         # Build components
+        nav_bar = NavigationBar(self.page, current_view="employees")
         search_row = self._build_search_row()
         filters_row = self._build_filters_row()
         employees_list = self._build_employees_list()
 
-        # Assemble view
-        return ft.Column(
+        # Assemble view content
+        view_content = ft.Column(
             [
+                ft.Container(height=20),
                 search_row,
                 ft.Container(height=10),
                 filters_row,
@@ -57,6 +60,13 @@ class EmployeesListView:
             ],
             scroll=ft.ScrollMode.AUTO,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+
+        return ft.Column(
+            [
+                nav_bar,
+                view_content,
+            ],
         )
 
     def _load_employees(self) -> List[dict]:
@@ -262,13 +272,7 @@ class EmployeesListView:
     def _refresh_list(self):
         """Refresh the employees list display."""
         self.page.clean()
-        self.page.add(
-            ft.AppBar(
-                title=ft.Text("Employee Manager"),
-                bgcolor=ft.Colors.SURFACE,
-            ),
-            self.build(),
-        )
+        self.page.add(self.build())
         self.page.update()
 
     def _navigate_to_employee_detail(self, employee_id: str):
@@ -276,8 +280,5 @@ class EmployeesListView:
         self.page.clean()
         from ui.views.employee_detail import EmployeeDetailView
         detail_view = EmployeeDetailView(self.page, employee_id)
-        self.page.add(
-            ft.AppBar(title=ft.Text("Employee Manager")),
-            detail_view.build(),
-        )
+        self.page.add(detail_view.build())
         self.page.update()

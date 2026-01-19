@@ -10,6 +10,7 @@ from ui.widgets.forms import (
     DropdownField,
     FormSection,
 )
+from ui.widgets.navigation import NavigationBar
 from employee.constants import EmployeeStatus, ContractType
 
 
@@ -52,42 +53,39 @@ class EmployeeFormView:
         """
         title = "Edit Employee" if self.is_edit_mode else "Add Employee"
 
-        # Build form sections
-        header = self._build_header(title)
+        # Build components
+        nav_bar = NavigationBar(self.page)
         basic_info_section = self._build_basic_info_section()
         employment_section = self._build_employment_section()
         actions_section = self._build_actions()
 
-        # Assemble form
-        return ft.Column(
+        # Assemble form in scrollable container
+        form_content = ft.Column(
             [
-                header,
                 ft.Container(height=20),
-                basic_info_section,
-                ft.Container(height=20),
-                employment_section,
-                ft.Container(height=20),
-                actions_section,
-            ],
-            scroll=ft.ScrollMode.AUTO,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        )
-
-    def _build_header(self, title: str) -> ft.Row:
-        """Build form header with back button."""
-        return ft.Row(
-            [
-                ft.TextButton(
-                    "← Back",
-                    on_click=lambda e: self._navigate_back(),
-                ),
                 ft.Text(
                     title,
                     size=24,
                     weight=ft.FontWeight.BOLD,
                 ),
+                ft.Container(height=10),
+                basic_info_section,
+                ft.Container(height=20),
+                employment_section,
+                ft.Container(height=20),
+                actions_section,
+                ft.Container(height=20),  # Bottom padding
             ],
-            alignment=ft.MainAxisAlignment.START,
+            spacing=0,
+            scroll=ft.ScrollMode.AUTO,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+
+        return ft.Column(
+            [
+                nav_bar,
+                form_content,
+            ],
         )
 
     def _build_basic_info_section(self) -> FormSection:
@@ -339,8 +337,5 @@ class EmployeeFormView:
         self.page.clean()
         from ui.views.employees import EmployeesListView
         employees_view = EmployeesListView(self.page)
-        self.page.add(
-            ft.AppBar(title=ft.Text("Employee Manager")),
-            employees_view.build(),
-        )
+        self.page.add(employees_view.build())
         self.page.update()

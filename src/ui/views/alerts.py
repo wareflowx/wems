@@ -5,6 +5,7 @@ from typing import List
 
 from ui.controllers.alerts_controller import AlertsController
 from ui.widgets.alert_item import AlertListItem
+from ui.widgets.navigation import NavigationBar
 
 
 class AlertsView:
@@ -41,13 +42,15 @@ class AlertsView:
         self.alerts_data = self.controller.get_all_alerts(days=90)
 
         # Build components
+        nav_bar = NavigationBar(self.page, current_view="alerts")
         filters_row = self._build_filters_row()
         summary_row = self._build_summary_row()
         alerts_list = self._build_alerts_list()
 
-        # Assemble view
-        return ft.Column(
+        # Assemble view content
+        view_content = ft.Column(
             [
+                ft.Container(height=20),
                 filters_row,
                 ft.Container(height=20),
                 summary_row,
@@ -56,6 +59,13 @@ class AlertsView:
             ],
             scroll=ft.ScrollMode.AUTO,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+
+        return ft.Column(
+            [
+                nav_bar,
+                view_content,
+            ],
         )
 
     def _build_filters_row(self) -> ft.Row:
@@ -348,10 +358,7 @@ class AlertsView:
     def _refresh_list(self):
         """Refresh the alerts list display."""
         self.page.clean()
-        self.page.add(
-            ft.AppBar(title=ft.Text("Employee Manager")),
-            self.build(),
-        )
+        self.page.add(self.build())
         self.page.update()
 
     def _navigate_to_employee_detail(self, employee_id: str):
@@ -359,10 +366,7 @@ class AlertsView:
         self.page.clean()
         from ui.views.employee_detail import EmployeeDetailView
         detail_view = EmployeeDetailView(self.page, employee_id)
-        self.page.add(
-            ft.AppBar(title=ft.Text("Employee Manager")),
-            detail_view.build(),
-        )
+        self.page.add(detail_view.build())
         self.page.update()
 
     def _export_alerts(self):

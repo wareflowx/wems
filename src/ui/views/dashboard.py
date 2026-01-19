@@ -6,6 +6,7 @@ from typing import List
 from ui.controllers.dashboard_controller import DashboardController
 from ui.widgets.stat_card import StatCard
 from ui.widgets.alert_item import AlertListItem
+from ui.widgets.navigation import NavigationBar
 
 
 class DashboardView:
@@ -40,13 +41,15 @@ class DashboardView:
         alerts = self.controller.format_alerts_for_ui(days=30, limit=10)
 
         # Build components
+        nav_bar = NavigationBar(self.page, current_view="dashboard")
         stats_row = self._build_stats_cards(stats, compliance, total_alerts)
         alerts_section = self._build_alerts_section(alerts, total_alerts)
         actions_row = self._build_actions()
 
         # Assemble dashboard
-        return ft.Column(
+        dashboard_content = ft.Column(
             [
+                ft.Container(height=20),
                 stats_row,
                 ft.Container(height=20),
                 alerts_section,
@@ -55,6 +58,13 @@ class DashboardView:
             ],
             scroll=ft.ScrollMode.AUTO,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+
+        return ft.Column(
+            [
+                nav_bar,
+                dashboard_content,
+            ],
         )
 
     def _build_stats_cards(self, stats: dict, compliance: int, total_alerts: int) -> ft.Row:

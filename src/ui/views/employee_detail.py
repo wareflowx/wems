@@ -4,6 +4,7 @@ import flet as ft
 from typing import Optional
 
 from ui.controllers.employee_controller import EmployeeController
+from ui.widgets.navigation import NavigationBar
 
 
 class EmployeeDetailView:
@@ -42,7 +43,7 @@ class EmployeeDetailView:
         emp = data['employee']
 
         # Build components
-        header = self._build_header(emp)
+        nav_bar = NavigationBar(self.page)
         actions_section = self._build_actions_section(self.employee_id)
         info_section = self._build_info_section(emp)
         compliance_section = self._build_compliance_section(data)
@@ -50,10 +51,15 @@ class EmployeeDetailView:
         visits_section = self._build_visits_section(data['medical_visits'])
         trainings_section = self._build_trainings_section(data['trainings'])
 
-        # Assemble view
-        return ft.Column(
+        # Assemble view content
+        view_content = ft.Column(
             [
-                header,
+                ft.Container(height=20),
+                ft.Text(
+                    emp.full_name,
+                    size=28,
+                    weight=ft.FontWeight.BOLD,
+                ),
                 ft.Container(height=10),
                 actions_section,
                 ft.Container(height=20),
@@ -69,6 +75,13 @@ class EmployeeDetailView:
             ],
             scroll=ft.ScrollMode.AUTO,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+
+        return ft.Column(
+            [
+                nav_bar,
+                view_content,
+            ],
         )
 
     def _build_not_found(self) -> ft.Column:
@@ -123,10 +136,7 @@ class EmployeeDetailView:
             self.page.clean()
             from ui.views.employee_form import EmployeeFormView
             form_view = EmployeeFormView(self.page, employee_id=employee_id)
-            self.page.add(
-                ft.AppBar(title=ft.Text("Employee Manager")),
-                form_view.build(),
-            )
+            self.page.add(form_view.build())
             self.page.update()
 
         return ft.Row(
@@ -408,8 +418,5 @@ class EmployeeDetailView:
         self.page.clean()
         from ui.views.dashboard import DashboardView
         dashboard = DashboardView(self.page)
-        self.page.add(
-            ft.AppBar(title=ft.Text("Employee Manager")),
-            dashboard.build(),
-        )
+        self.page.add(dashboard.build())
         self.page.update()
