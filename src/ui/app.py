@@ -10,6 +10,8 @@ if str(src_path) not in sys.path:
 
 import flet as ft
 from .state.app_state import get_app_state
+from .theme import AppTheme
+from .constants import MAX_CONTENT_WIDTH
 
 
 def ensure_database():
@@ -122,7 +124,7 @@ def main(page: ft.Page):
         page.title = "Employee Manager - Lock Error"
         page.add(
             ft.Text(
-                            "⛔ Unable to acquire application lock",
+                            "Unable to acquire application lock",
                             size=20,
                             weight=ft.FontWeight.BOLD,
                             color=ft.Colors.RED
@@ -134,7 +136,11 @@ def main(page: ft.Page):
 
     # Configure page
     page.title = "Employee Manager"
-    page.theme_mode = ft.ThemeMode.LIGHT
+    page.window_width = 1400
+    page.window_height = 900
+    page.theme_mode = app_state.get_flet_theme_mode()
+    page.theme = AppTheme.get_light_theme()
+    page.dark_theme = AppTheme.get_dark_theme()
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.padding = 0
 
@@ -155,7 +161,7 @@ def main(page: ft.Page):
     page.add(
         ft.AppBar(
             title=ft.Text("Employee Manager"),
-            bgcolor=ft.Colors.SURFACE,
+            bgcolor=AppTheme.SURFACE,
         ),
         dashboard_content,
     )
