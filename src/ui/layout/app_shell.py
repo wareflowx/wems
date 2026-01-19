@@ -23,7 +23,7 @@ class AppShell(ft.Column):
     """
 
     def __init__(self, page: ft.Page, current_route: str = "/"):
-        self.page = page
+        self._page = page
         self._current_route = current_route
 
         # Content container (dynamic content goes here)
@@ -164,7 +164,7 @@ class AppShell(ft.Column):
         """Navigate to route."""
         from ui.navigation.router import get_router
 
-        router = get_router(self.page)
+        router = get_router(self._page)
         router.navigate(route)
 
         # Update navigation visuals
@@ -197,5 +197,5 @@ class AppShell(ft.Column):
         app_state.toggle_theme()
 
         # Update page theme mode
-        self.page.theme_mode = app_state.get_flet_theme_mode()
-        self.page.update()
+        self._page.theme_mode = app_state.get_flet_theme_mode()
+        self._page.update()
