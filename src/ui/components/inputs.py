@@ -277,7 +277,7 @@ class FormSection(ft.Container):
         header = ft.Row(
             [
                 ft.Icon(
-                    ft.icons.TAB,
+                    ft.icons.Icons.TAB,
                     size=IconSize.SM.value,
                     color=AppTheme.PRIMARY
                 ),

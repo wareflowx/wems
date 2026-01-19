@@ -36,86 +36,87 @@ class AppIcon(ft.Icon):
 
 
 # Named icon mappings for commonly used icons
+# Icons are accessed via ft.icons.Icons enum
 class Icons:
     """Centralized icon name constants."""
 
     # Navigation
-    HOME = ft.icons.HOME
-    DASHBOARD = ft.icons.DASHBOARD_OUTLINE
-    PEOPLE = ft.icons.PEOPLE_OUTLINE
-    PERSON = ft.icons.PERSON_OUTLINE
-    SETTINGS = ft.icons.SETTINGS_OUTLINE
+    HOME = ft.icons.Icons.HOME
+    DASHBOARD = ft.icons.Icons.DASHBOARD
+    PEOPLE = ft.icons.Icons.PEOPLE
+    PERSON = ft.icons.Icons.PERSON
+    SETTINGS = ft.icons.Icons.SETTINGS
 
     # Actions
-    ADD = ft.icons.ADD
-    EDIT = ft.icons.EDIT_OUTLINE
-    DELETE = ft.icons.DELETE_OUTLINE
-    SAVE = ft.icons.SAVE
-    CANCEL = ft.icons.CLOSE
-    SEARCH = ft.icons.SEARCH
-    FILTER = ft.icons.FILTER_LIST
-    REFRESH = ft.icons.REFRESH
-    DOWNLOAD = ft.icons.DOWNLOAD
-    UPLOAD = ft.icons.UPLOAD
-    EXPORT = ft.icons.FILE_EXPORT
-    IMPORT = ft.icons.FILE_IMPORT
+    ADD = ft.icons.Icons.ADD
+    EDIT = ft.icons.Icons.EDIT
+    DELETE = ft.icons.Icons.DELETE
+    SAVE = ft.icons.Icons.SAVE
+    CANCEL = ft.icons.Icons.CLOSE
+    SEARCH = ft.icons.Icons.SEARCH
+    FILTER = ft.icons.Icons.FILTER_LIST
+    REFRESH = ft.icons.Icons.REFRESH
+    DOWNLOAD = ft.icons.Icons.DOWNLOAD
+    UPLOAD = ft.icons.Icons.UPLOAD
+    EXPORT = ft.icons.Icons.DOWNLOAD  # Use download icon for export
+    IMPORT = ft.icons.Icons.UPLOAD  # Use upload icon for import
 
     # Communication
-    EMAIL = ft.icons.EMAIL_OUTLINE
-    PHONE = ft.icons.PHONE
-    NOTIFICATION = ft.icons.NOTIFICATIONS_OUTLINE
-    WARNING = ft.icons.WARNING
-    ERROR = ft.icons.ERROR
-    INFO = ft.icons.INFO
-    SUCCESS = ft.icons.CHECK_CIRCLE
-    CHECK = ft.icons.CHECK
-    CLOSE_CIRCLE = ft.icons.CANCEL
+    EMAIL = ft.icons.Icons.EMAIL
+    PHONE = ft.icons.Icons.PHONE
+    NOTIFICATION = ft.icons.Icons.NOTIFICATIONS
+    WARNING = ft.icons.Icons.WARNING
+    ERROR = ft.icons.Icons.ERROR
+    INFO = ft.icons.Icons.INFO
+    SUCCESS = ft.icons.Icons.CHECK_CIRCLE
+    CHECK = ft.icons.Icons.CHECK
+    CLOSE_CIRCLE = ft.icons.Icons.CANCEL
 
     # Files
-    FILE = ft.icons.INSERT_DRIVE_FILE_OUTLINE
-    FOLDER = ft.icons.FOLDER_OUTLINE
-    DOCUMENT = ft.icons.DESCRIPTION_OUTLINE
-    PDF = ft.icons.PICTURE_AS_PDF
-    IMAGE = ft.icons.IMAGE_OUTLINE
+    FILE = ft.icons.Icons.INSERT_DRIVE_FILE
+    FOLDER = ft.icons.Icons.FOLDER
+    DOCUMENT = ft.icons.Icons.DESCRIPTION
+    PDF = ft.icons.Icons.PICTURE_AS_PDF
+    IMAGE = ft.icons.Icons.IMAGE
 
     # Status
-    ACTIVE = ft.icons.CHECK_CIRCLE_OUTLINE
-    INACTIVE = ft.icons.CANCEL_OUTLINE
-    PENDING = ft.icons.PENDING
-    LOADING = ft.icons.LOADING
+    ACTIVE = ft.icons.Icons.CHECK_CIRCLE
+    INACTIVE = ft.icons.Icons.CANCEL
+    PENDING = ft.icons.Icons.PENDING
+    LOADING = ft.icons.Icons.REFRESH  # Use refresh for loading
 
     # Navigation arrows
-    ARROW_BACK = ft.icons.ARROW_BACK
-    ARROW_FORWARD = ft.icons.ARROW_FORWARD
-    CHEVRON_RIGHT = ft.icons.CHEVRON_RIGHT
-    EXPAND_MORE = ft.icons.EXPAND_MORE
-    EXPAND_LESS = ft.icons.EXPAND_LESS
+    ARROW_BACK = ft.icons.Icons.ARROW_BACK
+    ARROW_FORWARD = ft.icons.Icons.ARROW_FORWARD
+    CHEVRON_RIGHT = ft.icons.Icons.CHEVRON_RIGHT
+    EXPAND_MORE = ft.icons.Icons.EXPAND_MORE
+    EXPAND_LESS = ft.icons.Icons.EXPAND_LESS
 
     # Calendar
-    CALENDAR = ft.icons.CALENDAR_MONTH
-    TODAY = ft.icons.TODAY
-    DATE_RANGE = ft.icons.DATE_RANGE
+    CALENDAR = ft.icons.Icons.CALENDAR_MONTH
+    TODAY = ft.icons.Icons.TODAY
+    DATE_RANGE = ft.icons.Icons.DATE_RANGE
 
     # Business
-    BUSINESS = ft.icons.BUSINESS_OUTLINE
-    WORK = ft.icons.WORK_OUTLINE
-    ASSIGNMENT = ft.icons.ASSIGNMENT_OUTLINE
-    BADGE = ft.icons.BADGE_OUTLINE
-    CERTIFICATE = ft.icons.CERTIFICATE
-    SCHOOL = ft.icons.SCHOOL
-    MEDICAL = ft.icons.MEDICAL_SERVICES
+    BUSINESS = ft.icons.Icons.BUSINESS
+    WORK = ft.icons.Icons.WORK
+    ASSIGNMENT = ft.icons.Icons.ASSIGNMENT
+    BADGE = ft.icons.Icons.BADGE
+    CERTIFICATE = ft.icons.Icons.VERIFIED
+    SCHOOL = ft.icons.Icons.SCHOOL
+    MEDICAL = ft.icons.Icons.LOCAL_HOSPITAL
 
     # UI elements
-    MENU = ft.icons.MENU
-    MORE_VERT = ft.icons.MORE_VERT
-    FULLSCREEN = ft.icons.FULLSCREEN
-    VIEW_LIST = ft.icons.VIEW_LIST
-    VIEW_MODULE = ft.icons.VIEW_MODULE
-    GRID_VIEW = ft.icons.GRID_VIEW
-    TABLE_ROWS = ft.icons.TABLE_ROWS
+    MENU = ft.icons.Icons.MENU
+    MORE_VERT = ft.icons.Icons.MORE_VERT
+    FULLSCREEN = ft.icons.Icons.FULLSCREEN
+    VIEW_LIST = ft.icons.Icons.VIEW_LIST
+    VIEW_MODULE = ft.icons.Icons.VIEW_MODULE
+    GRID_VIEW = ft.icons.Icons.GRID_VIEW
+    TABLE_ROWS = ft.icons.Icons.TABLE_ROWS
 
     # Visibility
-    VISIBILITY = ft.icons.VISIBILITY
-    VISIBILITY_OFF = ft.icons.VISIBILITY_OFF
-    EYE = ft.icons.VISIBILITY_OUTLINE
-    EYE_OFF = ft.icons.VISIBILITY_OFF_OUTLINE
+    VISIBILITY = ft.icons.Icons.VISIBILITY
+    VISIBILITY_OFF = ft.icons.Icons.VISIBILITY_OFF
+    EYE = ft.icons.Icons.VISIBILITY
+    EYE_OFF = ft.icons.Icons.VISIBILITY_OFF

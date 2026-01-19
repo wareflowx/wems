@@ -183,7 +183,7 @@ class AppShell(ft.Column):
                 on_click=lambda e: self._navigate("/settings"),
             ),
             ft.IconButton(
-                icon=ft.icons.LIGHT_MODE,
+                icon=ft.icons.Icons.LIGHT_MODE,
                 tooltip="Toggle theme",
                 on_click=self._toggle_theme,
             ),
