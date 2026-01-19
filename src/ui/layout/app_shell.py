@@ -167,7 +167,6 @@ class AppShell(ft.Column):
     def _navigate(self, route: str):
         """Navigate to route."""
         from ui.navigation.router import get_router
-        from ui.components.icons import Icons
 
         router = get_router(self._page)
         router.navigate(route)
