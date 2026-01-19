@@ -78,7 +78,7 @@ class EmployeeFormView:
         return ft.Row(
             [
                 ft.IconButton(
-                    ft.icons.ARROW_BACK,
+                    ft.icons.CHEVRON_LEFT,
                     on_click=lambda e: self._navigate_back(),
                 ),
                 ft.Text(

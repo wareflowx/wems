@@ -92,8 +92,7 @@ class EmployeeDetailView:
                     color=ft.Colors.GREY_600,
                 ),
                 ft.ElevatedButton(
-                    "Back to Dashboard",
-                    icon=ft.icons.ARROW_BACK,
+                    "← Back to Dashboard",
                     on_click=lambda e: self._navigate_to_dashboard(),
                 ),
             ],
@@ -105,7 +104,7 @@ class EmployeeDetailView:
         return ft.Row(
             [
                 ft.IconButton(
-                    ft.icons.ARROW_BACK,
+                    ft.icons.CHEVRON_LEFT,
                     on_click=lambda e: self._navigate_to_dashboard(),
                 ),
                 ft.Text(
