@@ -174,18 +174,15 @@ class DashboardView:
         return ft.Row(
             [
                 ft.ElevatedButton(
-                    "Add Employee",
-                    icon=ft.icons.ADD,
+                    "➕ Add Employee",
                     bgcolor=ft.Colors.BLUE,
                     color=ft.Colors.WHITE,
                 ),
                 ft.ElevatedButton(
-                    "View All Alerts",
-                    icon=ft.icons.ALERTS,
+                    "⚠️ View All Alerts",
                 ),
                 ft.ElevatedButton(
-                    "Export Report",
-                    icon=ft.icons.DOWNLOAD,
+                    "📥 Export Report",
                 ),
             ],
             spacing=10,
