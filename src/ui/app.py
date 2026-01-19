@@ -27,110 +27,119 @@ def route_change(route: str, page: ft.Page, app_state):
     """Handle route changes and build views accordingly."""
     page.views.clear()
 
-    # Always add root view
-    page.views.append(
-        ft.View(
-            "/",
-            [
-                ft.AppBar(
-                    title=ft.Text("Employee Manager"),
-                    bgcolor=ft.Colors.SURFACE,
-                    actions=[
-                        ft.Container(
-                            content=ft.Text(
-                                app_state.lock_status,
-                                size=12,
-                                color=ft.Colors.GREY_700
-                            ),
-                            padding=5,
-                            bgcolor=ft.Colors.GREY_100,
-                            border_radius=20,
-                        ),
-                    ],
+    # Common AppBar
+    appbar = ft.AppBar(
+        title=ft.Text("Employee Manager"),
+        bgcolor=ft.Colors.SURFACE,
+        actions=[
+            ft.Container(
+                content=ft.Text(
+                    app_state.lock_status,
+                    size=12,
+                    color=ft.Colors.GREY_700
                 ),
-            ],
-        )
+                padding=5,
+                bgcolor=ft.Colors.GREY_100,
+                border_radius=20,
+            ),
+        ],
     )
 
     # Dashboard view
     if page.route == "/":
-        page.views[-1].controls.extend([
-            ft.Container(
-                content=ft.Column(
-                    [
-                        ft.Text("Dashboard", size=32, weight=ft.FontWeight.BOLD),
-                        ft.Text("Coming soon...", size=16),
-                    ],
-                    spacing=10,
-                ),
-                padding=20,
-                expand=True,
+        page.views.append(
+            ft.View(
+                "/",
+                [
+                    appbar,
+                    ft.Column(
+                        [
+                            ft.Text("Dashboard", size=32, weight=ft.FontWeight.BOLD),
+                            ft.Text("Coming soon...", size=16),
+                        ],
+                        spacing=10,
+                    ),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
-        ])
+        )
 
     # Employees list view
     elif page.route == "/employees":
-        page.views[-1].controls.extend([
-            ft.Container(
-                content=ft.Column(
-                    [
-                        ft.Text("Employees", size=32, weight=ft.FontWeight.BOLD),
-                        ft.Text("Coming soon...", size=16),
-                    ],
-                    spacing=10,
-                ),
-                padding=20,
-                expand=True,
+        page.views.append(
+            ft.View(
+                "/employees",
+                [
+                    appbar,
+                    ft.Column(
+                        [
+                            ft.Text("Employees", size=32, weight=ft.FontWeight.BOLD),
+                            ft.Text("Coming soon...", size=16),
+                        ],
+                        spacing=10,
+                    ),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
-        ])
+        )
 
     # Employee detail view
     elif page.route.startswith("/employee/"):
-        page.views[-1].controls.extend([
-            ft.Container(
-                content=ft.Column(
-                    [
-                        ft.Text(f"Employee {page.route.split('/')[-1]}", size=32, weight=ft.FontWeight.BOLD),
-                        ft.Text("Coming soon...", size=16),
-                    ],
-                    spacing=10,
-                ),
-                padding=20,
-                expand=True,
+        emp_id = page.route.split("/")[-1]
+        page.views.append(
+            ft.View(
+                page.route,
+                [
+                    appbar,
+                    ft.Column(
+                        [
+                            ft.Text(f"Employee {emp_id}", size=32, weight=ft.FontWeight.BOLD),
+                            ft.Text("Coming soon...", size=16),
+                        ],
+                        spacing=10,
+                    ),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
-        ])
+        )
 
     # Documents view
     elif page.route == "/documents":
-        page.views[-1].controls.extend([
-            ft.Container(
-                content=ft.Column(
-                    [
-                        ft.Text("Documents", size=32, weight=ft.FontWeight.BOLD),
-                        ft.Text("Coming soon...", size=16),
-                    ],
-                    spacing=10,
-                ),
-                padding=20,
-                expand=True,
+        page.views.append(
+            ft.View(
+                "/documents",
+                [
+                    appbar,
+                    ft.Column(
+                        [
+                            ft.Text("Documents", size=32, weight=ft.FontWeight.BOLD),
+                            ft.Text("Coming soon...", size=16),
+                        ],
+                        spacing=10,
+                    ),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
-        ])
+        )
 
     # Settings view
     elif page.route == "/settings":
-        page.views[-1].controls.extend([
-            ft.Container(
-                content=ft.Column(
-                    [
-                        ft.Text("Settings", size=32, weight=ft.FontWeight.BOLD),
-                        ft.Text("Coming soon...", size=16),
-                    ],
-                    spacing=10,
-                ),
-                padding=20,
-                expand=True,
+        page.views.append(
+            ft.View(
+                "/settings",
+                [
+                    appbar,
+                    ft.Column(
+                        [
+                            ft.Text("Settings", size=32, weight=ft.FontWeight.BOLD),
+                            ft.Text("Coming soon...", size=16),
+                        ],
+                        spacing=10,
+                    ),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
-        ])
+        )
 
     page.update()
 
@@ -139,7 +148,8 @@ def view_pop(view, page: ft.Page):
     """Handle back navigation."""
     page.views.pop()
     top_view = page.views[-1]
-    page.go(top_view.route)
+    page.route = top_view.route
+    page.update()
 
 
 def main(page: ft.Page):
@@ -187,8 +197,8 @@ def main(page: ft.Page):
     page.on_route_change = on_route_change
     page.on_view_pop = view_pop
 
-    # Navigate to initial route
-    page.go(page.route)
+    # Navigate to initial route - call route change directly
+    on_route_change(page.route)
 
 
 if __name__ == "__main__":
