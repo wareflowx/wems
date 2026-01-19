@@ -38,30 +38,71 @@ class AppShell(ft.Column):
             expand=True,
         )
 
-        # App bar with navigation integrated
+        # App bar with full custom layout
         self.app_bar = ft.AppBar(
             bgcolor=self._colors["surface"],
             elevation=1,
             toolbar_height=64,
         )
 
-        # Build app bar content
+        # Build complete app bar layout with title, center nav, and right actions
         self.app_bar.title = ft.Row(
             [
-                # Title on the left
+                # Left side - Title
                 ft.Text(
                     "Employee Manager",
                     size=20,
                     weight=ft.FontWeight.W_600,
                     color=self._colors["on_surface"],
                 ),
+
+                # Spacer to push nav to center
+                ft.Container(expand=True),
+
+                # Center - Navigation
+                ft.Row(
+                    [
+                        self._nav_button(
+                            "Dashboard",
+                            Icons.HOME,
+                            "/",
+                        ),
+                        ft.Container(width=Spacing.XS.value),
+                        self._nav_button(
+                            "Employees",
+                            Icons.PEOPLE,
+                            "/employees",
+                        ),
+                        ft.Container(width=Spacing.XS.value),
+                        self._nav_button(
+                            "Alerts",
+                            Icons.WARNING,
+                            "/alerts",
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
+
+                # Spacer for balance
+                ft.Container(expand=True),
+
+                # Right side - Actions
+                ft.IconButton(
+                    icon=Icons.SETTINGS,
+                    tooltip="Settings",
+                    on_click=lambda e: self._navigate("/settings"),
+                ),
+                ft.IconButton(
+                    icon=ft.icons.Icons.LIGHT_MODE,
+                    tooltip="Toggle theme",
+                    on_click=self._toggle_theme,
+                ),
             ],
-            expand=False,
+            expand=True,
         )
 
-        # Center navigation
         self.app_bar.center_title = False
-        self.app_bar.actions = self._build_app_bar_content()
+        self.app_bar.actions = []
 
         # Initialize router with content container
         router = get_router(page)
@@ -81,54 +122,6 @@ class AppShell(ft.Column):
             spacing=0,
             expand=True,
         )
-
-    def _build_app_bar_content(self) -> list:
-        """Build the complete app bar content with center navigation and right actions."""
-        from ui.components.icons import Icons, IconSize
-
-        return [
-            # Spacer to push center content
-            ft.Container(expand=True),
-
-            # Center navigation
-            ft.Row(
-                [
-                    self._nav_button(
-                        "Dashboard",
-                        Icons.HOME,
-                        "/",
-                    ),
-                    ft.Container(width=Spacing.XS.value),
-                    self._nav_button(
-                        "Employees",
-                        Icons.PEOPLE,
-                        "/employees",
-                    ),
-                    ft.Container(width=Spacing.XS.value),
-                    self._nav_button(
-                        "Alerts",
-                        Icons.WARNING,
-                        "/alerts",
-                    ),
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-            ),
-
-            # Spacer for balance
-            ft.Container(expand=True),
-
-            # Right side actions
-            ft.IconButton(
-                icon=Icons.SETTINGS,
-                tooltip="Settings",
-                on_click=lambda e: self._navigate("/settings"),
-            ),
-            ft.IconButton(
-                icon=ft.icons.Icons.LIGHT_MODE,
-                tooltip="Toggle theme",
-                on_click=self._toggle_theme,
-            ),
-        ]
 
     def _nav_button(
         self,
@@ -173,13 +166,67 @@ class AppShell(ft.Column):
     def _navigate(self, route: str):
         """Navigate to route."""
         from ui.navigation.router import get_router
+        from ui.components.icons import Icons
 
         router = get_router(self._page)
         router.navigate(route)
 
-        # Update navigation visuals
+        # Update navigation visuals by rebuilding app bar
         self._current_route = route
-        self.app_bar.actions = self._build_app_bar_content()
+        self.app_bar.title = ft.Row(
+            [
+                # Left side - Title
+                ft.Text(
+                    "Employee Manager",
+                    size=20,
+                    weight=ft.FontWeight.W_600,
+                    color=self._colors["on_surface"],
+                ),
+
+                # Spacer to push nav to center
+                ft.Container(expand=True),
+
+                # Center - Navigation
+                ft.Row(
+                    [
+                        self._nav_button(
+                            "Dashboard",
+                            Icons.HOME,
+                            "/",
+                        ),
+                        ft.Container(width=Spacing.XS.value),
+                        self._nav_button(
+                            "Employees",
+                            Icons.PEOPLE,
+                            "/employees",
+                        ),
+                        ft.Container(width=Spacing.XS.value),
+                        self._nav_button(
+                            "Alerts",
+                            Icons.WARNING,
+                            "/alerts",
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
+
+                # Spacer for balance
+                ft.Container(expand=True),
+
+                # Right side - Actions
+                ft.IconButton(
+                    icon=Icons.SETTINGS,
+                    tooltip="Settings",
+                    on_click=lambda e: self._navigate("/settings"),
+                ),
+                ft.IconButton(
+                    icon=ft.icons.Icons.LIGHT_MODE,
+                    tooltip="Toggle theme",
+                    on_click=self._toggle_theme,
+                ),
+            ],
+            expand=True,
+        )
         self.app_bar.update()
 
     def _toggle_theme(self, e):
