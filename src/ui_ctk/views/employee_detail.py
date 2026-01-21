@@ -378,19 +378,19 @@ class EmployeeDetailView(BaseView):
         )
         date_label.pack(side="left", padx=10)
 
-        # Next expiration
-        if visit.next_visit_date:
-            next_text = f"Prochaine: {visit.next_visit_date.strftime(DATE_FORMAT)}"
-            next_label = ctk.CTkLabel(
+        # Expiration information
+        if visit.expiration_date:
+            exp_text = f"Expiration: {visit.expiration_date.strftime(DATE_FORMAT)}"
+            exp_label = ctk.CTkLabel(
                 item,
-                text=next_text,
+                text=exp_text,
                 font=("Arial", 11),
                 anchor="w"
             )
-            next_label.pack(side="left", padx=10)
+            exp_label.pack(side="left", padx=10)
 
-            # Status badge
-            days_until = (visit.next_visit_date - date.today()).days
+            # Status badge based on expiration
+            days_until = (visit.expiration_date - date.today()).days
             if days_until < 0:
                 status_text = EXPIRATION_STATUS_EXPIRED
                 status_color = COLOR_CRITICAL
