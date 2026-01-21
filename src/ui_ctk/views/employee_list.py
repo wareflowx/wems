@@ -23,6 +23,7 @@ from ui_ctk.constants import (
     TABLE_ACTIONS,
     BTN_VIEW,
 )
+from src.controllers.employee_controller import EmployeeController
 
 
 class EmployeeListView(BaseView):
@@ -39,6 +40,9 @@ class EmployeeListView(BaseView):
 
     def __init__(self, master, title: str = "Liste des Employés"):
         super().__init__(master, title)
+
+        # Controller
+        self.controller = EmployeeController()
 
         # State
         self.employees: List[Employee] = []
@@ -164,9 +168,14 @@ class EmployeeListView(BaseView):
             label.pack(side="left", padx=10, pady=5)
 
     def refresh_employee_list(self):
-        """Load employees from database."""
-        # Fetch all employees
-        self.employees = list(Employee.select().order_by(Employee.last_name, Employee.first_name))
+        """
+        Load employees from database efficiently.
+
+        Uses prefetch to load related data (CACES, Medical Visits, Trainings)
+        in just 4 queries instead of 1 + 3N queries (N+1 problem).
+        """
+        # Use optimized loading with prefetch
+        self.employees = self.controller.get_employees_with_relations()
 
         # Apply filters
         self.apply_filters()
