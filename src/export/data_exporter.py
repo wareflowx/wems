@@ -91,9 +91,9 @@ class DataExporter:
                         'title': t.title,
                         'completion_date': t.completion_date.isoformat() if t.completion_date else None,
                         'expiration_date': t.expiration_date.isoformat() if t.expiration_date else None,
-                        'document_path': t.document_path,
+                        'certificate_path': t.certificate_path,
                     }
-                    for t in employee.online_trainings
+                    for t in employee.trainings
                 ],
                 'export_metadata': {
                     'export_date': datetime.now().isoformat(),
@@ -193,7 +193,7 @@ class DataExporter:
                 emp.contract_type or "",
                 emp.caces.count(),
                 emp.medical_visits.count(),
-                emp.online_trainings.count(),
+                emp.trainings.count(),
             ])
 
         # Auto-width columns
