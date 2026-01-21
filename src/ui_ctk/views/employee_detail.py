@@ -515,20 +515,72 @@ class EmployeeDetailView(BaseView):
             print(f"[ERROR] Failed to delete employee: {e}")
             self.show_error(f"{ERROR_DELETE_EMPLOYEE}: {e}")
 
+    def refresh_view(self):
+        """Reload employee data and recreate the view."""
+        try:
+            # Reload employee data
+            self.employee = Employee.get_by_id(self.employee.id)
+            # Destroy current view
+            self.destroy()
+            # Recreate with updated data
+            EmployeeDetailView(self.master, employee=self.employee)
+        except Exception as e:
+            print(f"[ERROR] Failed to refresh view: {e}")
+
     def add_caces(self):
         """Add new CACES certification."""
-        # Placeholder for future implementation
-        self.show_info("Fonctionnalité à venir dans la Phase 4")
+        try:
+            from ui_ctk.forms.caces_form import CacesFormDialog
+
+            dialog = CacesFormDialog(self, employee=self.employee)
+            self.wait_window(dialog)
+
+            if dialog.result:
+                # Reload employee data and refresh view
+                self.refresh_view()
+
+        except Exception as e:
+            print(f"[ERROR] Failed to add CACES: {e}")
+            self.show_error(f"Failed to add CACES: {e}")
 
     def edit_caces(self, caces: Caces):
         """Edit existing CACES certification."""
-        # Placeholder for future implementation
-        self.show_info("Fonctionnalité à venir dans la Phase 4")
+        try:
+            from ui_ctk.forms.caces_form import CacesFormDialog
+
+            dialog = CacesFormDialog(self, employee=self.employee, caces=caces)
+            self.wait_window(dialog)
+
+            if dialog.result:
+                # Reload employee data and refresh view
+                self.refresh_view()
+
+        except Exception as e:
+            print(f"[ERROR] Failed to edit CACES: {e}")
+            self.show_error(f"Failed to edit CACES: {e}")
 
     def delete_caces(self, caces: Caces):
         """Delete CACES certification."""
-        # Placeholder for future implementation
-        self.show_info("Fonctionnalité à venir dans la Phase 4")
+        try:
+            import tkinter.messagebox as messagebox
+
+            # Confirm deletion
+            confirm = messagebox.askyesno(
+                "Confirm Deletion",
+                f"{CONFIRM_DELETE_CACES}\n\nType: {caces.kind}\nEmployee: {self.employee.full_name}"
+            )
+
+            if confirm:
+                # Delete CACES
+                caces.delete_instance()
+                print(f"[OK] CACES deleted: {caces.kind}")
+
+                # Refresh view
+                self.refresh_view()
+
+        except Exception as e:
+            print(f"[ERROR] Failed to delete CACES: {e}")
+            self.show_error(f"{ERROR_DELETE_CACES}: {e}")
 
     def add_medical_visit(self):
         """Add new medical visit."""
