@@ -189,7 +189,7 @@ def handle_error(
     full_message = f"{context}: {error}" if context else str(error)
 
     # Log with appropriate level
-    if error_type == ErrorCategory.CRITICAL:
+    if error_type == ErrorCategory.CRITICAL_ERROR:
         logging.critical(full_message, exc_info=True)
     elif error_type == ErrorCategory.DATABASE_ERROR:
         logging.error(full_message, exc_info=True)
@@ -241,7 +241,7 @@ def show_error_to_user(error: Exception, error_type: ErrorCategory):
         return
 
     # Determine severity and icon
-    if error_type == ErrorCategory.CRITICAL:
+    if error_type == ErrorCategory.CRITICAL_ERROR:
         icon = "error"
         title = "Critical Error"
     elif error_type == ErrorCategory.DATABASE_ERROR:
@@ -271,7 +271,7 @@ def show_error_to_user(error: Exception, error_type: ErrorCategory):
 
     # Show message
     try:
-        if error_type in [ErrorCategory.CRITICAL, ErrorCategory.DATABASE_ERROR, ErrorCategory.PERMISSION_ERROR]:
+        if error_type in [ErrorCategory.CRITICAL_ERROR, ErrorCategory.DATABASE_ERROR, ErrorCategory.PERMISSION_ERROR]:
             messagebox.showerror(title, user_message, icon=icon)
         elif error_type in [ErrorCategory.FILE_ERROR, ErrorCategory.NETWORK_ERROR]:
             messagebox.showwarning(title, user_message, icon=icon)
