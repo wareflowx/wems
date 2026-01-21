@@ -69,16 +69,17 @@ def sample_employee(db):
     # Add medical visit
     visit = MedicalVisit.create(
         employee=employee,
-        visit_type="Visite d'embauche",
+        visit_type="initial",
         visit_date=date(2020, 1, 10),
         expiration_date=date(2025, 1, 10),
+        result="fit",
         document_path="/docs/medical.pdf"
     )
 
     # Add training
     training = OnlineTraining.create(
         employee=employee,
-        name="Safety Training",
+        title="Safety Training",
         completion_date=date(2020, 2, 1),
         expiration_date=date(2023, 2, 1),
         document_path="/docs/training.pdf"
@@ -179,7 +180,8 @@ class TestJsonExport:
             phone=None,
             entry_date=None,
             current_status="active",
-            workspace="Paris"
+            workspace="Paris",
+            role="Engineer"
         )
 
         output_path = temp_output_dir / "null_employee.json"
@@ -203,7 +205,8 @@ class TestJsonExport:
             last_name="François",
             email="jose@example.com",
             current_status="active",
-            workspace="Paris"
+            workspace="Paris",
+            role="Engineer"
         )
 
         output_path = temp_output_dir / "utf8_employee.json"
@@ -428,7 +431,8 @@ class TestCsvExport:
             last_name="François",
             email="rene@example.com",
             current_status="active",
-            workspace="Paris"
+            workspace="Paris",
+            role="Engineer"
         )
 
         output_path = temp_output_dir / "special.csv"
@@ -466,7 +470,8 @@ class TestCsvExport:
             phone=None,
             entry_date=None,
             current_status="active",
-            workspace="Paris"
+            workspace="Paris",
+            role="Engineer"
         )
 
         output_path = temp_output_dir / "null_fields.csv"
@@ -494,7 +499,8 @@ class TestEdgeCases:
             first_name="No",
             last_name="Relations",
             current_status="active",
-            workspace="Paris"
+            workspace="Paris",
+            role="Engineer"
         )
 
         output_path = temp_output_dir / "no_relations.json"

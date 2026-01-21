@@ -89,7 +89,7 @@ class DataExporter:
                 ],
                 'online_trainings': [
                     {
-                        'name': t.name,
+                        'title': t.title,
                         'completion_date': t.completion_date.isoformat() if t.completion_date else None,
                         'expiration_date': t.expiration_date.isoformat() if t.expiration_date else None,
                         'document_path': t.document_path,
@@ -304,7 +304,7 @@ class DataExporter:
         """Create training sheet."""
         ws = workbook.create_sheet("Formations")
 
-        headers = ["Employé", "Formation", "Date Complétion", "Date Expiration", "Statut"]
+        headers = ["Employé", "Title", "Date Complétion", "Date Expiration", "Statut"]
         ws.append(headers)
 
         # Style headers
@@ -326,7 +326,7 @@ class DataExporter:
             status = "Expiré" if t.is_expired else "Valide"
             ws.append([
                 t.employee.full_name,
-                t.name,
+                t.title,
                 t.completion_date.isoformat() if t.completion_date else "",
                 t.expiration_date.isoformat() if t.expiration_date else "",
                 status,
