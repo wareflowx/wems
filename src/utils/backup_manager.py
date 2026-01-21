@@ -61,7 +61,7 @@ class BackupManager:
             raise FileNotFoundError(f"Database not found: {self.database_path}")
 
         # Generate backup filename
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         backup_name = f"employee_manager_{timestamp}.db"
         if description:
             backup_name = f"employee_manager_{timestamp}_{description}.db"
@@ -178,6 +178,10 @@ class BackupManager:
         Returns:
             True if valid SQLite database
         """
+        # Check if file exists first
+        if not path.exists():
+            return False
+
         try:
             conn = sqlite3.connect(str(path))
             cursor = conn.cursor()
