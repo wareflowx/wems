@@ -133,8 +133,8 @@ def main():
             database.close()
             print("[OK] Database connection closed")
 
-        # Destroy window
-        app.destroy()
+        # Quit application (will call destroy automatically)
+        app.quit()
 
     app.protocol("WM_DELETE_WINDOW", on_closing)
 
@@ -148,7 +148,6 @@ def main():
         app.mainloop()
     except KeyboardInterrupt:
         print("\n[INFO] Application interrupted by user")
-    finally:
         on_closing()
 
     print("[OK] Application closed cleanly")
