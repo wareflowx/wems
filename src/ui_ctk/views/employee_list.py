@@ -1,28 +1,28 @@
 """Employee list view with search and filtering."""
 
+from typing import List
+
 import customtkinter as ctk
-from typing import List, Optional
 
 from employee.models import Employee
-from ui_ctk.views.base_view import BaseView
 from ui_ctk.constants import (
-    STATUS_ACTIVE,
-    STATUS_INACTIVE,
-    DATE_FORMAT,
-    COLOR_SUCCESS,
-    COLOR_INACTIVE,
-    FILTER_ALL,
     BTN_ADD,
     BTN_REFRESH,
+    BTN_VIEW,
+    COLOR_INACTIVE,
+    COLOR_SUCCESS,
+    FILTER_ALL,
     PLACEHOLDER_SEARCH,
-    TABLE_NAME,
+    STATUS_ACTIVE,
+    STATUS_INACTIVE,
+    TABLE_ACTIONS,
     TABLE_EMAIL,
+    TABLE_NAME,
     TABLE_PHONE,
     TABLE_ROLE,
     TABLE_STATUS,
-    TABLE_ACTIONS,
-    BTN_VIEW,
 )
+from ui_ctk.views.base_view import BaseView
 
 
 class EmployeeListView(BaseView):
@@ -65,27 +65,16 @@ class EmployeeListView(BaseView):
         control_frame.pack_propagate(False)
 
         # Search entry
-        search_label = ctk.CTkLabel(
-            control_frame,
-            text="Rechercher:",
-            font=("Arial", 12)
-        )
+        search_label = ctk.CTkLabel(control_frame, text="Rechercher:", font=("Arial", 12))
         search_label.pack(side="left", padx=(10, 5))
 
         self.search_entry = ctk.CTkEntry(
-            control_frame,
-            placeholder_text=PLACEHOLDER_SEARCH,
-            textvariable=self.search_var,
-            width=300
+            control_frame, placeholder_text=PLACEHOLDER_SEARCH, textvariable=self.search_var, width=300
         )
         self.search_entry.pack(side="left", padx=5)
 
         # Filter dropdown
-        filter_label = ctk.CTkLabel(
-            control_frame,
-            text="Statut:",
-            font=("Arial", 12)
-        )
+        filter_label = ctk.CTkLabel(control_frame, text="Statut:", font=("Arial", 12))
         filter_label.pack(side="left", padx=(20, 5))
 
         self.filter_menu = ctk.CTkOptionMenu(
@@ -93,7 +82,7 @@ class EmployeeListView(BaseView):
             values=[FILTER_ALL, STATUS_ACTIVE, STATUS_INACTIVE],
             variable=self.filter_var,
             command=self.on_filter_changed,
-            width=120
+            width=120,
         )
         self.filter_menu.pack(side="left", padx=5)
 
@@ -102,45 +91,25 @@ class EmployeeListView(BaseView):
         button_frame.pack(side="right", padx=10)
 
         # Add employee button
-        self.add_btn = ctk.CTkButton(
-            button_frame,
-            text=f"+ {BTN_ADD}",
-            width=120,
-            command=self.add_employee
-        )
+        self.add_btn = ctk.CTkButton(button_frame, text=f"+ {BTN_ADD}", width=120, command=self.add_employee)
         self.add_btn.pack(side="left", padx=5)
 
         # Refresh button
-        self.refresh_btn = ctk.CTkButton(
-            button_frame,
-            text=BTN_REFRESH,
-            width=120,
-            command=self.refresh_employee_list
-        )
+        self.refresh_btn = ctk.CTkButton(button_frame, text=BTN_REFRESH, width=120, command=self.refresh_employee_list)
         self.refresh_btn.pack(side="left", padx=5)
 
     def create_table(self):
         """Create employee table."""
         # Scrollable frame for table
         self.table_frame = ctk.CTkScrollableFrame(self)
-        self.table_frame.pack(
-            side="top",
-            fill="both",
-            expand=True,
-            padx=10,
-            pady=(5, 10)
-        )
+        self.table_frame.pack(side="top", fill="both", expand=True, padx=10, pady=(5, 10))
 
         # Create header
         self.create_table_header()
 
     def create_table_header(self):
         """Create table header row."""
-        header = ctk.CTkFrame(
-            self.table_frame,
-            height=40,
-            fg_color=("gray80", "gray25")
-        )
+        header = ctk.CTkFrame(self.table_frame, height=40, fg_color=("gray80", "gray25"))
         header.pack(fill="x", pady=(0, 5))
         header.pack_propagate(False)
 
@@ -151,16 +120,11 @@ class EmployeeListView(BaseView):
             (TABLE_PHONE, 120),
             (TABLE_ROLE, 150),
             (TABLE_STATUS, 100),
-            (TABLE_ACTIONS, 100)
+            (TABLE_ACTIONS, 100),
         ]
 
         for col_name, col_width in columns:
-            label = ctk.CTkLabel(
-                header,
-                text=col_name,
-                font=("Arial", 12, "bold"),
-                anchor="w"
-            )
+            label = ctk.CTkLabel(header, text=col_name, font=("Arial", 12, "bold"), anchor="w")
             label.pack(side="left", padx=10, pady=5)
 
     def refresh_employee_list(self):
@@ -192,7 +156,8 @@ class EmployeeListView(BaseView):
         search_term = self.search_var.get().lower().strip()
         if search_term:
             filtered = [
-                e for e in filtered
+                e
+                for e in filtered
                 if search_term in e.first_name.lower()
                 or search_term in e.last_name.lower()
                 or (e.email and search_term in e.email.lower())
@@ -231,55 +196,28 @@ class EmployeeListView(BaseView):
         row.pack_propagate(False)
 
         # Name
-        name_label = ctk.CTkLabel(
-            row,
-            text=employee.full_name,
-            font=("Arial", 13),
-            anchor="w"
-        )
+        name_label = ctk.CTkLabel(row, text=employee.full_name, font=("Arial", 13), anchor="w")
         name_label.pack(side="left", padx=10, pady=5)
 
         # Email
         email_text = employee.email if employee.email else "-"
-        email_label = ctk.CTkLabel(
-            row,
-            text=email_text,
-            font=("Arial", 11),
-            anchor="w",
-            width=200
-        )
+        email_label = ctk.CTkLabel(row, text=email_text, font=("Arial", 11), anchor="w", width=200)
         email_label.pack(side="left", padx=10)
 
         # Phone
         phone_text = employee.phone if employee.phone else "-"
-        phone_label = ctk.CTkLabel(
-            row,
-            text=phone_text,
-            font=("Arial", 11),
-            anchor="w",
-            width=120
-        )
+        phone_label = ctk.CTkLabel(row, text=phone_text, font=("Arial", 11), anchor="w", width=120)
         phone_label.pack(side="left", padx=10)
 
         # Role
-        role_label = ctk.CTkLabel(
-            row,
-            text=employee.role,
-            font=("Arial", 11),
-            anchor="w",
-            width=150
-        )
+        role_label = ctk.CTkLabel(row, text=employee.role, font=("Arial", 11), anchor="w", width=150)
         role_label.pack(side="left", padx=10)
 
         # Status
         status_text = STATUS_ACTIVE if employee.is_active else STATUS_INACTIVE
         status_color = COLOR_SUCCESS if employee.is_active else COLOR_INACTIVE
         status_label = ctk.CTkLabel(
-            row,
-            text=status_text,
-            font=("Arial", 11, "bold"),
-            text_color=status_color,
-            width=100
+            row, text=status_text, font=("Arial", 11, "bold"), text_color=status_color, width=100
         )
         status_label.pack(side="left", padx=10)
 
@@ -288,11 +226,7 @@ class EmployeeListView(BaseView):
         action_frame.pack(side="right", padx=10)
 
         detail_btn = ctk.CTkButton(
-            action_frame,
-            text=BTN_VIEW,
-            width=80,
-            height=28,
-            command=lambda: self.show_employee_detail(employee)
+            action_frame, text=BTN_VIEW, width=80, height=28, command=lambda: self.show_employee_detail(employee)
         )
         detail_btn.pack()
 
@@ -358,13 +292,14 @@ class EmployeeListView(BaseView):
             count_text = f"{count} / {total} employé(s)"
 
         # Update header label if it exists
-        if hasattr(self, 'header_label'):
+        if hasattr(self, "header_label"):
             self.header_label.configure(text=f"Liste des Employés - {count_text}")
 
     def show_error(self, message: str):
         """Show error message to user."""
         try:
             import tkinter.messagebox as messagebox
+
             messagebox.showerror("Erreur", message)
         except:
             print(f"[ERROR] {message}")

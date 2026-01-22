@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 # Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 
 def create_test_fixtures():
@@ -25,19 +25,81 @@ def create_test_fixtures():
     ws = wb.active
 
     headers = [
-        "First Name", "Last Name", "Email", "Phone",
-        "External ID", "Status", "Workspace", "Role",
-        "Contract", "Entry Date"
+        "First Name",
+        "Last Name",
+        "Email",
+        "Phone",
+        "External ID",
+        "Status",
+        "Workspace",
+        "Role",
+        "Contract",
+        "Entry Date",
     ]
     for col_idx, header in enumerate(headers, start=1):
         ws.cell(row=1, column=col_idx, value=header)
 
     test_data = [
-        ["Jean", "Dupont", "jean.dupont@example.com", "06 12 34 56 78", "WMS-001", "Actif", "Zone A", "Cariste", "CDI", "15/01/2025"],
-        ["Marie", "Martin", "marie.martin@example.com", "06 23 45 67 89", "WMS-002", "Actif", "Zone B", "Magasinier", "CDD", "16/01/2025"],
-        ["Pierre", "Bernard", "pierre.bernard@example.com", "06 34 56 78 90", "WMS-003", "Inactif", "Zone C", "PrEparateur", "Interim", "17/01/2025"],
-        ["Sophie", "Richard", "sophie.richard@example.com", "06 45 67 89 01", "WMS-004", "Actif", "Zone A", "Cariste", "Alternance", "18/01/2025"],
-        ["Thomas", "Petit", "thomas.petit@example.com", "06 56 78 90 12", "WMS-005", "Actif", "Zone D", "Magasinier", "CDI", "19/01/2025"],
+        [
+            "Jean",
+            "Dupont",
+            "jean.dupont@example.com",
+            "06 12 34 56 78",
+            "WMS-001",
+            "Actif",
+            "Zone A",
+            "Cariste",
+            "CDI",
+            "15/01/2025",
+        ],
+        [
+            "Marie",
+            "Martin",
+            "marie.martin@example.com",
+            "06 23 45 67 89",
+            "WMS-002",
+            "Actif",
+            "Zone B",
+            "Magasinier",
+            "CDD",
+            "16/01/2025",
+        ],
+        [
+            "Pierre",
+            "Bernard",
+            "pierre.bernard@example.com",
+            "06 34 56 78 90",
+            "WMS-003",
+            "Inactif",
+            "Zone C",
+            "PrEparateur",
+            "Interim",
+            "17/01/2025",
+        ],
+        [
+            "Sophie",
+            "Richard",
+            "sophie.richard@example.com",
+            "06 45 67 89 01",
+            "WMS-004",
+            "Actif",
+            "Zone A",
+            "Cariste",
+            "Alternance",
+            "18/01/2025",
+        ],
+        [
+            "Thomas",
+            "Petit",
+            "thomas.petit@example.com",
+            "06 56 78 90 12",
+            "WMS-005",
+            "Actif",
+            "Zone D",
+            "Magasinier",
+            "CDI",
+            "19/01/2025",
+        ],
     ]
 
     for row_idx, row_data in enumerate(test_data, start=2):
@@ -54,9 +116,15 @@ def create_test_fixtures():
     ws = wb.active
 
     headers = [
-        "First Name", "Last Name", "Email", "Phone",
-        "External ID", "Status", "Workspace", "Role",
-        "Contract"
+        "First Name",
+        "Last Name",
+        "Email",
+        "Phone",
+        "External ID",
+        "Status",
+        "Workspace",
+        "Role",
+        "Contract",
         # Entry Date is missing!
     ]
     for col_idx, header in enumerate(headers, start=1):
@@ -79,9 +147,16 @@ def create_test_fixtures():
     ws = wb.active
 
     headers = [
-        "First Name", "Last Name", "Email", "Phone",
-        "External ID", "Status", "Workspace", "Role",
-        "Contract", "Entry Date"
+        "First Name",
+        "Last Name",
+        "Email",
+        "Phone",
+        "External ID",
+        "Status",
+        "Workspace",
+        "Role",
+        "Contract",
+        "Entry Date",
     ]
     for col_idx, header in enumerate(headers, start=1):
         ws.cell(row=1, column=col_idx, value=header)
@@ -124,9 +199,16 @@ def create_test_fixtures():
     ws = wb.active
     # Only headers, no data
     headers = [
-        "First Name", "Last Name", "Email", "Phone",
-        "External ID", "Status", "Workspace", "Role",
-        "Contract", "Entry Date"
+        "First Name",
+        "Last Name",
+        "Email",
+        "Phone",
+        "External ID",
+        "Status",
+        "Workspace",
+        "Role",
+        "Contract",
+        "Entry Date",
     ]
     for col_idx, header in enumerate(headers, start=1):
         ws.cell(row=1, column=col_idx, value=header)
@@ -141,9 +223,16 @@ def create_test_fixtures():
     ws = wb.active
 
     headers = [
-        "First Name", "Last Name", "Email", "Phone",
-        "External ID", "Status", "Workspace", "Role",
-        "Contract", "Entry Date"
+        "First Name",
+        "Last Name",
+        "Email",
+        "Phone",
+        "External ID",
+        "Status",
+        "Workspace",
+        "Role",
+        "Contract",
+        "Entry Date",
     ]
     for col_idx, header in enumerate(headers, start=1):
         ws.cell(row=1, column=col_idx, value=header)
@@ -155,16 +244,16 @@ def create_test_fixtures():
     contracts = ["CDI", "CDD", "Interim", "Alternance"]
 
     for i in range(100):
-        ws.cell(row=i+2, column=1, value=first_names[i % len(first_names)])
-        ws.cell(row=i+2, column=2, value=last_names[i % len(last_names)])
-        ws.cell(row=i+2, column=3, value=f"employee{i+1}@example.com")
-        ws.cell(row=i+2, column=4, value=f"06 12 34 5{i%10:02d}")
-        ws.cell(row=i+2, column=5, value=f"WMS-{str(i+1).zfill(3)}")
-        ws.cell(row=i+2, column=6, value="Actif" if i % 4 != 0 else "Inactif")
-        ws.cell(row=i+2, column=7, value=zones[i % len(zones)])
-        ws.cell(row=i+2, column=8, value=roles[i % len(roles)])
-        ws.cell(row=i+2, column=9, value=contracts[i % len(contracts)])
-        ws.cell(row=i+2, column=10, value=f"{15 + (i % 20):02d}/01/2025")
+        ws.cell(row=i + 2, column=1, value=first_names[i % len(first_names)])
+        ws.cell(row=i + 2, column=2, value=last_names[i % len(last_names)])
+        ws.cell(row=i + 2, column=3, value=f"employee{i + 1}@example.com")
+        ws.cell(row=i + 2, column=4, value=f"06 12 34 5{i % 10:02d}")
+        ws.cell(row=i + 2, column=5, value=f"WMS-{str(i + 1).zfill(3)}")
+        ws.cell(row=i + 2, column=6, value="Actif" if i % 4 != 0 else "Inactif")
+        ws.cell(row=i + 2, column=7, value=zones[i % len(zones)])
+        ws.cell(row=i + 2, column=8, value=roles[i % len(roles)])
+        ws.cell(row=i + 2, column=9, value=contracts[i % len(contracts)])
+        ws.cell(row=i + 2, column=10, value=f"{15 + (i % 20):02d}/01/2025")
 
     wb.save(fixtures_dir / "large_file.xlsx")
     wb.close()

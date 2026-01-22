@@ -1,14 +1,14 @@
 """Medical visit management commands."""
 
-import typer
 from datetime import date
 from pathlib import Path
 from typing import Optional
 
-from employee.models import Employee, MedicalVisit
-from database.connection import database as db
+import typer
 
 from cli.utils import format_medical_table
+from database.connection import database as db
+from employee.models import Employee, MedicalVisit
 
 app = typer.Typer(help="Gestion des visites médicales")
 
@@ -49,12 +49,12 @@ def add(
         raise typer.Exit(1)
 
     # Validate visit type
-    if visit_type not in ['initial', 'periodic', 'recovery']:
+    if visit_type not in ["initial", "periodic", "recovery"]:
         typer.echo("❌ Type de visite invalide. Options: initial, periodic, recovery", err=True)
         raise typer.Exit(1)
 
     # Validate result
-    if result not in ['fit', 'unfit', 'fit_with_restrictions']:
+    if result not in ["fit", "unfit", "fit_with_restrictions"]:
         typer.echo("❌ Résultat invalide. Options: fit, unfit, fit_with_restrictions", err=True)
         raise typer.Exit(1)
 
@@ -76,7 +76,7 @@ def add(
                 visit_type=visit_type,
                 visit_date=visit_date_obj,
                 result=result,
-                document_path=document_path
+                document_path=document_path,
             )
 
         typer.echo("✅ Visite médicale ajoutée")
@@ -110,7 +110,7 @@ def update(
     changes = []
 
     if visit_type is not None and isinstance(visit_type, str):
-        if visit_type not in ['initial', 'periodic', 'recovery']:
+        if visit_type not in ["initial", "periodic", "recovery"]:
             typer.echo("❌ Type de visite invalide. Options: initial, periodic, recovery", err=True)
             raise typer.Exit(1)
         visit.visit_type = visit_type
@@ -126,7 +126,7 @@ def update(
             raise typer.Exit(1)
 
     if result is not None and isinstance(result, str):
-        if result not in ['fit', 'unfit', 'fit_with_restrictions']:
+        if result not in ["fit", "unfit", "fit_with_restrictions"]:
             typer.echo("❌ Résultat invalide. Options: fit, unfit, fit_with_restrictions", err=True)
             raise typer.Exit(1)
         visit.result = result
@@ -155,7 +155,7 @@ def update(
 @app.command()
 def delete(
     visit_id: int = typer.Argument(..., help="ID de la visite"),
-    yes: bool = typer.Option(False, "--yes", "-y", help="Confirmer sans prompt")
+    yes: bool = typer.Option(False, "--yes", "-y", help="Confirmer sans prompt"),
 ):
     """Supprimer une visite médicale."""
     visit = MedicalVisit.get_or_none(MedicalVisit.id == visit_id)
@@ -170,9 +170,9 @@ def delete(
     if not yes:
         try:
             import questionary
+
             confirm = questionary.confirm(
-                f"Supprimer la visite {visit.visit_type} du {visit.visit_date} (ID: {visit_id})?",
-                default=False
+                f"Supprimer la visite {visit.visit_type} du {visit.visit_date} (ID: {visit_id})?", default=False
             ).ask()
 
             if not confirm:
@@ -196,9 +196,7 @@ def delete(
 
 
 @app.command()
-def expiring(
-    days: int = typer.Option(30, "--days", "-d", help="Jours avant expiration")
-):
+def expiring(days: int = typer.Option(30, "--days", "-d", help="Jours avant expiration")):
     """Afficher les visites expirant bientôt."""
     threshold = date.today()
 
@@ -222,7 +220,7 @@ def unfit():
     """Lister les employés inaptes."""
     unfit_visits = []
     for visit in MedicalVisit.select():
-        if visit.result == 'unfit':
+        if visit.result == "unfit":
             unfit_visits.append(visit)
 
     if not unfit_visits:

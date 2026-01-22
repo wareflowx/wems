@@ -1,15 +1,16 @@
 """Alert queries and calculations."""
 
-from datetime import date, timedelta
-from typing import List, Dict, Optional
 from dataclasses import dataclass
+from datetime import date, timedelta
 from enum import Enum
+from typing import Dict, List, Optional
 
-from employee.models import Employee, Caces, MedicalVisit
+from employee.models import Caces, Employee, MedicalVisit
 
 
 class AlertType(Enum):
     """Types of alerts."""
+
     CACES = "CACES"
     MEDICAL = "Visite médicale"
     TRAINING = "Formation"
@@ -17,10 +18,11 @@ class AlertType(Enum):
 
 class UrgencyLevel(Enum):
     """Urgency levels for coloring."""
+
     CRITICAL = "critical"  # Red: < 30 days or expired
-    WARNING = "warning"    # Yellow: 30-60 days
-    INFO = "info"          # Green: 60-90 days
-    OK = "ok"              # Gray: > 90 days
+    WARNING = "warning"  # Yellow: 30-60 days
+    INFO = "info"  # Green: 60-90 days
+    OK = "ok"  # Gray: > 90 days
 
 
 @dataclass
@@ -36,6 +38,7 @@ class Alert:
         days_until: Days until expiration (negative if expired)
         urgency: Urgency level for coloring
     """
+
     alert_type: AlertType
     employee: Employee
     description: str
@@ -98,10 +101,7 @@ class AlertQuery:
             return UrgencyLevel.OK
 
     @staticmethod
-    def get_caces_alerts(
-        days_threshold: int = 90,
-        include_expired: bool = True
-    ) -> List[Alert]:
+    def get_caces_alerts(days_threshold: int = 90, include_expired: bool = True) -> List[Alert]:
         """
         Get all CACES alerts within threshold.
 
@@ -121,10 +121,7 @@ class AlertQuery:
         threshold_date = today + timedelta(days=days_threshold)
 
         # Query CACES expiring within threshold
-        query = (Caces
-                 .select(Caces, Employee)
-                 .join(Employee)
-                 .where(Caces.expiration_date <= threshold_date))
+        query = Caces.select(Caces, Employee).join(Employee).where(Caces.expiration_date <= threshold_date)
 
         if not include_expired:
             # Only future expirations
@@ -141,7 +138,7 @@ class AlertQuery:
                 description=f"CACES {caces.kind}",
                 expiration_date=caces.expiration_date,
                 days_until=days_until,
-                urgency=urgency
+                urgency=urgency,
             )
             alerts.append(alert)
 
@@ -151,10 +148,7 @@ class AlertQuery:
         return alerts
 
     @staticmethod
-    def get_medical_alerts(
-        days_threshold: int = 90,
-        include_expired: bool = True
-    ) -> List[Alert]:
+    def get_medical_alerts(days_threshold: int = 90, include_expired: bool = True) -> List[Alert]:
         """
         Get all medical visit alerts within threshold.
 
@@ -174,10 +168,11 @@ class AlertQuery:
         threshold_date = today + timedelta(days=days_threshold)
 
         # Query medical visits with expiration_date within threshold
-        query = (MedicalVisit
-                 .select(MedicalVisit, Employee)
-                 .join(Employee)
-                 .where(MedicalVisit.expiration_date <= threshold_date))
+        query = (
+            MedicalVisit.select(MedicalVisit, Employee)
+            .join(Employee)
+            .where(MedicalVisit.expiration_date <= threshold_date)
+        )
 
         if not include_expired:
             # Only future expirations
@@ -194,7 +189,7 @@ class AlertQuery:
                 description=f"Visite {visit.visit_type}",
                 expiration_date=visit.expiration_date,
                 days_until=days_until,
-                urgency=urgency
+                urgency=urgency,
             )
             alerts.append(alert)
 
@@ -205,9 +200,7 @@ class AlertQuery:
 
     @staticmethod
     def get_all_alerts(
-        alert_types: Optional[List[AlertType]] = None,
-        days_threshold: int = 90,
-        include_expired: bool = True
+        alert_types: Optional[List[AlertType]] = None, days_threshold: int = 90, include_expired: bool = True
     ) -> List[Alert]:
         """
         Get all alerts matching criteria.
@@ -251,13 +244,7 @@ class AlertQuery:
         """
         all_alerts = AlertQuery.get_all_alerts(days_threshold=90)
 
-        summary = {
-            "critical": 0,
-            "warning": 0,
-            "info": 0,
-            "ok": 0,
-            "total": len(all_alerts)
-        }
+        summary = {"critical": 0, "warning": 0, "info": 0, "ok": 0, "total": len(all_alerts)}
 
         for alert in all_alerts:
             if alert.urgency == UrgencyLevel.CRITICAL:

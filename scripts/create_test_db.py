@@ -2,12 +2,14 @@
 """Create a test database for migration testing."""
 
 import sys
-sys.path.insert(0, 'src')
 
+sys.path.insert(0, "src")
+
+from datetime import date
 from pathlib import Path
+
 from database.connection import init_database
 from employee.models import Employee
-from datetime import date
 
 
 def create_test_database(db_path: str = "test_employee.db"):

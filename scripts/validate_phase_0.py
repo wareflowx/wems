@@ -21,6 +21,7 @@ def check_imports():
     # Check CustomTkinter
     try:
         import customtkinter
+
         version = customtkinter.__version__
         print(f"[OK] CustomTkinter {version}")
     except ImportError as e:
@@ -30,6 +31,7 @@ def check_imports():
     # Check Pillow
     try:
         from PIL import Image
+
         print("[OK] Pillow")
     except ImportError as e:
         print(f"[FAIL] Pillow: {e}")
@@ -38,6 +40,7 @@ def check_imports():
     # Check Peewee
     try:
         import peewee
+
         print("[OK] Peewee")
     except ImportError as e:
         print(f"[FAIL] Peewee: {e}")
@@ -46,6 +49,7 @@ def check_imports():
     # Check openpyxl
     try:
         import openpyxl
+
         print("[OK] openpyxl")
     except ImportError as e:
         print(f"[FAIL] openpyxl: {e}")
@@ -84,10 +88,11 @@ def check_database():
     print_section("CHECKING DATABASE")
 
     try:
-        sys.path.insert(0, 'src')
+        sys.path.insert(0, "src")
+        from pathlib import Path
+
         from database.connection import database, init_database
         from employee.models import Employee
-        from pathlib import Path
 
         # Initialize database with default path
         db_path = Path("employee_manager.db")
@@ -159,8 +164,9 @@ def check_ui_ctk_package():
 
     # Check constants
     try:
-        sys.path.insert(0, 'src')
+        sys.path.insert(0, "src")
         from ui_ctk.constants import APP_NAME, APP_TITLE
+
         print(f"[OK] constants.py (APP_NAME={APP_NAME})")
     except ImportError as e:
         print(f"[FAIL] constants.py: {e}")
@@ -169,6 +175,7 @@ def check_ui_ctk_package():
     # Check base view
     try:
         from ui_ctk.views.base_view import BaseView
+
         print("[OK] views/base_view.py")
     except ImportError as e:
         print(f"[FAIL] views/base_view.py: {e}")
@@ -177,6 +184,7 @@ def check_ui_ctk_package():
     # Check base form
     try:
         from ui_ctk.forms.base_form import BaseFormDialog
+
         print("[OK] forms/base_form.py")
     except ImportError as e:
         print(f"[FAIL] forms/base_form.py: {e}")
@@ -190,18 +198,18 @@ def check_phone_email_fields():
     print_section("CHECKING EMPLOYEE MODEL")
 
     try:
-        sys.path.insert(0, 'src')
+        sys.path.insert(0, "src")
         from employee.models import Employee
 
         # Check if phone field exists
-        if hasattr(Employee, 'phone'):
+        if hasattr(Employee, "phone"):
             print("[OK] Employee.phone field exists")
         else:
             print("[FAIL] Employee.phone field missing")
             return False
 
         # Check if email field exists
-        if hasattr(Employee, 'email'):
+        if hasattr(Employee, "email"):
             print("[OK] Employee.email field exists")
         else:
             print("[FAIL] Employee.email field missing")

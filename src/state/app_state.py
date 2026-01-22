@@ -1,7 +1,5 @@
 """Global application state management."""
 
-import socket
-import os
 import sys
 from pathlib import Path
 from typing import Optional
@@ -31,11 +29,7 @@ class AppState:
         """Initialize the application state with default values."""
         # Lock manager for database access control
         hostname, username, pid = get_process_info()
-        self.lock_manager: LockManager = LockManager(
-            hostname=hostname,
-            username=username,
-            pid=pid
-        )
+        self.lock_manager: LockManager = LockManager(hostname=hostname, username=username, pid=pid)
 
         # Currently selected employee (for detail view navigation)
         self.current_employee_id: Optional[int] = None

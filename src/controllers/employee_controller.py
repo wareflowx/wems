@@ -1,10 +1,9 @@
 """Employee controller - business logic for employee views."""
 
-from typing import Dict, Any, Optional
-from datetime import date
+from typing import Any, Dict, Optional
 
-from employee.models import Employee, Caces, MedicalVisit, OnlineTraining
-from employee import queries, calculations
+from employee import calculations
+from employee.models import Caces, Employee, MedicalVisit, OnlineTraining
 
 
 class EmployeeController:
@@ -64,25 +63,25 @@ class EmployeeController:
         caces_valid = sum(1 for c in caces if not c.is_expired)
         caces_score = min(caces_valid * 30, 30) if caces else 0
 
-        medical_valid = sum(1 for v in visits if not v.is_expired and v.result == 'fit')
+        medical_valid = sum(1 for v in visits if not v.is_expired and v.result == "fit")
         medical_score = min(medical_valid * 30, 30) if visits else 0
 
         training_valid = sum(1 for t in trainings if not t.is_expired)
         training_score = min(training_valid * 40, 40) if trainings else 0
 
         breakdown = {
-            'caces': caces_score,
-            'medical': medical_score,
-            'training': training_score,
+            "caces": caces_score,
+            "medical": medical_score,
+            "training": training_score,
         }
 
         return {
-            'employee': emp,
-            'compliance_score': score_data['score'],
-            'score_breakdown': breakdown,
-            'caces_list': caces,
-            'medical_visits': visits,
-            'trainings': trainings,
+            "employee": emp,
+            "compliance_score": score_data["score"],
+            "score_breakdown": breakdown,
+            "caces_list": caces,
+            "medical_visits": visits,
+            "trainings": trainings,
         }
 
     def get_all_employees(self) -> list:
@@ -101,6 +100,8 @@ class EmployeeController:
         Returns:
             List of active Employee objects
         """
-        return list(Employee.select()
-                    .where(Employee.current_status == 'active')
-                    .order_by(Employee.last_name, Employee.first_name))
+        return list(
+            Employee.select()
+            .where(Employee.current_status == "active")
+            .order_by(Employee.last_name, Employee.first_name)
+        )

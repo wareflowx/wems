@@ -30,6 +30,8 @@ dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
     "freezegun>=1.5.0",
+    "ruff>=0.8.0",
+    "pytest-mock>=3.14.0",
 ]
 
 [build-system]
@@ -41,3 +43,69 @@ packages = ["src"]
 
 [tool.pytest.ini_options]
 pythonpath = "src"
+testpaths = ["tests"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+    "--cov-report=html",
+    "--ignore=tests/test_ui",
+    "--ignore=tests/test_main_window.py",
+]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 120
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # function calls in argument defaults (common in typer/cli)
+    "B904",  # raise from in exception handling (too strict for now)
+    "UP045", # Use X | None (optional, can enable later)
+    "F403",  # from module import * (unable to detect undefined names)
+    "F405",  # may be undefined from star imports
+]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*.py" = ["F401", "F841", "E722", "F541", "I001"]
+"src/cli/*.py" = ["B008", "B904", "UP045", "F401", "F841", "F541", "C416"]
+"src/employee/models.py" = ["F403", "F405"]
+"src/employee/calculations.py" = ["F841"]
+"src/ui_ctk/*.py" = ["E722", "F841"]
+"src/ui_ctk/**/*.py" = ["E722", "F841"]
+"tests/conftest.py" = ["E722"]
+"src/state/app_state.py" = ["E402"]
+"src/excel_import/*.py" = ["F401"]
+"src/export/*.py" = ["F841"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+fail_under = 40

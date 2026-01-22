@@ -1,25 +1,22 @@
 """Excel generation with formatting."""
 
+from datetime import datetime
 from pathlib import Path
-from datetime import datetime, date
 from typing import Any
 
 try:
     from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
     from openpyxl.utils import get_column_letter
 except ImportError:
-    raise ImportError(
-        "openpyxl is required for Excel export. "
-        "Install it with: pip install openpyxl"
-    )
+    raise ImportError("openpyxl is required for Excel export. Install it with: pip install openpyxl")
 
-from export import templates
-from employee.models import Employee, Caces, MedicalVisit, OnlineTraining
 from employee import calculations
-
+from employee.models import Employee
+from export import templates
 
 # ========== STYLE CONVERSION ==========
+
 
 def _convert_style_dict_to_openpyxl(style_dict: dict[str, Any]) -> dict:
     """
@@ -34,47 +31,42 @@ def _convert_style_dict_to_openpyxl(style_dict: dict[str, Any]) -> dict:
     openpyxl_style = {}
 
     # Convert font
-    if 'font' in style_dict:
-        font_props = style_dict['font']
-        openpyxl_style['font'] = Font(
-            bold=font_props.get('bold', False),
-            size=font_props.get('size', 11),
-            color=font_props.get('color', '000000')
+    if "font" in style_dict:
+        font_props = style_dict["font"]
+        openpyxl_style["font"] = Font(
+            bold=font_props.get("bold", False), size=font_props.get("size", 11), color=font_props.get("color", "000000")
         )
 
     # Convert fill
-    if 'fill' in style_dict:
-        fill_props = style_dict['fill']
+    if "fill" in style_dict:
+        fill_props = style_dict["fill"]
         # Add 'FF' prefix if not present for openpyxl (expects 8 chars with alpha)
-        fg_color = fill_props.get('fgColor', 'FFFFFF')
+        fg_color = fill_props.get("fgColor", "FFFFFF")
         if len(fg_color) == 6:  # RGB without alpha
-            fg_color = 'FF' + fg_color
+            fg_color = "FF" + fg_color
         # If already 8 chars, use as-is
 
-        openpyxl_style['fill'] = PatternFill(
-            start_color=fg_color,
-            end_color=fg_color,
-            fill_type=fill_props.get('fill_type', 'solid')
+        openpyxl_style["fill"] = PatternFill(
+            start_color=fg_color, end_color=fg_color, fill_type=fill_props.get("fill_type", "solid")
         )
 
     # Convert alignment
-    if 'alignment' in style_dict:
-        align_props = style_dict['alignment']
-        openpyxl_style['alignment'] = Alignment(
-            horizontal=align_props.get('horizontal', 'left'),
-            vertical=align_props.get('vertical', 'center')
+    if "alignment" in style_dict:
+        align_props = style_dict["alignment"]
+        openpyxl_style["alignment"] = Alignment(
+            horizontal=align_props.get("horizontal", "left"), vertical=align_props.get("vertical", "center")
         )
 
     # Convert border
-    if 'border' in style_dict:
-        border_props = style_dict['border']
-        thin_side = Side(border_style='thin')
+    if "border" in style_dict:
+        border_props = style_dict["border"]
+        thin_side = Side(border_style="thin")
 
-        openpyxl_style['border'] = Border(
-            top=thin_side if 'top' in border_props else None,
-            left=thin_side if 'left' in border_props else None,
-            bottom=thin_side if 'bottom' in border_props else None,
-            right=thin_side if 'right' in border_props else None
+        openpyxl_style["border"] = Border(
+            top=thin_side if "top" in border_props else None,
+            left=thin_side if "left" in border_props else None,
+            bottom=thin_side if "bottom" in border_props else None,
+            right=thin_side if "right" in border_props else None,
         )
 
     return openpyxl_style
@@ -90,24 +82,25 @@ def _apply_style_to_cell(cell, style_dict: dict[str, Any]) -> None:
     """
     openpyxl_style = _convert_style_dict_to_openpyxl(style_dict)
 
-    if 'font' in openpyxl_style:
-        cell.font = openpyxl_style['font']
-    if 'fill' in openpyxl_style:
-        cell.fill = openpyxl_style['fill']
-    if 'alignment' in openpyxl_style:
-        cell.alignment = openpyxl_style['alignment']
-    if 'border' in openpyxl_style:
-        cell.border = openpyxl_style['border']
+    if "font" in openpyxl_style:
+        cell.font = openpyxl_style["font"]
+    if "fill" in openpyxl_style:
+        cell.fill = openpyxl_style["fill"]
+    if "alignment" in openpyxl_style:
+        cell.alignment = openpyxl_style["alignment"]
+    if "border" in openpyxl_style:
+        cell.border = openpyxl_style["border"]
 
 
 # ========== MAIN EXPORT FUNCTION ==========
+
 
 def export_employees_to_excel(
     output_path: Path,
     employees: list[Employee],
     include_caces: bool = True,
     include_visits: bool = True,
-    include_trainings: bool = True
+    include_trainings: bool = True,
 ) -> None:
     """
     Export employees to Excel file with multiple sheets.
@@ -160,6 +153,7 @@ def export_employees_to_excel(
 
 # ========== SHEET CREATION FUNCTIONS ==========
 
+
 def create_summary_sheet(workbook: Workbook, employees: list[Employee]) -> None:
     """
     Create summary sheet with key metrics.
@@ -178,7 +172,7 @@ def create_summary_sheet(workbook: Workbook, employees: list[Employee]) -> None:
 
     # Calculate statistics
     total_employees = len(employees)
-    active_employees = len([e for e in employees if e.current_status == 'active'])
+    active_employees = len([e for e in employees if e.current_status == "active"])
 
     # Count expiring items
     expired_caces = 0
@@ -193,7 +187,7 @@ def create_summary_sheet(workbook: Workbook, employees: list[Employee]) -> None:
         for caces in emp.caces:
             if caces.is_expired:
                 expired_caces += 1
-            elif caces.status == 'critical':
+            elif caces.status == "critical":
                 critical_caces += 1
 
         # Medical visits
@@ -211,11 +205,7 @@ def create_summary_sheet(workbook: Workbook, employees: list[Employee]) -> None:
                 elif training.days_until_expiration < 30:
                     critical_trainings += 1
 
-    unfit_count = len([
-        v for e in employees
-        for v in e.medical_visits
-        if v.result == 'unfit'
-    ])
+    unfit_count = len([v for e in employees for v in e.medical_visits if v.result == "unfit"])
 
     # Define metrics
     metrics_data = [
@@ -255,8 +245,8 @@ def create_summary_sheet(workbook: Workbook, employees: list[Employee]) -> None:
         _apply_style_to_cell(ws.cell(row=row_idx, column=2), templates.VALUE_STYLE)
 
     # Set column widths
-    ws.column_dimensions['A'].width = templates.SUMMARY_COLUMNS[0]['width']
-    ws.column_dimensions['B'].width = templates.SUMMARY_COLUMNS[1]['width']
+    ws.column_dimensions["A"].width = templates.SUMMARY_COLUMNS[0]["width"]
+    ws.column_dimensions["B"].width = templates.SUMMARY_COLUMNS[1]["width"]
 
 
 def create_employees_sheet(workbook: Workbook, employees: list[Employee]) -> None:
@@ -280,22 +270,18 @@ def create_employees_sheet(workbook: Workbook, employees: list[Employee]) -> Non
     for emp in employees:
         row_data = []
         for key in keys:
-            if key == 'full_name':
+            if key == "full_name":
                 value = emp.full_name
-            elif key == 'seniority':
+            elif key == "seniority":
                 value = calculations.calculate_seniority(emp)
-            elif key == 'status':
+            elif key == "status":
                 score = calculations.calculate_compliance_score(emp)
                 status = calculations.get_compliance_status(emp)
                 # Show status text
-                status_map = {
-                    'critical': 'Critique',
-                    'warning': 'Attention',
-                    'compliant': 'Conforme'
-                }
-                value = status_map.get(status, 'Inconnu')
+                status_map = {"critical": "Critique", "warning": "Attention", "compliant": "Conforme"}
+                value = status_map.get(status, "Inconnu")
             else:
-                value = getattr(emp, key, '')
+                value = getattr(emp, key, "")
 
             row_data.append(value)
 
@@ -304,7 +290,7 @@ def create_employees_sheet(workbook: Workbook, employees: list[Employee]) -> Non
         # Apply conditional formatting to status column
         status_col_idx = len(keys)
         status_cell = ws.cell(row=ws.max_row, column=status_col_idx)
-        if 'status' in keys:
+        if "status" in keys:
             status_value = row_data[-1]
             style = templates.get_style_for_status(status_value)
             _apply_style_to_cell(status_cell, style)
@@ -340,11 +326,11 @@ def create_caces_sheet(workbook: Workbook, employees: list[Employee]) -> None:
         for caces in emp.caces:
             # Determine status
             if caces.is_expired:
-                status = 'expired'
-            elif caces.status == 'critical':
-                status = 'critical'
+                status = "expired"
+            elif caces.status == "critical":
+                status = "critical"
             else:
-                status = 'valid'
+                status = "valid"
 
             row_data = [
                 emp.external_id,
@@ -354,7 +340,7 @@ def create_caces_sheet(workbook: Workbook, employees: list[Employee]) -> None:
                 caces.expiration_date,
                 caces.days_until_expiration,
                 status.capitalize(),
-                str(caces.document_path) if caces.document_path else ''
+                str(caces.document_path) if caces.document_path else "",
             ]
 
             ws.append(row_data)
@@ -395,11 +381,11 @@ def create_medical_visits_sheet(workbook: Workbook, employees: list[Employee]) -
         for visit in emp.medical_visits:
             # Determine status
             if visit.is_expired:
-                status = 'expired'
+                status = "expired"
             elif visit.days_until_expiration < 30:
-                status = 'critical'
+                status = "critical"
             else:
-                status = 'valid'
+                status = "valid"
 
             row_data = [
                 emp.external_id,
@@ -410,7 +396,7 @@ def create_medical_visits_sheet(workbook: Workbook, employees: list[Employee]) -
                 visit.days_until_expiration,
                 visit.result,
                 status.capitalize(),
-                str(visit.document_path) if visit.document_path else ''
+                str(visit.document_path) if visit.document_path else "",
             ]
 
             ws.append(row_data)
@@ -460,15 +446,15 @@ def create_trainings_sheet(workbook: Workbook, employees: list[Employee]) -> Non
         for training in emp.trainings:
             # Skip permanent trainings for status
             if not training.expires:
-                status = 'valid'
+                status = "valid"
                 days_until = None
             else:
                 if training.is_expired:
-                    status = 'expired'
+                    status = "expired"
                 elif training.days_until_expiration < 30:
-                    status = 'critical'
+                    status = "critical"
                 else:
-                    status = 'valid'
+                    status = "valid"
                 days_until = training.days_until_expiration
 
             row_data = [
@@ -476,10 +462,10 @@ def create_trainings_sheet(workbook: Workbook, employees: list[Employee]) -> Non
                 emp.full_name,
                 training.title,
                 training.completion_date,
-                training.expiration_date if training.expires else 'Permanent',
+                training.expiration_date if training.expires else "Permanent",
                 days_until,
-                status.capitalize() if training.expires else 'Permanent',
-                str(training.certificate_path) if training.certificate_path else ''
+                status.capitalize() if training.expires else "Permanent",
+                str(training.certificate_path) if training.certificate_path else "",
             ]
 
             ws.append(row_data)
@@ -500,6 +486,7 @@ def create_trainings_sheet(workbook: Workbook, employees: list[Employee]) -> Non
 
 
 # ========== HELPER FUNCTIONS ==========
+
 
 def save_workbook(workbook: Workbook, path: Path) -> None:
     """
@@ -525,9 +512,7 @@ def save_workbook(workbook: Workbook, path: Path) -> None:
         new_path = path.parent / f"{path.stem}_{timestamp}{path.suffix}"
         workbook.save(new_path)
         raise PermissionError(
-            f"Could not write to {path}. "
-            f"Saved as {new_path} instead. "
-            f"Close the file if it's open in Excel."
+            f"Could not write to {path}. Saved as {new_path} instead. Close the file if it's open in Excel."
         )
 
 

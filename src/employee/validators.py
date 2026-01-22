@@ -10,21 +10,21 @@ Validators can be used at multiple layers:
 
 import re
 from datetime import date
-from typing import Any, Optional
 from pathlib import Path
+from typing import Any, Optional
 
 from peewee import Model
 
 from .constants import (
     CACES_TYPES,
-    VisitType,
     VisitResult,
+    VisitType,
 )
-
 
 # =============================================================================
 # EXCEPTIONS
 # =============================================================================
+
 
 class ValidationError(Exception):
     """
@@ -70,13 +70,14 @@ class ValidationError(Exception):
             "field": self.field,
             "value": str(self.value) if self.value is not None else None,
             "message": self.message,
-            "details": self.details
+            "details": self.details,
         }
 
 
 # =============================================================================
 # VALIDATOR FUNCTIONS
 # =============================================================================
+
 
 def validate_external_id(external_id: str) -> str:
     """
@@ -112,18 +113,10 @@ def validate_external_id(external_id: str) -> str:
         ValidationError: Path traversal detected in external_id
     """
     if not external_id:
-        raise ValidationError(
-            field="external_id",
-            value=external_id,
-            message="External ID cannot be empty"
-        )
+        raise ValidationError(field="external_id", value=external_id, message="External ID cannot be empty")
 
     if not isinstance(external_id, str):
-        raise ValidationError(
-            field="external_id",
-            value=external_id,
-            message="External ID must be a string"
-        )
+        raise ValidationError(field="external_id", value=external_id, message="External ID must be a string")
 
     # Check length
     if len(external_id) < 3:
@@ -131,7 +124,7 @@ def validate_external_id(external_id: str) -> str:
             field="external_id",
             value=external_id,
             message="External ID is too short (minimum 3 characters)",
-            details={"min_length": 3, "actual_length": len(external_id)}
+            details={"min_length": 3, "actual_length": len(external_id)},
         )
 
     if len(external_id) > 50:
@@ -139,7 +132,7 @@ def validate_external_id(external_id: str) -> str:
             field="external_id",
             value=external_id,
             message="External ID is too long (maximum 50 characters)",
-            details={"max_length": 50, "actual_length": len(external_id)}
+            details={"max_length": 50, "actual_length": len(external_id)},
         )
 
     # Check for path traversal patterns
@@ -150,7 +143,7 @@ def validate_external_id(external_id: str) -> str:
                 field="external_id",
                 value=external_id,
                 message="Path traversal detected in external_id",
-                details={"forbidden_pattern": pattern}
+                details={"forbidden_pattern": pattern},
             )
 
     # Check for valid characters (alphanumeric, underscore, hyphen)
@@ -160,10 +153,7 @@ def validate_external_id(external_id: str) -> str:
             field="external_id",
             value=external_id,
             message="External ID contains invalid characters",
-            details={
-                "allowed_pattern": pattern,
-                "allowed_chars": "Letters, numbers, underscore (_), hyphen (-)"
-            }
+            details={"allowed_pattern": pattern, "allowed_chars": "Letters, numbers, underscore (_), hyphen (-)"},
         )
 
     return external_id
@@ -200,18 +190,10 @@ def validate_entry_date(entry_date: date) -> date:
         ValidationError: Entry date cannot be in the future
     """
     if not entry_date:
-        raise ValidationError(
-            field="entry_date",
-            value=entry_date,
-            message="Entry date is required"
-        )
+        raise ValidationError(field="entry_date", value=entry_date, message="Entry date is required")
 
     if not isinstance(entry_date, date):
-        raise ValidationError(
-            field="entry_date",
-            value=entry_date,
-            message="Entry date must be a date object"
-        )
+        raise ValidationError(field="entry_date", value=entry_date, message="Entry date must be a date object")
 
     # Check if date is in the future
     if entry_date > date.today():
@@ -219,10 +201,7 @@ def validate_entry_date(entry_date: date) -> date:
             field="entry_date",
             value=entry_date,
             message="Entry date cannot be in the future",
-            details={
-                "entry_date": entry_date.isoformat(),
-                "current_date": date.today().isoformat()
-            }
+            details={"entry_date": entry_date.isoformat(), "current_date": date.today().isoformat()},
         )
 
     # Check if date is too old (before 1900)
@@ -232,10 +211,7 @@ def validate_entry_date(entry_date: date) -> date:
             field="entry_date",
             value=entry_date,
             message="Entry date is too old (minimum 1900-01-01)",
-            details={
-                "min_date": min_date.isoformat(),
-                "actual_date": entry_date.isoformat()
-            }
+            details={"min_date": min_date.isoformat(), "actual_date": entry_date.isoformat()},
         )
 
     return entry_date
@@ -268,18 +244,10 @@ def validate_caces_kind(kind: str) -> str:
         ValidationError: Invalid CACES type
     """
     if not kind:
-        raise ValidationError(
-            field="kind",
-            value=kind,
-            message="CACES type is required"
-        )
+        raise ValidationError(field="kind", value=kind, message="CACES type is required")
 
     if not isinstance(kind, str):
-        raise ValidationError(
-            field="kind",
-            value=kind,
-            message="CACES type must be a string"
-        )
+        raise ValidationError(field="kind", value=kind, message="CACES type must be a string")
 
     kind_upper = kind.upper()
 
@@ -288,10 +256,7 @@ def validate_caces_kind(kind: str) -> str:
             field="kind",
             value=kind,
             message="Invalid CACES type",
-            details={
-                "provided": kind,
-                "allowed_types": CACES_TYPES
-            }
+            details={"provided": kind, "allowed_types": CACES_TYPES},
         )
 
     return kind_upper
@@ -333,40 +298,26 @@ def validate_medical_visit_consistency(visit_type: str, result: str) -> tuple:
     """
     # Validate visit type
     if not visit_type:
-        raise ValidationError(
-            field="visit_type",
-            value=visit_type,
-            message="Visit type is required"
-        )
+        raise ValidationError(field="visit_type", value=visit_type, message="Visit type is required")
 
     if visit_type not in VisitType.ALL:
         raise ValidationError(
             field="visit_type",
             value=visit_type,
             message="Invalid visit type",
-            details={
-                "provided": visit_type,
-                "allowed_types": VisitType.ALL
-            }
+            details={"provided": visit_type, "allowed_types": VisitType.ALL},
         )
 
     # Validate result
     if not result:
-        raise ValidationError(
-            field="result",
-            value=result,
-            message="Visit result is required"
-        )
+        raise ValidationError(field="result", value=result, message="Visit result is required")
 
     if result not in VisitResult.ALL:
         raise ValidationError(
             field="result",
             value=result,
             message="Invalid visit result",
-            details={
-                "provided": result,
-                "allowed_results": VisitResult.ALL
-            }
+            details={"provided": result, "allowed_results": VisitResult.ALL},
         )
 
     # Business rule: Recovery visits must have restrictions
@@ -379,8 +330,8 @@ def validate_medical_visit_consistency(visit_type: str, result: str) -> tuple:
                 "visit_type": visit_type,
                 "result": result,
                 "expected_result": "fit_with_restrictions",
-                "reason": "Employees returning from medical absence typically have work restrictions"
-            }
+                "reason": "Employees returning from medical absence typically have work restrictions",
+            },
         )
 
     return visit_type, result
@@ -421,18 +372,10 @@ def validate_path_safe(file_path: str, allowed_extensions: Optional[list] = None
         ValidationError: File extension not allowed
     """
     if not file_path:
-        raise ValidationError(
-            field="file_path",
-            value=file_path,
-            message="File path cannot be empty"
-        )
+        raise ValidationError(field="file_path", value=file_path, message="File path cannot be empty")
 
     if not isinstance(file_path, str):
-        raise ValidationError(
-            field="file_path",
-            value=file_path,
-            message="File path must be a string"
-        )
+        raise ValidationError(field="file_path", value=file_path, message="File path must be a string")
 
     # Check for path traversal patterns
     path_traversal_patterns = ["../", "..\\", "./", ".\\"]
@@ -442,16 +385,16 @@ def validate_path_safe(file_path: str, allowed_extensions: Optional[list] = None
                 field="file_path",
                 value=file_path,
                 message="Path traversal detected",
-                details={"forbidden_pattern": pattern}
+                details={"forbidden_pattern": pattern},
             )
 
     # Check for absolute paths (Windows and Unix)
-    if re.match(r'^[A-Za-z]:', file_path) or file_path.startswith('/'):
+    if re.match(r"^[A-Za-z]:", file_path) or file_path.startswith("/"):
         raise ValidationError(
             field="file_path",
             value=file_path,
             message="Absolute paths are not allowed",
-            details={"reason": "Only relative paths are allowed for security"}
+            details={"reason": "Only relative paths are allowed for security"},
         )
 
     # Check file extension if provided
@@ -464,7 +407,7 @@ def validate_path_safe(file_path: str, allowed_extensions: Optional[list] = None
                 field="file_path",
                 value=file_path,
                 message="File has no extension",
-                details={"allowed_extensions": allowed_extensions}
+                details={"allowed_extensions": allowed_extensions},
             )
 
         if extension not in allowed_extensions:
@@ -472,10 +415,7 @@ def validate_path_safe(file_path: str, allowed_extensions: Optional[list] = None
                 field="file_path",
                 value=file_path,
                 message="File extension not allowed",
-                details={
-                    "provided_extension": extension,
-                    "allowed_extensions": allowed_extensions
-                }
+                details={"provided_extension": extension, "allowed_extensions": allowed_extensions},
             )
 
     return file_path
@@ -484,6 +424,7 @@ def validate_path_safe(file_path: str, allowed_extensions: Optional[list] = None
 # =============================================================================
 # VALIDATOR CLASSES
 # =============================================================================
+
 
 class UniqueValidator:
     """
@@ -551,10 +492,7 @@ class UniqueValidator:
                 field=field_name,
                 value=value,
                 message=f"An item with {field_name} '{value}' already exists",
-                details={
-                    "existing_id": str(existing.id),
-                    "field": field_name
-                }
+                details={"existing_id": str(existing.id), "field": field_name},
             )
 
         return value
@@ -610,17 +548,11 @@ class DateRangeValidator:
             ValidationError: If date is outside range
         """
         if not value:
-            raise ValidationError(
-                field=self.field_name,
-                value=value,
-                message=f"{self.field_name} is required"
-            )
+            raise ValidationError(field=self.field_name, value=value, message=f"{self.field_name} is required")
 
         if not isinstance(value, date):
             raise ValidationError(
-                field=self.field_name,
-                value=value,
-                message=f"{self.field_name} must be a date object"
+                field=self.field_name, value=value, message=f"{self.field_name} must be a date object"
             )
 
         # Check minimum
@@ -629,10 +561,7 @@ class DateRangeValidator:
                 field=self.field_name,
                 value=value,
                 message=f"{self.field_name} is too early",
-                details={
-                    "min_date": self.min_date.isoformat(),
-                    "actual_date": value.isoformat()
-                }
+                details={"min_date": self.min_date.isoformat(), "actual_date": value.isoformat()},
             )
 
         # Check maximum
@@ -641,10 +570,7 @@ class DateRangeValidator:
                 field=self.field_name,
                 value=value,
                 message=f"{self.field_name} is too late",
-                details={
-                    "max_date": self.max_date.isoformat(),
-                    "actual_date": value.isoformat()
-                }
+                details={"max_date": self.max_date.isoformat(), "actual_date": value.isoformat()},
             )
 
         return value

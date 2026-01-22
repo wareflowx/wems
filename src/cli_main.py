@@ -5,14 +5,15 @@ All subcommands are organized into separate modules.
 """
 
 import typer
-from cli import employee, caces, medical, training, report, lock
+
+from cli import caces, employee, lock, medical, report, training
 
 # Main application
 app = typer.Typer(
     name="employee-manager",
     help="Simple Employee Manager - Gestion des employés et certifications",
     no_args_is_help=True,
-    add_completion=True
+    add_completion=True,
 )
 
 # Register command groups
@@ -28,6 +29,7 @@ app.add_typer(lock.app, name="lock", help="Gestion du verrou applicatif")
 def version():
     """Show application version."""
     from employee_manager import __version__
+
     typer.echo(f"Simple Employee Manager v{__version__}")
 
 

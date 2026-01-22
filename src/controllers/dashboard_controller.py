@@ -1,8 +1,8 @@
 """Dashboard controller - business logic for dashboard view."""
 
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
-from employee import queries, calculations
+from employee import calculations, queries
 from employee.models import Employee
 
 
@@ -65,7 +65,7 @@ class DashboardController:
         compliant_count = 0
         for emp in employees:
             score_data = calculations.calculate_compliance_score(emp)
-            if score_data['score'] >= 70:
+            if score_data["score"] >= 70:
                 compliant_count += 1
 
         percentage = int((compliant_count / len(employees)) * 100)
@@ -82,11 +82,7 @@ class DashboardController:
             Total count of items expiring within the period.
         """
         stats = self.get_statistics()
-        return (
-            stats['expiring_caces'] +
-            stats['expiring_visits'] +
-            stats['unfit_employees']
-        )
+        return stats["expiring_caces"] + stats["expiring_visits"] + stats["unfit_employees"]
 
     def format_alerts_for_ui(self, days: int = 30, limit: int = 10) -> List[Dict[str, Any]]:
         """
@@ -113,46 +109,50 @@ class DashboardController:
         formatted_alerts = []
 
         for emp_id, data in alerts_by_employee.items():
-            emp = data['employee']
+            emp = data["employee"]
 
             # Process CACES alerts
-            for caces in data['caces']:
-                formatted_alerts.append({
-                    'employee_id': emp.id,
-                    'employee_name': emp.full_name,
-                    'type': 'caces',
-                    'description': f"CACES {caces.kind}",
-                    'days_until': caces.days_until_expiration,
-                    'priority': self._get_priority_level(caces.days_until_expiration),
-                })
+            for caces in data["caces"]:
+                formatted_alerts.append(
+                    {
+                        "employee_id": emp.id,
+                        "employee_name": emp.full_name,
+                        "type": "caces",
+                        "description": f"CACES {caces.kind}",
+                        "days_until": caces.days_until_expiration,
+                        "priority": self._get_priority_level(caces.days_until_expiration),
+                    }
+                )
 
             # Process medical visit alerts
-            for visit in data['medical_visits']:
-                formatted_alerts.append({
-                    'employee_id': emp.id,
-                    'employee_name': emp.full_name,
-                    'type': 'medical',
-                    'description': f"Medical visit",
-                    'days_until': visit.days_until_expiration,
-                    'priority': self._get_priority_level(visit.days_until_expiration),
-                })
+            for visit in data["medical_visits"]:
+                formatted_alerts.append(
+                    {
+                        "employee_id": emp.id,
+                        "employee_name": emp.full_name,
+                        "type": "medical",
+                        "description": "Medical visit",
+                        "days_until": visit.days_until_expiration,
+                        "priority": self._get_priority_level(visit.days_until_expiration),
+                    }
+                )
 
             # Process training alerts
-            for training in data['trainings']:
-                formatted_alerts.append({
-                    'employee_id': emp.id,
-                    'employee_name': emp.full_name,
-                    'type': 'training',
-                    'description': f"Training: {training.title}",
-                    'days_until': training.days_until_expiration or 9999,
-                    'priority': self._get_priority_level(training.days_until_expiration or 9999),
-                })
+            for training in data["trainings"]:
+                formatted_alerts.append(
+                    {
+                        "employee_id": emp.id,
+                        "employee_name": emp.full_name,
+                        "type": "training",
+                        "description": f"Training: {training.title}",
+                        "days_until": training.days_until_expiration or 9999,
+                        "priority": self._get_priority_level(training.days_until_expiration or 9999),
+                    }
+                )
 
         # Sort by priority and days_until
-        priority_order = {'urgent': 0, 'high': 1, 'normal': 2}
-        formatted_alerts.sort(
-            key=lambda a: (priority_order[a['priority']], a['days_until'])
-        )
+        priority_order = {"urgent": 0, "high": 1, "normal": 2}
+        formatted_alerts.sort(key=lambda a: (priority_order[a["priority"]], a["days_until"]))
 
         return formatted_alerts[:limit]
 
@@ -169,8 +169,8 @@ class DashboardController:
             'normal' if < 90 days
         """
         if days_until < 15:
-            return 'urgent'
+            return "urgent"
         elif days_until < 30:
-            return 'high'
+            return "high"
         else:
-            return 'normal'
+            return "normal"

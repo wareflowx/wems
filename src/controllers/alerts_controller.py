@@ -1,7 +1,6 @@
 """Alerts controller - business logic for alerts view."""
 
-from typing import Dict, List, Any
-from datetime import date, timedelta
+from typing import Any, Dict, List
 
 from employee import queries
 
@@ -17,12 +16,7 @@ class AlertsController:
         """Initialize alerts controller."""
         pass
 
-    def get_all_alerts(
-        self,
-        days: int = 90,
-        alert_type: str = "all",
-        urgency: str = "all"
-    ) -> List[Dict[str, Any]]:
+    def get_all_alerts(self, days: int = 90, alert_type: str = "all", urgency: str = "all") -> List[Dict[str, Any]]:
         """
         Get all alerts with optional filtering.
 
@@ -49,58 +43,62 @@ class AlertsController:
         formatted_alerts = []
 
         for emp_id, data in alerts_by_employee.items():
-            emp = data['employee']
+            emp = data["employee"]
 
             # Process CACES alerts
-            if alert_type in ['all', 'caces']:
-                for caces in data['caces']:
+            if alert_type in ["all", "caces"]:
+                for caces in data["caces"]:
                     priority = self._get_priority_level(caces.days_until_expiration)
-                    if urgency == 'all' or priority == urgency:
-                        formatted_alerts.append({
-                            'employee_id': str(emp.id),
-                            'employee_name': emp.full_name,
-                            'type': 'caces',
-                            'description': f"CACES {caces.kind}",
-                            'days_until': caces.days_until_expiration,
-                            'priority': priority,
-                        })
+                    if urgency == "all" or priority == urgency:
+                        formatted_alerts.append(
+                            {
+                                "employee_id": str(emp.id),
+                                "employee_name": emp.full_name,
+                                "type": "caces",
+                                "description": f"CACES {caces.kind}",
+                                "days_until": caces.days_until_expiration,
+                                "priority": priority,
+                            }
+                        )
 
             # Process medical visit alerts
-            if alert_type in ['all', 'medical']:
-                for visit in data['medical_visits']:
+            if alert_type in ["all", "medical"]:
+                for visit in data["medical_visits"]:
                     priority = self._get_priority_level(visit.days_until_expiration)
-                    if visit.visit_result == 'unfit':
-                        priority = 'urgent'
-                    if urgency == 'all' or priority == urgency:
-                        formatted_alerts.append({
-                            'employee_id': str(emp.id),
-                            'employee_name': emp.full_name,
-                            'type': 'medical',
-                            'description': f"Medical visit ({visit.visit_kind})",
-                            'days_until': visit.days_until_expiration,
-                            'priority': priority,
-                        })
+                    if visit.visit_result == "unfit":
+                        priority = "urgent"
+                    if urgency == "all" or priority == urgency:
+                        formatted_alerts.append(
+                            {
+                                "employee_id": str(emp.id),
+                                "employee_name": emp.full_name,
+                                "type": "medical",
+                                "description": f"Medical visit ({visit.visit_kind})",
+                                "days_until": visit.days_until_expiration,
+                                "priority": priority,
+                            }
+                        )
 
             # Process training alerts
-            if alert_type in ['all', 'training']:
-                for training in data['trainings']:
+            if alert_type in ["all", "training"]:
+                for training in data["trainings"]:
                     days_until = training.days_until_expiration or 9999
                     priority = self._get_priority_level(days_until)
-                    if urgency == 'all' or priority == urgency:
-                        formatted_alerts.append({
-                            'employee_id': str(emp.id),
-                            'employee_name': emp.full_name,
-                            'type': 'training',
-                            'description': f"Training: {training.title}",
-                            'days_until': days_until,
-                            'priority': priority,
-                        })
+                    if urgency == "all" or priority == urgency:
+                        formatted_alerts.append(
+                            {
+                                "employee_id": str(emp.id),
+                                "employee_name": emp.full_name,
+                                "type": "training",
+                                "description": f"Training: {training.title}",
+                                "days_until": days_until,
+                                "priority": priority,
+                            }
+                        )
 
         # Sort by priority and days_until
-        priority_order = {'urgent': 0, 'high': 1, 'normal': 2}
-        formatted_alerts.sort(
-            key=lambda a: (priority_order[a['priority']], a['days_until'])
-        )
+        priority_order = {"urgent": 0, "high": 1, "normal": 2}
+        formatted_alerts.sort(key=lambda a: (priority_order[a["priority"]], a["days_until"]))
 
         return formatted_alerts
 
@@ -126,18 +124,18 @@ class AlertsController:
         alerts = self.get_all_alerts(days=days)
 
         summary = {
-            'total': len(alerts),
-            'urgent': 0,
-            'high': 0,
-            'normal': 0,
-            'caces': 0,
-            'medical': 0,
-            'training': 0,
+            "total": len(alerts),
+            "urgent": 0,
+            "high": 0,
+            "normal": 0,
+            "caces": 0,
+            "medical": 0,
+            "training": 0,
         }
 
         for alert in alerts:
-            summary[alert['priority']] += 1
-            summary[alert['type']] += 1
+            summary[alert["priority"]] += 1
+            summary[alert["type"]] += 1
 
         return summary
 
@@ -155,13 +153,15 @@ class AlertsController:
 
         export_data = []
         for alert in alerts:
-            export_data.append({
-                'Employee Name': alert['employee_name'],
-                'Type': alert['type'].capitalize(),
-                'Description': alert['description'],
-                'Days Until': alert['days_until'],
-                'Priority': alert['priority'].capitalize(),
-            })
+            export_data.append(
+                {
+                    "Employee Name": alert["employee_name"],
+                    "Type": alert["type"].capitalize(),
+                    "Description": alert["description"],
+                    "Days Until": alert["days_until"],
+                    "Priority": alert["priority"].capitalize(),
+                }
+            )
 
         return export_data
 
@@ -178,8 +178,8 @@ class AlertsController:
             'normal' if < 90 days
         """
         if days_until < 15:
-            return 'urgent'
+            return "urgent"
         elif days_until < 30:
-            return 'high'
+            return "high"
         else:
-            return 'normal'
+            return "normal"

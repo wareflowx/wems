@@ -1,27 +1,23 @@
 """Excel template generator for employee import."""
 
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import Dict, List
 
 try:
     from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-    from openpyxl.worksheet.datavalidation import DataValidation
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
     from openpyxl.utils import get_column_letter
+    from openpyxl.worksheet.datavalidation import DataValidation
 except ImportError:
-    raise ImportError(
-        "openpyxl is required for Excel template generation. "
-        "Install it with: pip install openpyxl"
-    )
+    raise ImportError("openpyxl is required for Excel template generation. Install it with: pip install openpyxl")
 
 from ui_ctk.constants import (
-    STATUS_ACTIVE,
-    STATUS_INACTIVE,
     CONTRACT_TYPE_CHOICES,
     ROLE_CARISTE,
     ROLE_CHOICES,
+    STATUS_ACTIVE,
+    STATUS_INACTIVE,
     WORKSPACE_ZONES,
-    DATE_FORMAT,
 )
 
 
@@ -39,7 +35,7 @@ class ExcelTemplateGenerator:
         "Workspace",
         "Role",
         "Contract",
-        "Entry Date"
+        "Entry Date",
     ]
 
     # Status dropdown options
@@ -70,10 +66,10 @@ class ExcelTemplateGenerator:
         sheet = workbook.create_sheet("Instructions", 0)
 
         # Title
-        title_cell = sheet['A1']
+        title_cell = sheet["A1"]
         title_cell.value = "Employee Import Template"
         title_cell.font = Font(size=16, bold=True)
-        title_cell.alignment = Alignment(horizontal='center')
+        title_cell.alignment = Alignment(horizontal="center")
 
         # Instructions
         instructions = [
@@ -118,17 +114,17 @@ class ExcelTemplateGenerator:
             "  • Import is done in batches of 100 rows",
             "  • Progress is shown during import",
             "",
-            "For support, contact: wareflow@example.com"
+            "For support, contact: wareflow@example.com",
         ]
 
         # Write instructions
         row_num = 3
         for line in instructions:
-            sheet[f'A{row_num}'] = line
+            sheet[f"A{row_num}"] = line
             row_num += 1
 
         # Auto-adjust column widths
-        sheet.column_dimensions['A'].width = 80
+        sheet.column_dimensions["A"].width = 80
 
     def _create_data_sheet(self, workbook) -> None:
         """Create data sheet with headers, validation, and example."""
@@ -136,17 +132,10 @@ class ExcelTemplateGenerator:
 
         # Style definitions
         header_font = Font(bold=True, size=11)
-        header_fill = PatternFill(
-            start_color='FFE6B3',
-            end_color='FFE6B3',
-            fill_type='solid'
-        )
-        header_alignment = Alignment(horizontal='center', vertical='center')
+        header_fill = PatternFill(start_color="FFE6B3", end_color="FFE6B3", fill_type="solid")
+        header_alignment = Alignment(horizontal="center", vertical="center")
         thin_border = Border(
-            top=Side(style='thin'),
-            left=Side(style='thin'),
-            bottom=Side(style='thin'),
-            right=Side(style='thin')
+            top=Side(style="thin"), left=Side(style="thin"), bottom=Side(style="thin"), right=Side(style="thin")
         )
 
         # Create headers
@@ -173,43 +162,27 @@ class ExcelTemplateGenerator:
 
             # Status dropdown
             if column_name == "Status":
-                dv = DataValidation(
-                    type="list",
-                    formula1=f'"{",".join(self.STATUS_OPTIONS)}"',
-                    allow_blank=False
-                )
+                dv = DataValidation(type="list", formula1=f'"{",".join(self.STATUS_OPTIONS)}"', allow_blank=False)
                 sheet.add_data_validation(dv)
-                dv.add(f"{col_letter}{row_num+1}:{col_letter}{row_num+1000}")
+                dv.add(f"{col_letter}{row_num + 1}:{col_letter}{row_num + 1000}")
 
             # Workspace dropdown
             elif column_name == "Workspace":
-                dv = DataValidation(
-                    type="list",
-                    formula1=f'"{",".join(WORKSPACE_ZONES)}"',
-                    allow_blank=False
-                )
+                dv = DataValidation(type="list", formula1=f'"{",".join(WORKSPACE_ZONES)}"', allow_blank=False)
                 sheet.add_data_validation(dv)
-                dv.add(f"{col_letter}{row_num+1}:{col_letter}{row_num+1000}")
+                dv.add(f"{col_letter}{row_num + 1}:{col_letter}{row_num + 1000}")
 
             # Role dropdown
             elif column_name == "Role":
-                dv = DataValidation(
-                    type="list",
-                    formula1=f'"{",".join(ROLE_CHOICES)}"',
-                    allow_blank=False
-                )
+                dv = DataValidation(type="list", formula1=f'"{",".join(ROLE_CHOICES)}"', allow_blank=False)
                 sheet.add_data_validation(dv)
-                dv.add(f"{col_letter}{row_num+1}:{col_letter}{row_num+1000}")
+                dv.add(f"{col_letter}{row_num + 1}:{col_letter}{row_num + 1000}")
 
             # Contract dropdown
             elif column_name == "Contract":
-                dv = DataValidation(
-                    type="list",
-                    formula1=f'"{",".join(CONTRACT_TYPE_CHOICES)}"',
-                    allow_blank=False
-                )
+                dv = DataValidation(type="list", formula1=f'"{",".join(CONTRACT_TYPE_CHOICES)}"', allow_blank=False)
                 sheet.add_data_validation(dv)
-                dv.add(f"{col_letter}{row_num+1}:{col_letter}{row_num+1000}")
+                dv.add(f"{col_letter}{row_num + 1}:{col_letter}{row_num + 1000}")
 
             # Entry date format
             elif column_name == "Entry Date":
@@ -228,17 +201,17 @@ class ExcelTemplateGenerator:
             "Workspace": "Zone A",
             "Role": ROLE_CARISTE,
             "Contract": CONTRACT_TYPE_CHOICES[0],
-            "Entry Date": "15/01/2025"
+            "Entry Date": "15/01/2025",
         }
 
         for col_idx, (col_name, value) in enumerate(example_row.items(), start=1):
             cell = sheet.cell(row=2, column=col_idx)
             cell.value = value
-            cell.font = Font(italic=True, color='808080')
-            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.font = Font(italic=True, color="808080")
+            cell.alignment = Alignment(horizontal="center", vertical="center")
 
         # Freeze header row
-        sheet.freeze_panes = 'A2'
+        sheet.freeze_panes = "A2"
 
         # Select the data sheet
         workbook.active = sheet
@@ -246,15 +219,7 @@ class ExcelTemplateGenerator:
     @staticmethod
     def _is_required_column(column_name: str) -> bool:
         """Check if column is required."""
-        return column_name in [
-            "First Name",
-            "Last Name",
-            "Status",
-            "Workspace",
-            "Role",
-            "Contract",
-            "Entry Date"
-        ]
+        return column_name in ["First Name", "Last Name", "Status", "Workspace", "Role", "Contract", "Entry Date"]
 
     def generate_sample_file(self, output_path: Path, num_employees: int = 5) -> None:
         """
@@ -278,16 +243,16 @@ class ExcelTemplateGenerator:
         row_num = 2
 
         for employee in sample_data:
-            sheet.cell(row_num, 1).value = employee['first_name']
-            sheet.cell(row_num, 2).value = employee['last_name']
-            sheet.cell(row_num, 3).value = employee['email']
-            sheet.cell(row_num, 4).value = employee['phone']
-            sheet.cell(row_num, 5).value = employee['external_id']
-            sheet.cell(row_num, 6).value = employee['status']
-            sheet.cell(row_num, 7).value = employee['workspace']
-            sheet.cell(row_num, 8).value = employee['role']
-            sheet.cell(row_num, 9).value = employee['contract_type']
-            sheet.cell(row_num, 10).value = employee['entry_date']
+            sheet.cell(row_num, 1).value = employee["first_name"]
+            sheet.cell(row_num, 2).value = employee["last_name"]
+            sheet.cell(row_num, 3).value = employee["email"]
+            sheet.cell(row_num, 4).value = employee["phone"]
+            sheet.cell(row_num, 5).value = employee["external_id"]
+            sheet.cell(row_num, 6).value = employee["status"]
+            sheet.cell(row_num, 7).value = employee["workspace"]
+            sheet.cell(row_num, 8).value = employee["role"]
+            sheet.cell(row_num, 9).value = employee["contract_type"]
+            sheet.cell(row_num, 10).value = employee["entry_date"]
 
             row_num += 1
 
@@ -306,17 +271,19 @@ class ExcelTemplateGenerator:
 
         sample_data = []
         for i in range(count):
-            sample_data.append({
-                'first_name': first_names[i % len(first_names)],
-                'last_name': last_names[i % len(last_names)],
-                'email': f"employee{i+1}@example.com",
-                'phone': f"06 12 34 5{i:02d}",
-                'external_id': f"WMS-{str(i+1).zfill(3)}",
-                'status': STATUS_ACTIVE if i % 4 != 0 else STATUS_INACTIVE,
-                'workspace': WORKSPACE_ZONES[i % len(WORKSPACE_ZONES)],
-                'role': ROLE_CHOICES[i % len(ROLE_CHOICES)],
-                'contract_type': CONTRACT_TYPE_CHOICES[i % len(CONTRACT_TYPE_CHOICES)],
-                'entry_date': f"{15 + i:02d}/01/2025"
-            })
+            sample_data.append(
+                {
+                    "first_name": first_names[i % len(first_names)],
+                    "last_name": last_names[i % len(last_names)],
+                    "email": f"employee{i + 1}@example.com",
+                    "phone": f"06 12 34 5{i:02d}",
+                    "external_id": f"WMS-{str(i + 1).zfill(3)}",
+                    "status": STATUS_ACTIVE if i % 4 != 0 else STATUS_INACTIVE,
+                    "workspace": WORKSPACE_ZONES[i % len(WORKSPACE_ZONES)],
+                    "role": ROLE_CHOICES[i % len(ROLE_CHOICES)],
+                    "contract_type": CONTRACT_TYPE_CHOICES[i % len(CONTRACT_TYPE_CHOICES)],
+                    "entry_date": f"{15 + i:02d}/01/2025",
+                }
+            )
 
         return sample_data

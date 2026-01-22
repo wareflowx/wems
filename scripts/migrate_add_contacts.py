@@ -11,12 +11,12 @@ Rollback:
     python scripts/migrate_add_contacts.py --rollback
 """
 
+import argparse
+import shutil
 import sqlite3
 import sys
-from pathlib import Path
 from datetime import datetime
-import shutil
-import argparse
+from pathlib import Path
 
 
 def migrate(db_path: str, dry_run: bool = False):
@@ -170,9 +170,7 @@ def backup_database(db_path: str) -> str:
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Migrate database: Add phone and email columns"
-    )
+    parser = argparse.ArgumentParser(description="Migrate database: Add phone and email columns")
     parser.add_argument("--db", default="employee_manager.db", help="Path to database file")
     parser.add_argument("--dry-run", action="store_true", help="Show SQL without executing")
     parser.add_argument("--rollback", action="store_true", help="Rollback migration")

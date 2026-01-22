@@ -4,7 +4,6 @@
 # to avoid circular import with cli_main
 # Import app directly from cli_main instead
 
-from . import employee, caces, medical, training, report, lock
+from . import caces, employee, lock, medical, report, training
 
-__all__ = ['employee', 'caces', 'medical', 'training', 'report', 'lock']
-
+__all__ = ["employee", "caces", "medical", "training", "report", "lock"]

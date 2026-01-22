@@ -1,7 +1,9 @@
 """Base class for all forms."""
 
+from typing import Optional, Tuple
+
 import customtkinter as ctk
-from typing import Dict, Any, Optional, Tuple
+
 from ui_ctk.constants import APP_TITLE
 
 
@@ -76,18 +78,13 @@ class BaseFormDialog(ctk.CTkToplevel):
     def show_error(self, message: str):
         """Show error message to user."""
         # Create error label if it doesn't exist
-        if not hasattr(self, 'error_label'):
-            self.error_label = ctk.CTkLabel(
-                self,
-                text="",
-                text_color="red",
-                wraplength=400
-            )
+        if not hasattr(self, "error_label"):
+            self.error_label = ctk.CTkLabel(self, text="", text_color="red", wraplength=400)
             self.error_label.pack(pady=10)
 
         self.error_label.configure(text=message)
 
     def clear_error(self):
         """Clear error message."""
-        if hasattr(self, 'error_label'):
+        if hasattr(self, "error_label"):
             self.error_label.configure(text="")

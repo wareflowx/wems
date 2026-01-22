@@ -1,15 +1,15 @@
 """Employee management commands."""
 
-import typer
 from datetime import date
 from pathlib import Path
 from typing import Optional
 
-from employee.models import Employee
-from employee import queries, calculations
-from database.connection import database as db
+import typer
 
-from cli.utils import format_employee_table, format_employee_detail, get_compliance_emoji
+from cli.utils import format_employee_detail, format_employee_table, get_compliance_emoji
+from database.connection import database as db
+from employee import calculations, queries
+from employee.models import Employee
 
 app = typer.Typer(help="Gestion des employés")
 
@@ -19,16 +19,16 @@ def list(
     active_only: bool = typer.Option(False, "--active", help="Uniquement les employés actifs"),
     status: Optional[str] = typer.Option(None, "--status", help="Filtrer par statut (active/inactive)"),
     role: Optional[str] = typer.Option(None, "--role", help="Filtrer par poste"),
-    workspace: Optional[str] = typer.Option(None, "--workspace", help="Filtrer par zone")
+    workspace: Optional[str] = typer.Option(None, "--workspace", help="Filtrer par zone"),
 ):
     """Lister tous les employés avec filtres optionnels."""
     # Build query
     query = Employee.select()
 
     if active_only or status == "active":
-        query = query.where(Employee.current_status == 'active')
+        query = query.where(Employee.current_status == "active")
     elif status == "inactive":
-        query = query.where(Employee.current_status == 'inactive')
+        query = query.where(Employee.current_status == "inactive")
 
     if role is not None and isinstance(role, str):
         query = query.where(Employee.role.contains(role))
@@ -94,24 +94,14 @@ def add(
                 typer.echo("❌ ID WMS requis", err=True)
                 raise typer.Exit(1)
 
-            workspace = questionary.select(
-                "Zone:",
-                choices=["Quai", "Zone A", "Zone B", "Bureau"]
-            ).ask()
+            workspace = questionary.select("Zone:", choices=["Quai", "Zone A", "Zone B", "Bureau"]).ask()
 
-            role = questionary.select(
-                "Poste:",
-                choices=["Cariste", "Préparateur", "Magasinier"]
-            ).ask()
+            role = questionary.select("Poste:", choices=["Cariste", "Préparateur", "Magasinier"]).ask()
 
-            contract_type = questionary.select(
-                "Type de contrat:",
-                choices=["CDI", "CDD", "Intérim"]
-            ).ask()
+            contract_type = questionary.select("Type de contrat:", choices=["CDI", "CDD", "Intérim"]).ask()
 
             entry_date_str = questionary.text(
-                "Date d'entrée (YYYY-MM-DD):",
-                validate=lambda x: len(x) == 10 if x else False
+                "Date d'entrée (YYYY-MM-DD):", validate=lambda x: len(x) == 10 if x else False
             ).ask()
             entry_date = date.fromisoformat(entry_date_str)
 
@@ -125,7 +115,9 @@ def add(
         # Non-interactive mode - validate required fields
         if not all([first_name, last_name, external_id, workspace, role, contract_type, entry_date]):
             typer.echo("❌ Tous les champs sont requis en mode non-interactif", err=True)
-            typer.echo("   Utilisez: --first-name, --last-name, --external-id, --workspace, --role, --contract, --entry-date")
+            typer.echo(
+                "   Utilisez: --first-name, --last-name, --external-id, --workspace, --role, --contract, --entry-date"
+            )
             raise typer.Exit(1)
 
         # Parse date
@@ -152,7 +144,7 @@ def add(
                 role=role,
                 contract_type=contract_type,
                 entry_date=entry_date,
-                current_status='active'
+                current_status="active",
             )
 
         typer.echo("✅ Employé créé avec succès")
@@ -191,7 +183,7 @@ def update(
         changes.append(f"Poste → {role}")
 
     if status is not None and isinstance(status, str):
-        if status not in ['active', 'inactive']:
+        if status not in ["active", "inactive"]:
             typer.echo("❌ Statut doit être 'active' ou 'inactive'", err=True)
             raise typer.Exit(1)
         employee.current_status = status
@@ -216,7 +208,7 @@ def update(
 @app.command()
 def delete(
     employee_id: str = typer.Argument(..., help="ID WMS de l'employé"),
-    yes: bool = typer.Option(False, "--yes", "-y", help="Confirmer sans prompt")
+    yes: bool = typer.Option(False, "--yes", "-y", help="Confirmer sans prompt"),
 ):
     """Supprimer un employé."""
     employee = Employee.get_or_none(Employee.external_id == employee_id)
@@ -229,9 +221,9 @@ def delete(
     if not yes:
         try:
             import questionary
+
             confirm = questionary.confirm(
-                f"Supprimer l'employé {employee.full_name} ({employee_id})?",
-                default=False
+                f"Supprimer l'employé {employee.full_name} ({employee_id})?", default=False
             ).ask()
 
             if not confirm:
@@ -296,7 +288,7 @@ def compliance(employee_id: str = typer.Argument(..., help="ID WMS de l'employé
     if actions:
         typer.echo("\n📋 Actions requises:")
         for action in actions[:5]:  # Limit to 5 actions
-            priority_emoji = "🔴" if action['priority'] == 'urgent' else "🟠" if action['priority'] == 'high' else "🟢"
+            priority_emoji = "🔴" if action["priority"] == "urgent" else "🟠" if action["priority"] == "high" else "🟢"
             typer.echo(f"  {priority_emoji} {action['description']}")
     else:
         typer.echo("\n✅ Aucune action requise")

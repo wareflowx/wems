@@ -1,14 +1,14 @@
 """CACES certification management commands."""
 
-import typer
 from datetime import date
 from pathlib import Path
 from typing import Optional
 
-from employee.models import Employee, Caces
-from database.connection import database as db
+import typer
 
 from cli.utils import format_caces_table
+from database.connection import database as db
+from employee.models import Caces, Employee
 
 app = typer.Typer(help="Gestion des certifications CACES")
 
@@ -61,10 +61,7 @@ def add(
     try:
         with db.atomic():
             caces = Caces.create(
-                employee=employee,
-                kind=kind,
-                completion_date=completion_date,
-                document_path=document_path
+                employee=employee, kind=kind, completion_date=completion_date, document_path=document_path
             )
 
         typer.echo("✅ CACES ajouté")
@@ -82,7 +79,9 @@ def add(
 def update(
     caces_id: int = typer.Argument(..., help="ID du CACES"),
     kind: Optional[str] = typer.Option(None, "--kind", "-k", help="Nouveau type de CACES"),
-    completion_date: Optional[str] = typer.Option(None, "--completion-date", "-d", help="Nouvelle date d'obtention (YYYY-MM-DD)"),
+    completion_date: Optional[str] = typer.Option(
+        None, "--completion-date", "-d", help="Nouvelle date d'obtention (YYYY-MM-DD)"
+    ),
     document: Optional[Path] = typer.Option(None, "--document", help="Nouveau chemin du document"),
 ):
     """Mettre à jour un CACES."""
@@ -131,7 +130,7 @@ def update(
 @app.command()
 def delete(
     caces_id: int = typer.Argument(..., help="ID du CACES"),
-    yes: bool = typer.Option(False, "--yes", "-y", help="Confirmer sans prompt")
+    yes: bool = typer.Option(False, "--yes", "-y", help="Confirmer sans prompt"),
 ):
     """Supprimer un CACES."""
     caces = Caces.get_or_none(Caces.id == caces_id)
@@ -146,10 +145,8 @@ def delete(
     if not yes:
         try:
             import questionary
-            confirm = questionary.confirm(
-                f"Supprimer le CACES {caces.kind} (ID: {caces_id})?",
-                default=False
-            ).ask()
+
+            confirm = questionary.confirm(f"Supprimer le CACES {caces.kind} (ID: {caces_id})?", default=False).ask()
 
             if not confirm:
                 typer.echo("❌ Suppression annulée")
@@ -172,9 +169,7 @@ def delete(
 
 
 @app.command()
-def expiring(
-    days: int = typer.Option(30, "--days", "-d", help="Jours avant expiration")
-):
+def expiring(days: int = typer.Option(30, "--days", "-d", help="Jours avant expiration")):
     """Afficher les CACES expirant bientôt."""
     threshold = date.today()
     cutoff = threshold

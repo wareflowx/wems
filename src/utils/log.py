@@ -1,12 +1,12 @@
 """Logger setup and configuration."""
 
 import logging
-import sys
-from pathlib import Path
-from logging.handlers import RotatingFileHandler
-from datetime import datetime
-import socket
 import os
+import socket
+import sys
+from datetime import datetime
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
 
 def setup_logger(
@@ -14,7 +14,7 @@ def setup_logger(
     level: str = "INFO",
     log_file: Path | None = None,
     max_bytes: int = 5 * 1024 * 1024,  # 5MB
-    backup_count: int = 3
+    backup_count: int = 3,
 ) -> logging.Logger:
     """
     Setup logger with rotating file handler and console output.
@@ -50,8 +50,7 @@ def setup_logger(
 
     # Create formatter
     formatter = logging.Formatter(
-        fmt='%(asctime)s | %(levelname)-8s | %(name)s | %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        fmt="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
 
     # Console handler (always enabled)
@@ -66,12 +65,7 @@ def setup_logger(
         log_file.parent.mkdir(parents=True, exist_ok=True)
 
         # Create rotating file handler
-        file_handler = RotatingFileHandler(
-            log_file,
-            maxBytes=max_bytes,
-            backupCount=backup_count,
-            encoding='utf-8'
-        )
+        file_handler = RotatingFileHandler(log_file, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8")
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
@@ -199,7 +193,7 @@ def log_database_error(logger: logging.Logger, error: Exception, context: str = 
         ... except Exception as e:
         ...     log_database_error(logger, e, "fetching employees")
     """
-    msg = f"Database error"
+    msg = "Database error"
     if context:
         msg += f" ({context})"
     msg += f": {error}"
