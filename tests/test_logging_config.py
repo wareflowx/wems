@@ -253,7 +253,7 @@ class TestGetLogDir:
 
     def test_get_log_dir(self, tmp_path):
         """Test log directory creation."""
-        with patch("utils.logging_config.get_base_dir", return_value=tmp_path):
+        with patch("utils.config.get_base_dir", return_value=tmp_path):
             log_dir = get_log_dir()
             assert log_dir == tmp_path / "logs"
             assert log_dir.exists()
@@ -261,7 +261,7 @@ class TestGetLogDir:
 
     def test_get_log_dir_creates_if_not_exists(self, tmp_path):
         """Test log directory is created if it doesn't exist."""
-        with patch("utils.logging_config.get_base_dir", return_value=tmp_path):
+        with patch("utils.config.get_base_dir", return_value=tmp_path):
             log_dir = get_log_dir()
             assert log_dir.exists()
 
