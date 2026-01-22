@@ -27,10 +27,10 @@ class Employee(Model):
     last_name = CharField()
 
     # Employment Status
-    current_status = CharField()  # Enum: 'active', 'inactive'
-    workspace = CharField()
-    role = CharField()
-    contract_type = CharField()  # Enum: 'CDI', 'CDD', 'Interim', 'Alternance'
+    current_status = CharField(index=True)  # Enum: 'active', 'inactive'
+    workspace = CharField(index=True)
+    role = CharField(index=True)
+    contract_type = CharField(index=True)  # Enum: 'CDI', 'CDD', 'Interim', 'Alternance'
 
     # Employment Dates
     entry_date = DateField()
