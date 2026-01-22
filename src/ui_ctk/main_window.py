@@ -9,6 +9,9 @@ from ui_ctk.constants import (
     NAV_ALERTS,
     NAV_EMPLOYEES,
     NAV_IMPORT,
+    NAV_BACKUPS,
+    DEFAULT_WIDTH,
+    DEFAULT_HEIGHT,
 )
 from ui_ctk.views.base_view import BaseView
 
@@ -74,6 +77,15 @@ class MainWindow(ctk.CTkFrame):
         # Import button
         self.btn_import = ctk.CTkButton(button_container, text=NAV_IMPORT, width=140, command=self.show_import)
         self.btn_import.pack(side="left", padx=5)
+
+        # Backups button
+        self.btn_backups = ctk.CTkButton(
+            button_container,
+            text=NAV_BACKUPS,
+            width=140,
+            command=self.show_backups
+        )
+        self.btn_backups.pack(side="left", padx=5)
 
     def create_view_container(self):
         """Create container for dynamic views."""
@@ -175,6 +187,22 @@ class MainWindow(ctk.CTkFrame):
         except Exception as e:
             print(f"[ERROR] Failed to load import view: {e}")
             self.show_error(f"Failed to load import: {e}")
+
+    def show_backups(self):
+        """Display backup and export management view."""
+        try:
+            from ui_ctk.views.backup_view import BackupView
+            self.switch_view(BackupView)
+            print("[NAV] Showing backup view")
+        except ImportError as e:
+            print(f"[WARN] BackupView not implemented: {e}")
+            # Show placeholder
+            from ui_ctk.views.placeholder import PlaceholderView
+            self.switch_view(PlaceholderView, title="Sauvegardes")
+            print("[NAV] Showing placeholder for backups")
+        except Exception as e:
+            print(f"[ERROR] Failed to load backup view: {e}")
+            self.show_error(f"Failed to load backup view: {e}")
 
     def show_error(self, message: str):
         """Show error message to user."""

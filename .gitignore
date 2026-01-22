@@ -76,6 +76,7 @@ data/
 documents/
 exports/
 logs/
+backups/
 
 # Test files in root directory (ad-hoc tests)
 test_*.py

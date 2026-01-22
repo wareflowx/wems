@@ -75,6 +75,7 @@ DATE_PLACEHOLDER = "JJ/MM/AAAA"
 NAV_EMPLOYEES = "Employés"
 NAV_ALERTS = "Alertes"
 NAV_IMPORT = "Import Excel"
+NAV_BACKUPS = "Sauvegardes"
 
 # Button Labels
 BTN_ADD = "Ajouter"

@@ -27,6 +27,9 @@ from ui_ctk.constants import (
 )
 from ui_ctk.main_window import MainWindow
 
+# Import backup manager for automatic backups
+from utils.backup_manager import BackupManager
+
 
 def setup_customtkinter():
     """Configure CustomTkinter appearance and themes."""
@@ -81,6 +84,37 @@ def setup_database(db_path: str = "employee_manager.db"):
         raise
 
 
+def create_startup_backup(db_path: str = "employee_manager.db"):
+    """
+    Create automatic backup on application startup.
+
+    Args:
+        db_path: Path to database file
+    """
+    db_file = Path(db_path)
+
+    # Only create backup if database exists
+    if not db_file.exists():
+        print("[INFO] No existing database to backup")
+        return
+
+    try:
+        backup_manager = BackupManager(
+            database_path=db_file,
+            backup_dir=Path("backups"),
+            max_backups=30
+        )
+
+        backup_path = backup_manager.create_backup(description="startup")
+        print(f"[OK] Startup backup created: {backup_path.name}")
+        print(f"     Size: {backup_path.stat().st_size / (1024*1024):.2f} MB")
+
+    except Exception as e:
+        # Don't fail application if backup fails
+        print(f"[WARN] Startup backup failed: {e}")
+        print("[INFO] Application continuing without backup")
+
+
 def create_main_window(app: ctk.CTk) -> MainWindow:
     """
     Create and configure main application window.
@@ -113,6 +147,9 @@ def main():
 
     # Step 2: Setup database
     setup_database()
+
+    # Step 2.5: Create startup backup
+    create_startup_backup()
 
     # Step 3: Create root application
     app = ctk.CTk()
