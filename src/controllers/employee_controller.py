@@ -2,10 +2,15 @@
 
 from typing import Dict, Any, Optional, List
 from datetime import date
+import logging
 
 from employee.models import Employee, Caces, MedicalVisit, OnlineTraining
 from employee import queries, calculations
 from peewee import prefetch
+
+from utils.validation import InputValidator, ValidationError
+
+logger = logging.getLogger(__name__)
 
 
 class EmployeeController:
@@ -144,3 +149,75 @@ class EmployeeController:
                          .prefetch(Caces, MedicalVisit, OnlineTraining)
                          .order_by(Employee.last_name, Employee.first_name))
         return employees
+
+    def create_employee(self, **kwargs) -> Employee:
+        """
+        Create new employee with validation.
+
+        Args:
+            **kwargs: Employee data fields
+
+        Returns:
+            Created Employee object
+
+        Raises:
+            ValueError: If validation fails or duplicate external_id
+        """
+        try:
+            # Validate all input data
+            validated_data = InputValidator.validate_employee_data(kwargs)
+
+            # Check for duplicate external_id
+            if Employee.select().where(Employee.external_id == validated_data['external_id']).exists():
+                raise ValueError(f"Employee with external_id '{validated_data['external_id']}' already exists")
+
+            # Create employee with validated data
+            employee = Employee.create(**validated_data)
+
+            logger.info(f"Employee created: {employee.full_name} ({employee.external_id})")
+            return employee
+
+        except ValidationError as e:
+            logger.warning(f"Validation failed: {e}")
+            raise ValueError(f"Validation error - {e.field}: {e.message}")
+
+    def update_employee(self, employee: Employee, **kwargs) -> Employee:
+        """
+        Update employee with validation.
+
+        Args:
+            employee: Existing Employee object
+            **kwargs: Employee data fields to update
+
+        Returns:
+            Updated Employee object
+
+        Raises:
+            ValueError: If validation fails
+        """
+        try:
+            # Validate all input data
+            validated_data = InputValidator.validate_employee_data(kwargs)
+
+            # Check if external_id is being changed and if it conflicts
+            if 'external_id' in validated_data:
+                new_external_id = validated_data['external_id']
+                if new_external_id != employee.external_id:
+                    if Employee.select().where(
+                        (Employee.external_id == new_external_id) &
+                        (Employee.id != employee.id)
+                    ).exists():
+                        raise ValueError(f"Employee with external_id '{new_external_id}' already exists")
+
+            # Update employee fields
+            for key, value in validated_data.items():
+                setattr(employee, key, value)
+
+            employee.save()
+
+            logger.info(f"Employee updated: {employee.full_name} ({employee.external_id})")
+            return employee
+
+        except ValidationError as e:
+            logger.warning(f"Validation failed: {e}")
+            raise ValueError(f"Validation error - {e.field}: {e.message}")

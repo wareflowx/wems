@@ -13,6 +13,7 @@ except ImportError:
 
 from database.connection import database
 from employee.models import Employee
+from utils.validation import InputValidator, ValidationError
 from ui_ctk.constants import (
     CONTRACT_TYPE_CHOICES,
     ROLE_CHOICES,
@@ -428,7 +429,7 @@ class ExcelImporter:
 
     def _validate_row(self, row_num: int, employee_data: Dict[str, Any]) -> Optional[ImportError]:
         """
-        Validate a single row of employee data.
+        Validate a single row of employee data using InputValidator.
 
         Args:
             row_num: Row number (for error reporting)
@@ -437,101 +438,20 @@ class ExcelImporter:
         Returns:
             ImportError if invalid, None if valid
         """
-        # Check required fields
-        if not employee_data.get("first_name"):
+        try:
+            # Use comprehensive validation framework
+            validated_data = InputValidator.validate_employee_data(employee_data)
+            return None
+
+        except ValidationError as e:
+            # Map ValidationError to ImportError
             return ImportError(
                 row_num=row_num,
-                column="First Name",
-                value=None,
-                error_type="required",
-                message="First name is required",
-            )
-
-        if not employee_data.get("last_name"):
-            return ImportError(
-                row_num=row_num, column="Last Name", value=None, error_type="required", message="Last name is required"
-            )
-
-        # Validate status
-        if employee_data.get("current_status") not in ["active", "inactive"]:
-            return ImportError(
-                row_num=row_num,
-                column="Status",
-                value=employee_data.get("current_status"),
+                column=e.field,
+                value=e.value,
                 error_type="validation",
-                message=f"Status must be 'Actif' or 'Inactif', got '{employee_data.get('current_status')}'",
+                message=e.message,
             )
-
-        # Validate workspace
-        if employee_data.get("workspace") not in WORKSPACE_ZONES:
-            return ImportError(
-                row_num=row_num,
-                column="Workspace",
-                value=employee_data.get("workspace"),
-                error_type="validation",
-                message=f"Invalid workspace. Must be one of: {', '.join(WORKSPACE_ZONES)}",
-            )
-
-        # Validate role
-        if employee_data.get("role") not in ROLE_CHOICES:
-            return ImportError(
-                row_num=row_num,
-                column="Role",
-                value=employee_data.get("role"),
-                error_type="validation",
-                message=f"Invalid role. Must be one of: {', '.join(ROLE_CHOICES)}",
-            )
-
-        # Validate contract type
-        if employee_data.get("contract_type") not in CONTRACT_TYPE_CHOICES:
-            return ImportError(
-                row_num=row_num,
-                column="Contract",
-                value=employee_data.get("contract_type"),
-                error_type="validation",
-                message=f"Invalid contract type. Must be one of: {', '.join(CONTRACT_TYPE_CHOICES)}",
-            )
-
-        # Validate entry date
-        if not employee_data.get("entry_date"):
-            return ImportError(
-                row_num=row_num,
-                column="Entry Date",
-                value=None,
-                error_type="required",
-                message="Entry date is required",
-            )
-
-        # Date range validation
-        if employee_data["entry_date"].year < 2000:
-            return ImportError(
-                row_num=row_num,
-                column="Entry Date",
-                value=employee_data["entry_date"],
-                error_type="validation",
-                message="Entry date seems too old (before 2000)",
-            )
-
-        if employee_data["entry_date"] > date.today():
-            return ImportError(
-                row_num=row_num,
-                column="Entry Date",
-                value=employee_data["entry_date"],
-                error_type="validation",
-                message="Entry date cannot be in the future",
-            )
-
-        # Optional fields (email, phone) - less strict
-        if employee_data.get("email") and "@" not in employee_data["email"]:
-            return ImportError(
-                row_num=row_num,
-                column="Email",
-                value=employee_data["email"],
-                error_type="warning",
-                message="Email format looks invalid (will be set to None)",
-            )
-
-        return None
 
     def _check_duplicate_external_id(self, external_id: str) -> Optional[ImportError]:
         """

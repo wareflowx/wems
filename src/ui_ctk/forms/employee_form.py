@@ -8,6 +8,8 @@ import customtkinter as ctk
 
 from employee.constants import EmployeeStatus
 from employee.models import Employee
+from employee.controller import EmployeeController
+from utils.validation import InputValidator, ValidationError
 from ui_ctk.constants import (
     BTN_CANCEL,
     BTN_SAVE,
@@ -365,60 +367,54 @@ class EmployeeFormDialog(BaseFormDialog):
         return False
 
     def save(self):
-        """Save employee to database."""
-        # Validate form
-        is_valid, error_message = self.validate()
+        """Save employee to database with validation."""
+        controller = EmployeeController()
 
-        if not is_valid:
-            self.show_error(error_message)
-            return
+        # Prepare employee data
+        employee_data = {
+            'external_id': f"EMP-{datetime.now().strftime('%Y%m%d%H%M%S')}",  # Generate external_id
+            'first_name': self.first_name_var.get().strip(),
+            'last_name': self.last_name_var.get().strip(),
+            'email': self.email_var.get().strip() or None,
+            'phone': self.phone_var.get().strip() or None,
+            'current_status': 'active' if self.status_var.get() == STATUS_ACTIVE else 'inactive',
+            'workspace': self.workspace_var.get().strip(),
+            'role': self.role_var.get().strip(),
+            'contract_type': self.contract_type_var.get(),
+            'entry_date': self.entry_date_var.get().strip() or None,
+        }
 
         try:
-            # Parse entry date
-            entry_date_str = self.entry_date_var.get().strip()
-            entry_date = datetime.strptime(entry_date_str, DATE_FORMAT).date()
-
-            # Convert status
-            status = EmployeeStatus.ACTIVE if self.status_var.get() == STATUS_ACTIVE else EmployeeStatus.INACTIVE
-
             if self.is_edit_mode:
-                # Update existing employee
-                self.employee.first_name = self.first_name_var.get().strip()
-                self.employee.last_name = self.last_name_var.get().strip()
-                self.employee.email = self.email_var.get().strip() or None
-                self.employee.phone = self.phone_var.get().strip() or None
-                self.employee.current_status = status
-                self.employee.workspace = self.workspace_var.get().strip()
-                self.employee.role = self.role_var.get().strip()
-                self.employee.contract_type = self.contract_type_var.get()
-                self.employee.entry_date = entry_date
-                self.employee.updated_at = datetime.now()
+                # Update existing employee with validation
+                # Keep original external_id
+                employee_data['external_id'] = self.employee.external_id
 
-                self.employee.save()
+                # Update employee
+                self.employee = controller.update_employee(self.employee, **employee_data)
 
                 print(f"[OK] Employee updated: {self.employee.full_name}")
 
             else:
-                # Create new employee
-                employee = Employee.create(
-                    first_name=self.first_name_var.get().strip(),
-                    last_name=self.last_name_var.get().strip(),
-                    email=self.email_var.get().strip() or None,
-                    phone=self.phone_var.get().strip() or None,
-                    current_status=status,
-                    workspace=self.workspace_var.get().strip(),
-                    role=self.role_var.get().strip(),
-                    contract_type=self.contract_type_var.get(),
-                    entry_date=entry_date,
-                )
+                # Create new employee with validation
+                self.employee = controller.create_employee(**employee_data)
 
-                print(f"[OK] Employee created: {employee.full_name}")
+                print(f"[OK] Employee created: {self.employee.full_name}")
 
                 # Store result for parent
-                self.result = employee
+                self.result = self.employee
 
             # Close dialog
             self.destroy()
+
+        except ValueError as e:
+            # Controller wraps ValidationError in ValueError
+            error_msg = str(e)
+            if "Validation error" in error_msg:
+                # Extract user-friendly message
+                error_msg = error_msg.replace("Validation error - ", "").replace(":", " - ")
+            print(f"[ERROR] Validation failed: {error_msg}")
+            self.show_error(error_msg)
 
         except Exception as e:
             error_msg = f"{ERROR_SAVE_EMPLOYEE}: {e}"

@@ -6,6 +6,7 @@ from typing import Optional
 import customtkinter as ctk
 
 from employee.models import MedicalVisit
+from utils.validation import InputValidator, ValidationError
 from ui_ctk.constants import (
     BTN_CANCEL,
     BTN_SAVE,
@@ -363,7 +364,7 @@ class MedicalVisitFormDialog(BaseFormDialog):
         return True, None
 
     def save(self):
-        """Save form data to database."""
+        """Save form data to database with validation."""
         type_label = self.type_dropdown.get()
         date_str = self.visit_date_var.get().strip()
         result_label = self.result_dropdown.get()
@@ -373,33 +374,70 @@ class MedicalVisitFormDialog(BaseFormDialog):
         visit_type = self._get_type_key_from_label(type_label)
         result = self._get_result_key_from_label(result_label)
 
-        # Parse visit date
-        visit_date = self.parse_date(date_str)
-
-        # Calculate expiration date
-        expiration_date = MedicalVisit.calculate_expiration(visit_type, visit_date)
+        # Prepare medical visit data
+        visit_data = {
+            'visit_type': visit_type,
+            'visit_date': date_str,
+            'result': result,
+            'document_path': document_path,
+        }
 
         try:
+            # Validate medical visit data
+            validated_data = InputValidator.validate_medical_visit_data(visit_data)
+
+            # Get validated date
+            visit_date = validated_data['visit_date']
+
+            # Calculate expiration date
+            expiration_date = MedicalVisit.calculate_expiration(
+                validated_data['visit_type'], visit_date
+            )
+
             if self.is_edit_mode:
                 # Update existing visit
-                self.visit.visit_type = visit_type
+                self.visit.visit_type = validated_data['visit_type']
                 self.visit.visit_date = visit_date
                 self.visit.expiration_date = expiration_date
-                self.visit.result = result
-                self.visit.document_path = document_path
+                self.visit.result = validated_data['result']
+                if 'document_path' in validated_data:
+                    self.visit.document_path = validated_data['document_path']
                 self.visit.save()
                 print(f"[OK] Medical visit updated: {visit_type} for {self.employee.full_name}")
             else:
                 # Create new visit
                 self.visit = MedicalVisit.create(
                     employee=self.employee,
-                    visit_type=visit_type,
+                    visit_type=validated_data['visit_type'],
                     visit_date=visit_date,
                     expiration_date=expiration_date,
-                    result=result,
-                    document_path=document_path,
+                    result=validated_data['result'],
+                    document_path=validated_data.get('document_path'),
                 )
                 print(f"[OK] Medical visit created: {visit_type} for {self.employee.full_name}")
 
+        except ValueError as e:
+            # InputValidator may raise ValueError
+            error_msg = str(e)
+            if "Validation error" in error_msg or "Cannot be empty" in error_msg:
+                # Extract user-friendly message
+                error_msg = error_msg.replace("Validation error - ", "").replace(":", " - ")
+            print(f"[ERROR] Validation failed: {error_msg}")
+            self.show_error(error_msg)
+            return  # Don't close dialog on validation error
+
+        except ValidationError as e:
+            # Direct validation error
+            error_msg = f"{e.field}: {e.message}"
+            print(f"[ERROR] Validation failed: {error_msg}")
+            self.show_error(error_msg)
+            return  # Don't close dialog on validation error
+
         except Exception as e:
-            raise Exception(f"{ERROR_SAVE_VISIT}: {str(e)}")
+            error_msg = f"{ERROR_SAVE_VISIT}: {str(e)}"
+            print(f"[ERROR] {error_msg}")
+            self.show_error(error_msg)
+            return  # Don't close dialog on error
+
+        # Close dialog on success
+        self.destroy()

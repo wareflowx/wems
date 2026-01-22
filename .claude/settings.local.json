@@ -8,6 +8,7 @@
       "Bash(find:*)",
       "Bash(uv run python:*)",
       "Bash(tree:*)",
+      "Bash(gh issue view:*)",
       "Bash(git fetch:*)",
       "Bash(git checkout:*)",
       "Bash(gh pr view:*)",
