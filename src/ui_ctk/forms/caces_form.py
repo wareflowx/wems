@@ -6,6 +6,7 @@ from typing import Optional
 import customtkinter as ctk
 
 from employee.models import Caces
+from utils.validation import InputValidator, ValidationError
 from ui_ctk.constants import (
     BTN_CANCEL,
     BTN_SAVE,
@@ -305,36 +306,70 @@ class CacesFormDialog(BaseFormDialog):
         return True, None
 
     def save(self):
-        """Save form data to database."""
+        """Save form data to database with validation."""
         kind = self.kind_var.get().strip()
         completion_str = self.completion_date_var.get().strip()
         document_path = self.document_path_var.get().strip() or None
 
-        # Parse completion date
-        completion_date = self.parse_date(completion_str)
-
-        # Calculate expiration date
-        expiration_date = Caces.calculate_expiration(kind, completion_date)
+        # Prepare CACES data
+        caces_data = {
+            'kind': kind,
+            'completion_date': completion_str,
+            'document_path': document_path,
+        }
 
         try:
+            # Validate CACES data
+            validated_data = InputValidator.validate_caces_data(caces_data)
+
+            # Get validated date
+            completion_date = validated_data['completion_date']
+
+            # Calculate expiration date
+            expiration_date = Caces.calculate_expiration(kind, completion_date)
+
             if self.is_edit_mode:
                 # Update existing CACES
-                self.caces.kind = kind
+                self.caces.kind = validated_data['kind']
                 self.caces.completion_date = completion_date
                 self.caces.expiration_date = expiration_date
-                self.caces.document_path = document_path
+                if 'document_path' in validated_data:
+                    self.caces.document_path = validated_data['document_path']
                 self.caces.save()
                 print(f"[OK] CACES updated: {kind} for {self.employee.full_name}")
             else:
                 # Create new CACES
                 self.caces = Caces.create(
                     employee=self.employee,
-                    kind=kind,
+                    kind=validated_data['kind'],
                     completion_date=completion_date,
                     expiration_date=expiration_date,
-                    document_path=document_path,
+                    document_path=validated_data.get('document_path'),
                 )
                 print(f"[OK] CACES created: {kind} for {self.employee.full_name}")
 
+        except ValueError as e:
+            # InputValidator may raise ValueError
+            error_msg = str(e)
+            if "Validation error" in error_msg or "Cannot be empty" in error_msg:
+                # Extract user-friendly message
+                error_msg = error_msg.replace("Validation error - ", "").replace(":", " - ")
+            print(f"[ERROR] Validation failed: {error_msg}")
+            self.show_error(error_msg)
+            return  # Don't close dialog on validation error
+
+        except ValidationError as e:
+            # Direct validation error
+            error_msg = f"{e.field}: {e.message}"
+            print(f"[ERROR] Validation failed: {error_msg}")
+            self.show_error(error_msg)
+            return  # Don't close dialog on validation error
+
         except Exception as e:
-            raise Exception(f"{ERROR_SAVE_CACES}: {str(e)}")
+            error_msg = f"{ERROR_SAVE_CACES}: {str(e)}"
+            print(f"[ERROR] {error_msg}")
+            self.show_error(error_msg)
+            return  # Don't close dialog on error
+
+        # Close dialog on success
+        self.destroy()
