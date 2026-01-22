@@ -1,0 +1,6 @@
+# Ignore all log files
+*.log
+*.log.*
+
+# Allow keeping .gitignore directory structure
+!.gitignore

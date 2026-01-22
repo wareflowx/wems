@@ -35,6 +35,13 @@ from auth.models import User, create_tables
 from auth.session import get_current_user, is_authenticated
 from ui_ctk.views.login_view import LoginView, create_default_admin
 
+# Import logging system
+from utils.logging_config import setup_logging, get_logger
+from utils.security_logger import log_authentication, log_authorization
+
+# Initialize logger
+logger = get_logger(__name__)
+
 
 def setup_customtkinter():
     """Configure CustomTkinter appearance and themes."""
@@ -48,19 +55,27 @@ def setup_customtkinter():
     print(f"      Theme: {DEFAULT_MODE} mode, {DEFAULT_THEME} theme")
 
 
-def setup_database(db_path: str = "employee_manager.db"):
+def setup_database(db_path: str = None):
     """
     Initialize database connection and create tables.
 
     Args:
-        db_path: Path to SQLite database file
+        db_path: Path to SQLite database file (None = use config/env vars)
     """
-    # Check if database exists
-    db_file = Path(db_path)
+    from utils.config import get_database_path, ensure_database_directory
 
+    # Get database path from config if not specified
+    if db_path is None:
+        ensure_database_directory()
+        db_file = get_database_path()
+        print(f"[INFO] Using database from config/env: {db_file}")
+    else:
+        db_file = Path(db_path)
+
+    # Check if database exists
     if not db_file.exists():
-        print(f"[WARN] Database not found: {db_path}")
-        print(f"[INFO] Creating new database: {db_path}")
+        print(f"[WARN] Database not found: {db_file}")
+        print(f"[INFO] Creating new database: {db_file}")
 
     try:
         # Initialize database
@@ -92,14 +107,20 @@ def setup_database(db_path: str = "employee_manager.db"):
         raise
 
 
-def create_startup_backup(db_path: str = "employee_manager.db"):
+def create_startup_backup(db_path: str = None):
     """
     Create automatic backup on application startup.
 
     Args:
-        db_path: Path to database file
+        db_path: Path to database file (None = use config/env vars)
     """
-    db_file = Path(db_path)
+    from utils.config import get_database_path
+
+    # Get database path from config if not specified
+    if db_path is None:
+        db_file = get_database_path()
+    else:
+        db_file = Path(db_path)
 
     # Only create backup if database exists
     if not db_file.exists():
@@ -159,6 +180,9 @@ def show_login_screen(app: ctk.CTk):
     print(" AUTHENTICATION REQUIRED")
     print("=" * 50)
 
+    # Log authentication requirement
+    logger.info("Authentication required, showing login screen")
+
     # Ensure default admin exists
     admin = create_default_admin()
     if admin:
@@ -167,12 +191,33 @@ def show_login_screen(app: ctk.CTk):
         print(f"       Password: Admin123!")
         print(f"       Email: {admin.email}")
         print(f"\n[WARN] Please change the default password after first login!\n")
+        logger.warning(f"Default admin account created: {admin.username}")
 
     # Create and show login view
-    login_view = LoginView(app, login_success_callback=lambda user: show_main_application(app, user))
+    login_view = LoginView(app, login_success_callback=lambda user: on_login_success(app, user))
     login_view.pack(fill="both", expand=True)
 
     print("[OK] Login screen displayed")
+
+
+def on_login_success(app: ctk.CTk, user: User):
+    """
+    Handle successful user login.
+
+    Args:
+        app: CustomTkinter root application
+        user: Authenticated user
+    """
+    # Log successful authentication
+    log_authentication(
+        "login",
+        user.username,
+        success=True,
+    )
+    logger.info(f"User logged in: {user.username} (role: {user.role})")
+
+    # Show main application
+    show_main_application(app, user)
 
 
 def show_main_application(app: ctk.CTk, user: User):
@@ -210,6 +255,10 @@ def main():
     print(" Employee Management System")
     print("=" * 50)
 
+    # Step 0: Setup logging
+    setup_logging(level="INFO", enable_console=True, enable_file=True)
+    logger.info(f"Starting {APP_NAME} v{APP_VERSION}")
+
     # Step 1: Setup CustomTkinter
     setup_customtkinter()
 
@@ -236,16 +285,23 @@ def main():
     def on_closing():
         """Handle application closing."""
         print("\n[INFO] Shutting down application...")
+        logger.info("Application shutdown requested")
 
         # Log logout if authenticated
         if is_authenticated():
             user = get_current_user()
             print(f"[INFO] Logging out: {user.username}")
+            log_authentication("logout", user.username, success=True)
+            logger.info(f"User logged out: {user.username}")
 
         # Close database connection
         if not database.is_closed():
             database.close()
             print("[OK] Database connection closed")
+            logger.info("Database connection closed")
+
+        # Log application shutdown
+        logger.info(f"{APP_NAME} v{APP_VERSION} shutting down")
 
         # Quit application (will call destroy automatically)
         app.quit()

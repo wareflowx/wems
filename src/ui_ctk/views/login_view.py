@@ -24,6 +24,12 @@ from ui_ctk.constants import (
     APP_TITLE,
 )
 
+# Import logging
+from utils.logging_config import get_logger
+from utils.security_logger import log_authentication
+
+logger = get_logger(__name__)
+
 
 class LoginView(ctk.CTkFrame):
     """
@@ -228,6 +234,10 @@ class LoginView(ctk.CTkFrame):
                 self.show_error(error or "Authentication failed")
                 print(f"[AUTH] Login failed: {error}")
 
+                # Log failed login attempt
+                log_authentication("failed_login", username, success=False)
+                logger.warning(f"Failed login attempt for username: {username}")
+
                 # Clear password for security
                 self.password_var.set("")
 
@@ -235,17 +245,32 @@ class LoginView(ctk.CTkFrame):
             self.show_error(str(e))
             print(f"[AUTH] Account locked: {e}")
 
+            # Log account locked event
+            log_authentication("account_locked", username, success=False, details=str(e))
+            logger.error(f"Account locked for username: {username}")
+
         except InvalidCredentialsError as e:
             self.show_error(str(e))
             print(f"[AUTH] Invalid credentials: {e}")
+
+            # Log invalid credentials
+            log_authentication("failed_login", username, success=False)
+            logger.warning(f"Invalid credentials for username: {username}")
 
         except AuthenticationError as e:
             self.show_error(f"Authentication error: {e}")
             print(f"[AUTH] Authentication error: {e}")
 
+            # Log authentication error
+            log_authentication("failed_login", username, success=False, details=str(e))
+            logger.error(f"Authentication error for username: {username}: {e}")
+
         except Exception as e:
             self.show_error("An error occurred during login")
             print(f"[ERROR] Login error: {e}")
+
+            # Log unexpected error
+            logger.error(f"Unexpected login error for username {username}: {e}")
 
         finally:
             # Re-enable login button
