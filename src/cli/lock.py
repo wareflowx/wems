@@ -1,11 +1,12 @@
 """Application lock management commands."""
 
-import typer
-import socket
 import os
+import socket
 
-from lock.models import AppLock
+import typer
+
 from lock.manager import LockManager
+from lock.models import AppLock
 
 app = typer.Typer(help="Gestion du verrou applicatif")
 
@@ -13,7 +14,7 @@ app = typer.Typer(help="Gestion du verrou applicatif")
 def get_process_info():
     """Get current process identification."""
     hostname = socket.gethostname()
-    username = os.environ.get('USERNAME') or os.environ.get('USER')
+    username = os.environ.get("USERNAME") or os.environ.get("USER")
     pid = os.getpid()
     return hostname, username, pid
 
@@ -33,7 +34,7 @@ def status():
         raise typer.Exit(0)
 
     # Check if we own the lock
-    we_own_it = (active_lock.hostname == hostname and active_lock.process_id == pid)
+    we_own_it = active_lock.hostname == hostname and active_lock.process_id == pid
 
     typer.echo("🔒 État du verrou applicatif")
     typer.echo("")
@@ -50,6 +51,7 @@ def status():
 
     # Calculate age
     from datetime import datetime
+
     heartbeat_age = (datetime.now() - active_lock.last_heartbeat).total_seconds()
     lock_age = (datetime.now() - active_lock.locked_at).total_seconds()
 
@@ -118,7 +120,7 @@ def release():
         typer.echo("ℹ️  Aucun verrou actif")
         raise typer.Exit(0)
 
-    we_own_it = (active_lock.hostname == hostname and active_lock.process_id == pid)
+    we_own_it = active_lock.hostname == hostname and active_lock.process_id == pid
 
     if not we_own_it:
         typer.echo("❌ Vous ne possédez pas ce verrou")
@@ -152,7 +154,7 @@ def refresh():
         typer.echo("❌ Aucun verrou actif")
         raise typer.Exit(1)
 
-    we_own_it = (active_lock.hostname == hostname and active_lock.process_id == pid)
+    we_own_it = active_lock.hostname == hostname and active_lock.process_id == pid
 
     if not we_own_it:
         typer.echo("❌ Vous ne possédez pas ce verrou")
@@ -164,6 +166,7 @@ def refresh():
 
         if success:
             from datetime import datetime
+
             typer.echo(f"✅ Heartbeat rafraîchi: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         else:
             typer.echo("❌ Échec du rafraîchissement")
@@ -200,6 +203,7 @@ def info():
     if active_lock.is_stale:
         typer.echo("  🔴 Statut: PÉRIMÉ (STALE)")
         from datetime import datetime
+
         age = (datetime.now() - active_lock.last_heartbeat).total_seconds()
         typer.echo(f"     Dernier heartbeat il y a {int(age)} secondes")
     else:

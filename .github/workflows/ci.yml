@@ -1,1 +1,70 @@
+<<<<<<< HEAD
 404: Not Found
+=======
+name: CI
+
+on:
+  push:
+    branches: ['**']  # All branches
+  pull_request:
+    branches: ['**']  # All PRs
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Ruff linter
+        run: |
+          uv run ruff check . --output-format=github
+
+      - name: Ruff formatter check
+        run: |
+          uv run ruff format --check .
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Run tests
+        run: |
+          uv run pytest --cov=src --cov-report=xml --cov-report=term-missing --ignore=tests/test_ui --ignore=tests/test_main_window.py
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+>>>>>>> origin/main

@@ -1,29 +1,25 @@
 """CACES certification form dialog for creating and editing certifications."""
 
-import customtkinter as ctk
 from datetime import date, datetime
-from pathlib import Path
 from typing import Optional
-import re
+
+import customtkinter as ctk
 
 from employee.models import Caces
-from ui_ctk.forms.base_form import BaseFormDialog
 from ui_ctk.constants import (
+    BTN_CANCEL,
+    BTN_SAVE,
     CACES_TYPES,
     DATE_FORMAT,
     DATE_PLACEHOLDER,
-    BTN_SAVE,
-    BTN_CANCEL,
-    FORM_CACES_TYPE,
+    ERROR_SAVE_CACES,
     FORM_CACES_COMPLETION_DATE,
     FORM_CACES_DOCUMENT,
-    VALIDATION_DATE_REQUIRED,
+    FORM_CACES_TYPE,
     VALIDATION_DATE_INVALID,
-    VALIDATION_REQUIRED_FIELD,
-    SUCCESS_CACES_CREATED,
-    SUCCESS_CACES_UPDATED,
-    ERROR_SAVE_CACES,
+    VALIDATION_DATE_REQUIRED,
 )
+from ui_ctk.forms.base_form import BaseFormDialog
 
 
 class CacesFormDialog(BaseFormDialog):
@@ -48,7 +44,7 @@ class CacesFormDialog(BaseFormDialog):
         """
         self.employee = employee
         self.caces = caces
-        self.is_edit_mode = (caces is not None)
+        self.is_edit_mode = caces is not None
 
         # Form variables
         self.kind_var = ctk.StringVar()
@@ -77,20 +73,11 @@ class CacesFormDialog(BaseFormDialog):
 
         # Form title
         title = "Edit CACES Certification" if self.is_edit_mode else "New CACES Certification"
-        title_label = ctk.CTkLabel(
-            form_frame,
-            text=title,
-            font=("Arial", 18, "bold")
-        )
+        title_label = ctk.CTkLabel(form_frame, text=title, font=("Arial", 18, "bold"))
         title_label.pack(pady=(0, 20))
 
         # Required fields notice
-        notice_label = ctk.CTkLabel(
-            form_frame,
-            text="* Required fields",
-            font=("Arial", 10),
-            text_color="gray"
-        )
+        notice_label = ctk.CTkLabel(form_frame, text="* Required fields", font=("Arial", 10), text_color="gray")
         notice_label.pack(pady=(0, 10))
 
         # Form fields
@@ -110,11 +97,7 @@ class CacesFormDialog(BaseFormDialog):
         type_row.pack(fill="x", pady=5)
         self.create_required_field_label(type_row, FORM_CACES_TYPE)
         self.kind_dropdown = ctk.CTkOptionMenu(
-            type_row,
-            values=CACES_TYPES,
-            variable=self.kind_var,
-            command=self.on_kind_changed,
-            width=300
+            type_row, values=CACES_TYPES, variable=self.kind_var, command=self.on_kind_changed, width=300
         )
         self.kind_dropdown.pack(side="right", padx=10)
 
@@ -123,10 +106,7 @@ class CacesFormDialog(BaseFormDialog):
         date_row.pack(fill="x", pady=5)
         self.create_required_field_label(date_row, FORM_CACES_COMPLETION_DATE)
         self.date_entry = ctk.CTkEntry(
-            date_row,
-            placeholder_text=DATE_PLACEHOLDER,
-            textvariable=self.completion_date_var,
-            width=300
+            date_row, placeholder_text=DATE_PLACEHOLDER, textvariable=self.completion_date_var, width=300
         )
         self.date_entry.pack(side="right", padx=10)
 
@@ -134,32 +114,19 @@ class CacesFormDialog(BaseFormDialog):
         exp_row = ctk.CTkFrame(field_container, fg_color="transparent")
         exp_row.pack(fill="x", pady=5)
         exp_label = ctk.CTkLabel(
-            exp_row,
-            text="Expiration Date (auto-calculated):",
-            font=("Arial", 11),
-            width=180,
-            anchor="w"
+            exp_row, text="Expiration Date (auto-calculated):", font=("Arial", 11), width=180, anchor="w"
         )
         exp_label.pack(side="left", padx=10)
 
         self.expiration_label = ctk.CTkLabel(
-            exp_row,
-            text="Select type and date first",
-            font=("Arial", 11),
-            text_color="gray"
+            exp_row, text="Select type and date first", font=("Arial", 11), text_color="gray"
         )
         self.expiration_label.pack(side="left", padx=10)
 
         # Document Path (optional)
         doc_row = ctk.CTkFrame(field_container, fg_color="transparent")
         doc_row.pack(fill="x", pady=5)
-        doc_label = ctk.CTkLabel(
-            doc_row,
-            text=f"{FORM_CACES_DOCUMENT}:",
-            font=("Arial", 11),
-            width=180,
-            anchor="w"
-        )
+        doc_label = ctk.CTkLabel(doc_row, text=f"{FORM_CACES_DOCUMENT}:", font=("Arial", 11), width=180, anchor="w")
         doc_label.pack(side="left", padx=10)
 
         doc_frame = ctk.CTkFrame(doc_row, fg_color="transparent")
@@ -169,16 +136,11 @@ class CacesFormDialog(BaseFormDialog):
             doc_frame,
             placeholder_text="Optional - Path to certificate PDF",
             textvariable=self.document_path_var,
-            width=200
+            width=200,
         )
         self.doc_entry.pack(side="left")
 
-        browse_btn = ctk.CTkButton(
-            doc_frame,
-            text="Browse...",
-            width=80,
-            command=self.browse_document
-        )
+        browse_btn = ctk.CTkButton(doc_frame, text="Browse...", width=80, command=self.browse_document)
         browse_btn.pack(side="left", padx=5)
 
         # Info text
@@ -188,19 +150,13 @@ class CacesFormDialog(BaseFormDialog):
             info_row,
             text="ℹ️ R489-1A/1B/3/4: 5 years validity | R489-5: 10 years validity",
             font=("Arial", 9),
-            text_color="gray"
+            text_color="gray",
         )
         info_text.pack(padx=10)
 
     def create_required_field_label(self, parent, text: str):
         """Create a required field label with asterisk."""
-        label = ctk.CTkLabel(
-            parent,
-            text=f"{text}: *",
-            font=("Arial", 11),
-            width=180,
-            anchor="w"
-        )
+        label = ctk.CTkLabel(parent, text=f"{text}: *", font=("Arial", 11), width=180, anchor="w")
         label.pack(side="left", padx=10)
 
     def create_buttons(self, parent):
@@ -208,20 +164,10 @@ class CacesFormDialog(BaseFormDialog):
         button_frame = ctk.CTkFrame(parent, fg_color="transparent")
         button_frame.pack(fill="x", pady=(20, 0))
 
-        cancel_btn = ctk.CTkButton(
-            button_frame,
-            text=BTN_CANCEL,
-            width=120,
-            command=self.on_cancel
-        )
+        cancel_btn = ctk.CTkButton(button_frame, text=BTN_CANCEL, width=120, command=self.on_cancel)
         cancel_btn.pack(side="right", padx=5)
 
-        save_btn = ctk.CTkButton(
-            button_frame,
-            text=BTN_SAVE,
-            width=120,
-            command=self.on_save
-        )
+        save_btn = ctk.CTkButton(button_frame, text=BTN_SAVE, width=120, command=self.on_save)
         save_btn.pack(side="right", padx=5)
 
     def on_kind_changed(self, value):
@@ -238,26 +184,20 @@ class CacesFormDialog(BaseFormDialog):
                 completion_date = self.parse_date(date_str)
                 if completion_date:
                     expiration = Caces.calculate_expiration(kind, completion_date)
-                    self.expiration_label.configure(
-                        text=expiration.strftime(DATE_FORMAT),
-                        text_color="black"
-                    )
+                    self.expiration_label.configure(text=expiration.strftime(DATE_FORMAT), text_color="black")
                     return
             except Exception:
                 pass
 
-        self.expiration_label.configure(
-            text="Select type and date first",
-            text_color="gray"
-        )
+        self.expiration_label.configure(text="Select type and date first", text_color="gray")
 
     def browse_document(self):
         """Open file browser to select document."""
         try:
             from tkinter import filedialog
+
             file_path = filedialog.askopenfilename(
-                title="Select CACES Certificate PDF",
-                filetypes=[("PDF files", "*.pdf"), ("All files", "*.*")]
+                title="Select CACES Certificate PDF", filetypes=[("PDF files", "*.pdf"), ("All files", "*.*")]
             )
             if file_path:
                 self.document_path_var.set(file_path)
@@ -354,7 +294,7 @@ class CacesFormDialog(BaseFormDialog):
                     kind=kind,
                     completion_date=completion_date,
                     expiration_date=expiration_date,
-                    document_path=document_path
+                    document_path=document_path,
                 )
                 print(f"[OK] CACES created: {kind} for {self.employee.full_name}")
 

@@ -1,8 +1,6 @@
 """Base class for all views."""
 
 import customtkinter as ctk
-from typing import Callable, Optional
-from ui_ctk.constants import APP_TITLE
 
 
 class BaseView(ctk.CTkFrame):
@@ -38,7 +36,7 @@ class BaseView(ctk.CTkFrame):
         current = widget
         while current is not None:
             # Check if this is the MainWindow (has switch_view method)
-            if hasattr(current, 'switch_view') and hasattr(current, 'show_employee_list'):
+            if hasattr(current, "switch_view") and hasattr(current, "show_employee_list"):
                 return current
             # Move up to parent
             current = current.master
@@ -46,11 +44,7 @@ class BaseView(ctk.CTkFrame):
 
     def create_header(self):
         """Create view header with title."""
-        header = ctk.CTkLabel(
-            self,
-            text=self.title,
-            font=("Arial", 20, "bold")
-        )
+        header = ctk.CTkLabel(self, text=self.title, font=("Arial", 20, "bold"))
         header.pack(pady=10)
 
     def refresh(self):
@@ -71,15 +65,15 @@ class BaseView(ctk.CTkFrame):
 
     def show_employee_list(self):
         """Navigate to employee list view."""
-        if self.master_window and hasattr(self.master_window, 'show_employee_list'):
+        if self.master_window and hasattr(self.master_window, "show_employee_list"):
             self.master_window.show_employee_list()
 
     def show_alerts(self):
         """Navigate to alerts view."""
-        if self.master_window and hasattr(self.master_window, 'show_alerts'):
+        if self.master_window and hasattr(self.master_window, "show_alerts"):
             self.master_window.show_alerts()
 
     def show_import(self):
         """Navigate to import view."""
-        if self.master_window and hasattr(self.master_window, 'show_import'):
+        if self.master_window and hasattr(self.master_window, "show_import"):
             self.master_window.show_import()

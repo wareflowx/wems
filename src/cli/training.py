@@ -1,14 +1,14 @@
 """Online training management commands."""
 
-import typer
 from datetime import date
 from pathlib import Path
 from typing import Optional
 
-from employee.models import Employee, OnlineTraining
-from database.connection import database as db
+import typer
 
 from cli.utils import format_training_table
+from database.connection import database as db
+from employee.models import Employee, OnlineTraining
 
 app = typer.Typer(help="Gestion des formations en ligne")
 
@@ -76,7 +76,7 @@ def add(
                 title=title,
                 completion_date=completion_date_obj,
                 validity_months=None if permanent else validity_months,
-                certificate_path=certificate_path
+                certificate_path=certificate_path,
             )
 
         typer.echo("✅ Formation ajoutée")
@@ -98,7 +98,9 @@ def add(
 def update(
     training_id: int = typer.Argument(..., help="ID de la formation"),
     title: Optional[str] = typer.Option(None, "--title", "-t", help="Nouveau titre"),
-    completion_date: Optional[str] = typer.Option(None, "--completion-date", "-d", help="Nouvelle date de complétion (YYYY-MM-DD)"),
+    completion_date: Optional[str] = typer.Option(
+        None, "--completion-date", "-d", help="Nouvelle date de complétion (YYYY-MM-DD)"
+    ),
     validity_months: Optional[int] = typer.Option(None, "--validity-months", "-m", help="Nouveaux mois de validité"),
     permanent: bool = typer.Option(False, "--permanent", help="Rendre permanente"),
     certificate: Optional[Path] = typer.Option(None, "--certificate", help="Nouveau chemin du certificat"),
@@ -157,7 +159,7 @@ def update(
 @app.command()
 def delete(
     training_id: int = typer.Argument(..., help="ID de la formation"),
-    yes: bool = typer.Option(False, "--yes", "-y", help="Confirmer sans prompt")
+    yes: bool = typer.Option(False, "--yes", "-y", help="Confirmer sans prompt"),
 ):
     """Supprimer une formation."""
     training = OnlineTraining.get_or_none(OnlineTraining.id == training_id)
@@ -172,9 +174,9 @@ def delete(
     if not yes:
         try:
             import questionary
+
             confirm = questionary.confirm(
-                f"Supprimer la formation '{training.title}' (ID: {training_id})?",
-                default=False
+                f"Supprimer la formation '{training.title}' (ID: {training_id})?", default=False
             ).ask()
 
             if not confirm:
@@ -198,9 +200,7 @@ def delete(
 
 
 @app.command()
-def expiring(
-    days: int = typer.Option(30, "--days", "-d", help="Jours avant expiration")
-):
+def expiring(days: int = typer.Option(30, "--days", "-d", help="Jours avant expiration")):
     """Afficher les formations expirant bientôt."""
     threshold = date.today()
 

@@ -1,9 +1,10 @@
 """Business logic calculations for Employee entity."""
 
 from datetime import date
+
 from dateutil.relativedelta import relativedelta
 
-from employee.models import Employee, Caces, MedicalVisit, OnlineTraining
+from employee.models import Employee
 
 
 def calculate_seniority(employee: Employee) -> int:
@@ -76,7 +77,7 @@ def calculate_compliance_score(employee: Employee) -> dict:
         if caces.is_expired:
             items.append(-100)
             expired_count += 1
-        elif caces.status == 'critical':
+        elif caces.status == "critical":
             items.append(-30)
             critical_count += 1
         else:
@@ -117,11 +118,11 @@ def calculate_compliance_score(employee: Employee) -> dict:
     if total_items == 0:
         # No compliance items - return neutral score
         return {
-            'score': 100,
-            'total_items': 0,
-            'valid_items': 0,
-            'critical_items': 0,
-            'expired_items': 0,
+            "score": 100,
+            "total_items": 0,
+            "valid_items": 0,
+            "critical_items": 0,
+            "expired_items": 0,
         }
 
     # Calculate average score and normalize to 0-100
@@ -135,11 +136,11 @@ def calculate_compliance_score(employee: Employee) -> dict:
     normalized_score = max(0, min(100, normalized_score))
 
     return {
-        'score': normalized_score,
-        'total_items': total_items,
-        'valid_items': valid_count,
-        'critical_items': critical_count,
-        'expired_items': expired_count,
+        "score": normalized_score,
+        "total_items": total_items,
+        "valid_items": valid_count,
+        "critical_items": critical_count,
+        "expired_items": expired_count,
     }
 
 
@@ -168,7 +169,7 @@ def get_compliance_status(employee: Employee) -> str:
         if caces.is_expired:
             has_expired = True
             break
-        elif caces.status == 'critical':
+        elif caces.status == "critical":
             has_critical = True
 
     # Check medical visits
@@ -192,11 +193,11 @@ def get_compliance_status(employee: Employee) -> str:
                 has_critical = True
 
     if has_expired:
-        return 'critical'
+        return "critical"
     elif has_critical:
-        return 'warning'
+        return "warning"
     else:
-        return 'compliant'
+        return "compliant"
 
 
 def calculate_next_actions(employee: Employee) -> list:
@@ -231,54 +232,58 @@ def calculate_next_actions(employee: Employee) -> list:
         days = caces.days_until_expiration
 
         if days < 0:
-            priority = 'urgent'
+            priority = "urgent"
             description = f"Renew CACES {caces.kind} (expired {abs(days)} days ago)"
         elif days < 30:
-            priority = 'urgent'
+            priority = "urgent"
             description = f"Renew CACES {caces.kind} (expires in {days} days)"
         elif days < 60:
-            priority = 'high'
+            priority = "high"
             description = f"Plan CACES {caces.kind} renewal (expires in {days} days)"
         elif days < 90:
-            priority = 'normal'
+            priority = "normal"
             description = f"CACES {caces.kind} expires in {days} days"
         else:
             continue  # No action needed yet
 
-        actions.append({
-            'type': 'caces',
-            'priority': priority,
-            'item': caces,
-            'description': description,
-            'days_until': days,
-        })
+        actions.append(
+            {
+                "type": "caces",
+                "priority": priority,
+                "item": caces,
+                "description": description,
+                "days_until": days,
+            }
+        )
 
     # Check medical visits
     for visit in employee.medical_visits:
         days = visit.days_until_expiration
 
         if days < 0:
-            priority = 'urgent'
+            priority = "urgent"
             description = f"Schedule medical visit (expired {abs(days)} days ago)"
         elif days < 30:
-            priority = 'urgent'
+            priority = "urgent"
             description = f"Schedule medical visit (expires in {days} days)"
         elif days < 60:
-            priority = 'high'
+            priority = "high"
             description = f"Plan medical visit (expires in {days} days)"
         elif days < 90:
-            priority = 'normal'
+            priority = "normal"
             description = f"Medical visit expires in {days} days"
         else:
             continue
 
-        actions.append({
-            'type': 'medical',
-            'priority': priority,
-            'item': visit,
-            'description': description,
-            'days_until': days,
-        })
+        actions.append(
+            {
+                "type": "medical",
+                "priority": priority,
+                "item": visit,
+                "description": description,
+                "days_until": days,
+            }
+        )
 
     # Check trainings
     for training in employee.trainings:
@@ -291,31 +296,33 @@ def calculate_next_actions(employee: Employee) -> list:
             continue
 
         if days < 0:
-            priority = 'urgent'
+            priority = "urgent"
             description = f"Renew training '{training.title}' (expired {abs(days)} days ago)"
         elif days < 30:
-            priority = 'urgent'
+            priority = "urgent"
             description = f"Renew training '{training.title}' (expires in {days} days)"
         elif days < 60:
-            priority = 'high'
+            priority = "high"
             description = f"Plan training renewal '{training.title}' (expires in {days} days)"
         elif days < 90:
-            priority = 'normal'
+            priority = "normal"
             description = f"Training '{training.title}' expires in {days} days"
         else:
             continue
 
-        actions.append({
-            'type': 'training',
-            'priority': priority,
-            'item': training,
-            'description': description,
-            'days_until': days,
-        })
+        actions.append(
+            {
+                "type": "training",
+                "priority": priority,
+                "item": training,
+                "description": description,
+                "days_until": days,
+            }
+        )
 
     # Sort by priority (urgent > high > normal) then by days_until
-    priority_order = {'urgent': 0, 'high': 1, 'normal': 2}
-    actions.sort(key=lambda a: (priority_order[a['priority']], a['days_until']))
+    priority_order = {"urgent": 0, "high": 1, "normal": 2}
+    actions.sort(key=lambda a: (priority_order[a["priority"]], a["days_until"]))
 
     return actions
 

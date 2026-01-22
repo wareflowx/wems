@@ -13,18 +13,19 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import customtkinter as ctk
+
 from database.connection import database, init_database
-from employee.models import Employee, Caces, MedicalVisit, OnlineTraining
-from ui_ctk.main_window import MainWindow
+from employee.models import Caces, Employee, MedicalVisit, OnlineTraining
 from ui_ctk.constants import (
     APP_NAME,
     APP_TITLE,
     APP_VERSION,
-    DEFAULT_WIDTH,
     DEFAULT_HEIGHT,
-    DEFAULT_THEME,
     DEFAULT_MODE,
+    DEFAULT_THEME,
+    DEFAULT_WIDTH,
 )
+from ui_ctk.main_window import MainWindow
 
 # Import backup manager for automatic backups
 from utils.backup_manager import BackupManager
@@ -38,7 +39,7 @@ def setup_customtkinter():
     # Set color theme (blue, green, dark-blue)
     ctk.set_default_color_theme(DEFAULT_THEME)
 
-    print(f"[OK] CustomTkinter configured")
+    print("[OK] CustomTkinter configured")
     print(f"      Theme: {DEFAULT_MODE} mode, {DEFAULT_THEME} theme")
 
 
@@ -65,15 +66,18 @@ def setup_database(db_path: str = "employee_manager.db"):
             database.connect()
 
         # Create tables if they don't exist
-        database.create_tables([
-            Employee,
-            Caces,
-            MedicalVisit,
-            OnlineTraining,
-        ], safe=True)
+        database.create_tables(
+            [
+                Employee,
+                Caces,
+                MedicalVisit,
+                OnlineTraining,
+            ],
+            safe=True,
+        )
 
         print(f"[OK] Database initialized: {db_path}")
-        print(f"      Connected successfully")
+        print("      Connected successfully")
 
     except Exception as e:
         print(f"[ERROR] Database initialization failed: {e}")
@@ -125,7 +129,7 @@ def create_main_window(app: ctk.CTk) -> MainWindow:
     window = MainWindow(app)
     window.pack(fill="both", expand=True)
 
-    print(f"[OK] Main window created")
+    print("[OK] Main window created")
     print(f"      Size: {DEFAULT_WIDTH}x{DEFAULT_HEIGHT}")
 
     return window
@@ -155,7 +159,7 @@ def main():
     # Set minimum window size
     app.minsize(DEFAULT_WIDTH, DEFAULT_HEIGHT)
 
-    print(f"[OK] Application window created")
+    print("[OK] Application window created")
 
     # Step 4: Create main window with navigation
     main_window = create_main_window(app)

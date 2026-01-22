@@ -1,16 +1,16 @@
 """Employee data models using Peewee ORM."""
 
 import uuid
-from peewee import *
 from datetime import date, datetime, timedelta
+
 from dateutil.relativedelta import relativedelta
+from peewee import *
 
 from database.connection import database
 from employee.constants import (
-    EmployeeStatus,
-    ContractType,
     CACES_VALIDITY_YEARS,
     VISIT_VALIDITY_YEARS,
+    EmployeeStatus,
 )
 
 
@@ -38,13 +38,17 @@ class Employee(Model):
     # Optional
     avatar_path = CharField(null=True)
 
+    # Contact Information
+    phone = CharField(null=True)
+    email = CharField(null=True)
+
     # Metadata
     created_at = DateTimeField(default=datetime.now)
     updated_at = DateTimeField(default=datetime.now)
 
     class Meta:
         database = database
-        table_name = 'employees'
+        table_name = "employees"
 
     # ========== COMPUTED PROPERTIES ==========
 
@@ -97,33 +101,22 @@ class Employee(Model):
 
     def add_caces(self, kind: str, completion_date: date, document_path: str):
         """Create a CACES certification for this employee."""
-        return Caces.create(
-            employee=self,
-            kind=kind,
-            completion_date=completion_date,
-            document_path=document_path
-        )
+        return Caces.create(employee=self, kind=kind, completion_date=completion_date, document_path=document_path)
 
-    def add_medical_visit(self, visit_type: str, visit_date: date,
-                         result: str, document_path: str):
+    def add_medical_visit(self, visit_type: str, visit_date: date, result: str, document_path: str):
         """Create a medical visit record for this employee."""
         return MedicalVisit.create(
-            employee=self,
-            visit_type=visit_type,
-            visit_date=visit_date,
-            result=result,
-            document_path=document_path
+            employee=self, visit_type=visit_type, visit_date=visit_date, result=result, document_path=document_path
         )
 
-    def add_training(self, title: str, completion_date: date,
-                    validity_months: int, certificate_path: str):
+    def add_training(self, title: str, completion_date: date, validity_months: int, certificate_path: str):
         """Create an online training record for this employee."""
         return OnlineTraining.create(
             employee=self,
             title=title,
             completion_date=completion_date,
             validity_months=validity_months,
-            certificate_path=certificate_path
+            certificate_path=certificate_path,
         )
 
     # ========== HOOKS ==========
@@ -131,10 +124,12 @@ class Employee(Model):
     def before_save(self):
         """Validation logic using Peewee hooks."""
         from .validators import (
-            ValidationError as ModelValidationError,
-            validate_external_id,
-            validate_entry_date,
             UniqueValidator,
+            validate_entry_date,
+            validate_external_id,
+        )
+        from .validators import (
+            ValidationError as ModelValidationError,
         )
 
         # Validate external_id format if provided
@@ -183,7 +178,7 @@ class Caces(Model):
     """
 
     id = UUIDField(primary_key=True, default=uuid.uuid4)
-    employee = ForeignKeyField(Employee, backref='caces', on_delete='CASCADE')
+    employee = ForeignKeyField(Employee, backref="caces", on_delete="CASCADE")
 
     # Certification Details
     kind = CharField()  # e.g., 'R489-1A', 'R489-1B', 'R489-3', 'R489-4'
@@ -200,9 +195,9 @@ class Caces(Model):
 
     class Meta:
         database = database
-        table_name = 'caces'
+        table_name = "caces"
         indexes = (
-            (('employee', 'expiration_date'), False),  # Composite index
+            (("employee", "expiration_date"), False),  # Composite index
         )
 
     # ========== COMPUTED PROPERTIES ==========
@@ -265,10 +260,7 @@ class Caces(Model):
     def expiring_soon(cls, days=30):
         """Get all certifications expiring within X days."""
         threshold = date.today() + timedelta(days=days)
-        return cls.select().where(
-            (cls.expiration_date <= threshold) &
-            (cls.expiration_date >= date.today())
-        )
+        return cls.select().where((cls.expiration_date <= threshold) & (cls.expiration_date >= date.today()))
 
     @classmethod
     def expired(cls):
@@ -284,7 +276,8 @@ class Caces(Model):
 
     def before_save(self):
         """Validate CACES kind and calculate expiration_date before saving."""
-        from .validators import ValidationError as ModelValidationError, validate_caces_kind
+        from .validators import ValidationError as ModelValidationError
+        from .validators import validate_caces_kind
 
         # Validate CACES kind
         if self.kind:
@@ -295,10 +288,7 @@ class Caces(Model):
 
         # Calculate expiration_date if not set
         if not self.expiration_date:
-            self.expiration_date = self.calculate_expiration(
-                self.kind,
-                self.completion_date
-            )
+            self.expiration_date = self.calculate_expiration(self.kind, self.completion_date)
 
     def save(self, force_insert=False, only=None):
         """Override save to calculate expiration_date automatically."""
@@ -314,7 +304,7 @@ class MedicalVisit(Model):
     """
 
     id = UUIDField(primary_key=True, default=uuid.uuid4)
-    employee = ForeignKeyField(Employee, backref='medical_visits', on_delete='CASCADE')
+    employee = ForeignKeyField(Employee, backref="medical_visits", on_delete="CASCADE")
 
     # Visit Details
     visit_type = CharField()  # 'initial', 'periodic', 'recovery'
@@ -334,10 +324,8 @@ class MedicalVisit(Model):
 
     class Meta:
         database = database
-        table_name = 'medical_visits'
-        indexes = (
-            (('employee', 'expiration_date'), False),
-        )
+        table_name = "medical_visits"
+        indexes = ((("employee", "expiration_date"), False),)
 
     # ========== COMPUTED PROPERTIES ==========
 
@@ -354,12 +342,12 @@ class MedicalVisit(Model):
     @property
     def is_fit(self) -> bool:
         """Convenience: is employee fit for work?"""
-        return self.result == 'fit'
+        return self.result == "fit"
 
     @property
     def has_restrictions(self) -> bool:
         """Does this visit have work restrictions?"""
-        return self.result == 'fit_with_restrictions'
+        return self.result == "fit_with_restrictions"
 
     # ========== CLASS METHODS ==========
 
@@ -389,41 +377,30 @@ class MedicalVisit(Model):
     def expiring_soon(cls, days=30):
         """Get medical visits expiring within X days."""
         threshold = date.today() + timedelta(days=days)
-        return cls.select().where(
-            (cls.expiration_date <= threshold) &
-            (cls.expiration_date >= date.today())
-        )
+        return cls.select().where((cls.expiration_date <= threshold) & (cls.expiration_date >= date.today()))
 
     @classmethod
     def unfit_employees(cls):
         """Get employees with unfit medical visits."""
-        return (Employee
-                .select(Employee, cls)
-                .join(cls)
-                .where(cls.result == 'unfit'))
+        return Employee.select(Employee, cls).join(cls).where(cls.result == "unfit")
 
     # ========== HOOKS ==========
 
     def before_save(self):
         """Validate visit consistency and calculate expiration_date before saving."""
-        from .validators import ValidationError as ModelValidationError, validate_medical_visit_consistency
+        from .validators import ValidationError as ModelValidationError
+        from .validators import validate_medical_visit_consistency
 
         # Validate visit type and result consistency
         if self.visit_type and self.result:
             try:
-                self.visit_type, self.result = validate_medical_visit_consistency(
-                    self.visit_type,
-                    self.result
-                )
+                self.visit_type, self.result = validate_medical_visit_consistency(self.visit_type, self.result)
             except ModelValidationError as e:
                 raise ValueError(str(e))
 
         # Calculate expiration_date if not set
         if not self.expiration_date:
-            self.expiration_date = self.calculate_expiration(
-                self.visit_type,
-                self.visit_date
-            )
+            self.expiration_date = self.calculate_expiration(self.visit_type, self.visit_date)
 
     def save(self, force_insert=False, only=None):
         """Override save to calculate expiration_date automatically."""
@@ -439,7 +416,7 @@ class OnlineTraining(Model):
     """
 
     id = UUIDField(primary_key=True, default=uuid.uuid4)
-    employee = ForeignKeyField(Employee, backref='trainings', on_delete='CASCADE')
+    employee = ForeignKeyField(Employee, backref="trainings", on_delete="CASCADE")
 
     # Training Details
     title = CharField()
@@ -459,10 +436,8 @@ class OnlineTraining(Model):
 
     class Meta:
         database = database
-        table_name = 'online_trainings'
-        indexes = (
-            (('employee', 'expiration_date'), False),
-        )
+        table_name = "online_trainings"
+        indexes = ((("employee", "expiration_date"), False),)
 
     # ========== COMPUTED PROPERTIES ==========
 
@@ -526,9 +501,9 @@ class OnlineTraining(Model):
         """Get trainings expiring within X days."""
         threshold = date.today() + timedelta(days=days)
         return cls.select().where(
-            (cls.expiration_date.is_null(False)) &
-            (cls.expiration_date <= threshold) &
-            (cls.expiration_date >= date.today())
+            (cls.expiration_date.is_null(False))
+            & (cls.expiration_date <= threshold)
+            & (cls.expiration_date >= date.today())
         )
 
     @classmethod
@@ -541,10 +516,7 @@ class OnlineTraining(Model):
     def before_save(self):
         """Calculate expiration_date before saving if not set."""
         if self.expiration_date is None and self.validity_months is not None:
-            self.expiration_date = self.calculate_expiration(
-                self.completion_date,
-                self.validity_months
-            )
+            self.expiration_date = self.calculate_expiration(self.completion_date, self.validity_months)
 
     def save(self, force_insert=False, only=None):
         """Override save to calculate expiration_date automatically."""

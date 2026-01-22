@@ -1,35 +1,36 @@
 """Employee form dialog for creating and editing employees."""
 
-import customtkinter as ctk
+import re
 from datetime import date, datetime
 from typing import Optional
-import re
 
-from employee.models import Employee
+import customtkinter as ctk
+
 from employee.constants import EmployeeStatus
-from ui_ctk.forms.base_form import BaseFormDialog
+from employee.models import Employee
 from ui_ctk.constants import (
-    STATUS_ACTIVE,
-    STATUS_INACTIVE,
+    BTN_CANCEL,
+    BTN_SAVE,
     CONTRACT_TYPE_CHOICES,
-    ROLE_CHOICES,
-    WORKSPACE_ZONES,
     DATE_FORMAT,
     DATE_PLACEHOLDER,
-    BTN_SAVE,
-    BTN_CANCEL,
+    ERROR_SAVE_EMPLOYEE,
+    ROLE_CHOICES,
+    STATUS_ACTIVE,
+    STATUS_INACTIVE,
+    VALIDATION_DATE_FUTURE,
+    VALIDATION_DATE_INVALID,
+    VALIDATION_DATE_REQUIRED,
+    VALIDATION_DATE_TOO_OLD,
+    VALIDATION_EMAIL_INVALID,
     VALIDATION_FIRST_NAME_REQUIRED,
     VALIDATION_LAST_NAME_REQUIRED,
-    VALIDATION_WORKSPACE_REQUIRED,
-    VALIDATION_ROLE_REQUIRED,
-    VALIDATION_EMAIL_INVALID,
     VALIDATION_PHONE_INVALID,
-    VALIDATION_DATE_REQUIRED,
-    VALIDATION_DATE_INVALID,
-    VALIDATION_DATE_FUTURE,
-    VALIDATION_DATE_TOO_OLD,
-    ERROR_SAVE_EMPLOYEE,
+    VALIDATION_ROLE_REQUIRED,
+    VALIDATION_WORKSPACE_REQUIRED,
+    WORKSPACE_ZONES,
 )
+from ui_ctk.forms.base_form import BaseFormDialog
 
 
 class EmployeeFormDialog(BaseFormDialog):
@@ -54,7 +55,7 @@ class EmployeeFormDialog(BaseFormDialog):
         """
         # Determine mode
         self.employee = employee
-        self.is_edit_mode = (employee is not None)
+        self.is_edit_mode = employee is not None
 
         # Set title
         if self.is_edit_mode:
@@ -88,20 +89,11 @@ class EmployeeFormDialog(BaseFormDialog):
 
         # Form title
         title = "Modifier un Employé" if self.is_edit_mode else "Nouvel Employé"
-        title_label = ctk.CTkLabel(
-            form_frame,
-            text=title,
-            font=("Arial", 18, "bold")
-        )
+        title_label = ctk.CTkLabel(form_frame, text=title, font=("Arial", 18, "bold"))
         title_label.pack(pady=(0, 20))
 
         # Required fields notice
-        notice_label = ctk.CTkLabel(
-            form_frame,
-            text="* Champs obligatoires",
-            font=("Arial", 10),
-            text_color="gray"
-        )
+        notice_label = ctk.CTkLabel(form_frame, text="* Champs obligatoires", font=("Arial", 10), text_color="gray")
         notice_label.pack(pady=(0, 10))
 
         # Form fields
@@ -157,20 +149,11 @@ class EmployeeFormDialog(BaseFormDialog):
         container.pack(side="left", fill="both", expand=True, padx=5)
 
         # Label with required indicator
-        label_widget = ctk.CTkLabel(
-            container,
-            text=f"{label} *",
-            font=("Arial", 11, "bold"),
-            anchor="w"
-        )
+        label_widget = ctk.CTkLabel(container, text=f"{label} *", font=("Arial", 11, "bold"), anchor="w")
         label_widget.pack(fill="x", pady=(5, 2))
 
         # Entry
-        entry = ctk.CTkEntry(
-            container,
-            placeholder_text=placeholder,
-            textvariable=variable
-        )
+        entry = ctk.CTkEntry(container, placeholder_text=placeholder, textvariable=variable)
         entry.pack(fill="x", pady=(0, 5))
 
     def create_optional_field(self, parent, label: str, variable: ctk.StringVar, placeholder: str, column: int):
@@ -180,20 +163,11 @@ class EmployeeFormDialog(BaseFormDialog):
         container.pack(side="left", fill="both", expand=True, padx=5)
 
         # Label
-        label_widget = ctk.CTkLabel(
-            container,
-            text=label,
-            font=("Arial", 11),
-            anchor="w"
-        )
+        label_widget = ctk.CTkLabel(container, text=label, font=("Arial", 11), anchor="w")
         label_widget.pack(fill="x", pady=(5, 2))
 
         # Entry
-        entry = ctk.CTkEntry(
-            container,
-            placeholder_text=placeholder,
-            textvariable=variable
-        )
+        entry = ctk.CTkEntry(container, placeholder_text=placeholder, textvariable=variable)
         entry.pack(fill="x", pady=(0, 5))
 
     def create_status_dropdown(self, parent, label: str, variable: ctk.StringVar, column: int):
@@ -203,21 +177,11 @@ class EmployeeFormDialog(BaseFormDialog):
         container.pack(side="left", fill="both", expand=True, padx=5)
 
         # Label
-        label_widget = ctk.CTkLabel(
-            container,
-            text=f"{label} *",
-            font=("Arial", 11, "bold"),
-            anchor="w"
-        )
+        label_widget = ctk.CTkLabel(container, text=f"{label} *", font=("Arial", 11, "bold"), anchor="w")
         label_widget.pack(fill="x", pady=(5, 2))
 
         # Dropdown
-        dropdown = ctk.CTkOptionMenu(
-            container,
-            values=[STATUS_ACTIVE, STATUS_INACTIVE],
-            variable=variable,
-            width=200
-        )
+        dropdown = ctk.CTkOptionMenu(container, values=[STATUS_ACTIVE, STATUS_INACTIVE], variable=variable, width=200)
         dropdown.pack(fill="x", pady=(0, 5))
 
     def create_workspace_dropdown(self, parent, label: str, variable: ctk.StringVar, column: int):
@@ -227,21 +191,11 @@ class EmployeeFormDialog(BaseFormDialog):
         container.pack(side="left", fill="both", expand=True, padx=5)
 
         # Label
-        label_widget = ctk.CTkLabel(
-            container,
-            text=f"{label} *",
-            font=("Arial", 11, "bold"),
-            anchor="w"
-        )
+        label_widget = ctk.CTkLabel(container, text=f"{label} *", font=("Arial", 11, "bold"), anchor="w")
         label_widget.pack(fill="x", pady=(5, 2))
 
         # Dropdown
-        dropdown = ctk.CTkOptionMenu(
-            container,
-            values=WORKSPACE_ZONES,
-            variable=variable,
-            width=200
-        )
+        dropdown = ctk.CTkOptionMenu(container, values=WORKSPACE_ZONES, variable=variable, width=200)
         dropdown.pack(fill="x", pady=(0, 5))
 
     def create_role_dropdown(self, parent, label: str, variable: ctk.StringVar, column: int):
@@ -251,21 +205,11 @@ class EmployeeFormDialog(BaseFormDialog):
         container.pack(side="left", fill="both", expand=True, padx=5)
 
         # Label
-        label_widget = ctk.CTkLabel(
-            container,
-            text=f"{label} *",
-            font=("Arial", 11, "bold"),
-            anchor="w"
-        )
+        label_widget = ctk.CTkLabel(container, text=f"{label} *", font=("Arial", 11, "bold"), anchor="w")
         label_widget.pack(fill="x", pady=(5, 2))
 
         # Dropdown
-        dropdown = ctk.CTkOptionMenu(
-            container,
-            values=ROLE_CHOICES,
-            variable=variable,
-            width=200
-        )
+        dropdown = ctk.CTkOptionMenu(container, values=ROLE_CHOICES, variable=variable, width=200)
         dropdown.pack(fill="x", pady=(0, 5))
 
     def create_contract_dropdown(self, parent, label: str, variable: ctk.StringVar, column: int):
@@ -275,21 +219,11 @@ class EmployeeFormDialog(BaseFormDialog):
         container.pack(side="left", fill="both", expand=True, padx=5)
 
         # Label
-        label_widget = ctk.CTkLabel(
-            container,
-            text=f"{label} *",
-            font=("Arial", 11, "bold"),
-            anchor="w"
-        )
+        label_widget = ctk.CTkLabel(container, text=f"{label} *", font=("Arial", 11, "bold"), anchor="w")
         label_widget.pack(fill="x", pady=(5, 2))
 
         # Dropdown
-        dropdown = ctk.CTkOptionMenu(
-            container,
-            values=CONTRACT_TYPE_CHOICES,
-            variable=variable,
-            width=200
-        )
+        dropdown = ctk.CTkOptionMenu(container, values=CONTRACT_TYPE_CHOICES, variable=variable, width=200)
         dropdown.pack(fill="x", pady=(0, 5))
 
     def create_date_field(self, parent, label: str, variable: ctk.StringVar, column: int):
@@ -299,29 +233,15 @@ class EmployeeFormDialog(BaseFormDialog):
         container.pack(side="left", fill="both", expand=True, padx=5)
 
         # Label
-        label_widget = ctk.CTkLabel(
-            container,
-            text=f"{label} *",
-            font=("Arial", 11, "bold"),
-            anchor="w"
-        )
+        label_widget = ctk.CTkLabel(container, text=f"{label} *", font=("Arial", 11, "bold"), anchor="w")
         label_widget.pack(fill="x", pady=(5, 2))
 
         # Date entry
-        date_entry = ctk.CTkEntry(
-            container,
-            placeholder_text=DATE_PLACEHOLDER,
-            textvariable=variable
-        )
+        date_entry = ctk.CTkEntry(container, placeholder_text=DATE_PLACEHOLDER, textvariable=variable)
         date_entry.pack(fill="x", pady=(0, 5))
 
         # Format hint
-        hint_label = ctk.CTkLabel(
-            container,
-            text=f"Format: {DATE_FORMAT}",
-            font=("Arial", 9),
-            text_color="gray"
-        )
+        hint_label = ctk.CTkLabel(container, text=f"Format: {DATE_FORMAT}", font=("Arial", 9), text_color="gray")
         hint_label.pack(anchor="w")
 
     def create_buttons(self, parent):
@@ -331,22 +251,11 @@ class EmployeeFormDialog(BaseFormDialog):
         button_frame.pack(fill="x", pady=(20, 0))
 
         # Cancel button
-        cancel_btn = ctk.CTkButton(
-            button_frame,
-            text=BTN_CANCEL,
-            width=120,
-            command=self.cancel,
-            fg_color="gray"
-        )
+        cancel_btn = ctk.CTkButton(button_frame, text=BTN_CANCEL, width=120, command=self.cancel, fg_color="gray")
         cancel_btn.pack(side="right", padx=5)
 
         # Save button
-        save_btn = ctk.CTkButton(
-            button_frame,
-            text=BTN_SAVE,
-            width=120,
-            command=self.save
-        )
+        save_btn = ctk.CTkButton(button_frame, text=BTN_SAVE, width=120, command=self.save)
         save_btn.pack(side="right", padx=5)
 
     def load_employee_data(self):
@@ -433,7 +342,7 @@ class EmployeeFormDialog(BaseFormDialog):
         Returns:
             True if valid, False otherwise
         """
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         return re.match(pattern, email) is not None
 
     def validate_phone(self, phone: str) -> bool:
@@ -500,7 +409,7 @@ class EmployeeFormDialog(BaseFormDialog):
                     workspace=self.workspace_var.get().strip(),
                     role=self.role_var.get().strip(),
                     contract_type=self.contract_type_var.get(),
-                    entry_date=entry_date
+                    entry_date=entry_date,
                 )
 
                 print(f"[OK] Employee created: {employee.full_name}")
@@ -525,6 +434,7 @@ class EmployeeFormDialog(BaseFormDialog):
         """Show error message to user."""
         try:
             import tkinter.messagebox as messagebox
+
             messagebox.showerror("Erreur de validation", message)
         except:
             print(f"[ERROR] {message}")

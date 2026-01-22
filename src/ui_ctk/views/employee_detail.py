@@ -1,41 +1,42 @@
 """Employee detail view with certifications and visits."""
 
-import customtkinter as ctk
 from datetime import date
 
-from employee.models import Employee, Caces, MedicalVisit
-from ui_ctk.views.base_view import BaseView
+import customtkinter as ctk
+
+from employee.models import Caces, Employee, MedicalVisit
 from ui_ctk.constants import (
-    STATUS_ACTIVE,
-    STATUS_INACTIVE,
-    DATE_FORMAT,
-    COLOR_SUCCESS,
-    COLOR_WARNING,
+    BTN_ADD,
+    BTN_BACK,
+    BTN_DELETE,
+    BTN_EDIT,
     COLOR_CRITICAL,
     COLOR_INACTIVE,
-    BTN_BACK,
-    BTN_EDIT,
-    BTN_DELETE,
-    BTN_ADD,
-    SECTION_INFO,
-    SECTION_CACES,
-    SECTION_MEDICAL,
-    SECTION_TRAININGS,
+    COLOR_SUCCESS,
+    COLOR_WARNING,
+    CONFIRM_DELETE_CACES,
+    CONFIRM_DELETE_EMPLOYEE,
+    CONFIRM_DELETE_VISIT,
+    CONFIRM_DELETE_WARNING,
+    DATE_FORMAT,
     EMPTY_NO_CACES,
     EMPTY_NO_VISITS,
-    EXPIRATION_STATUS_VALID,
+    ERROR_DELETE_CACES,
+    ERROR_DELETE_EMPLOYEE,
+    ERROR_DELETE_VISIT,
+    EXPIRATION_STATUS_EXPIRED,
     EXPIRATION_STATUS_SOON,
     EXPIRATION_STATUS_URGENT,
-    EXPIRATION_STATUS_EXPIRED,
-    CONFIRM_DELETE_EMPLOYEE,
-    CONFIRM_DELETE_WARNING,
-    CONFIRM_DELETE_CACES,
-    CONFIRM_DELETE_VISIT,
-    ERROR_DELETE_EMPLOYEE,
-    ERROR_DELETE_CACES,
-    ERROR_DELETE_VISIT,
+    EXPIRATION_STATUS_VALID,
+    SECTION_CACES,
+    SECTION_INFO,
+    SECTION_MEDICAL,
+    SECTION_TRAININGS,
+    STATUS_ACTIVE,
+    STATUS_INACTIVE,
     VISIT_TYPES,
 )
+from ui_ctk.views.base_view import BaseView
 
 
 class EmployeeDetailView(BaseView):
@@ -77,51 +78,28 @@ class EmployeeDetailView(BaseView):
         header_frame.pack_propagate(False)
 
         # Back button
-        back_btn = ctk.CTkButton(
-            header_frame,
-            text=f"← {BTN_BACK}",
-            width=100,
-            command=self.go_back
-        )
+        back_btn = ctk.CTkButton(header_frame, text=f"← {BTN_BACK}", width=100, command=self.go_back)
         back_btn.pack(side="left", padx=10)
 
         # Employee name
-        name_label = ctk.CTkLabel(
-            header_frame,
-            text=self.employee.full_name,
-            font=("Arial", 18, "bold")
-        )
+        name_label = ctk.CTkLabel(header_frame, text=self.employee.full_name, font=("Arial", 18, "bold"))
         name_label.pack(side="left", padx=20)
 
         # Status badge
         status_text = STATUS_ACTIVE if self.employee.is_active else STATUS_INACTIVE
         status_color = COLOR_SUCCESS if self.employee.is_active else COLOR_INACTIVE
-        status_label = ctk.CTkLabel(
-            header_frame,
-            text=status_text,
-            font=("Arial", 12, "bold"),
-            text_color=status_color
-        )
+        status_label = ctk.CTkLabel(header_frame, text=status_text, font=("Arial", 12, "bold"), text_color=status_color)
         status_label.pack(side="left", padx=10)
 
         # Action buttons
         action_frame = ctk.CTkFrame(header_frame, fg_color="transparent")
         action_frame.pack(side="right", padx=10)
 
-        edit_btn = ctk.CTkButton(
-            action_frame,
-            text=f"✏️ {BTN_EDIT}",
-            width=120,
-            command=self.edit_employee
-        )
+        edit_btn = ctk.CTkButton(action_frame, text=f"✏️ {BTN_EDIT}", width=120, command=self.edit_employee)
         edit_btn.pack(side="left", padx=5)
 
         delete_btn = ctk.CTkButton(
-            action_frame,
-            text=f"🗑️ {BTN_DELETE}",
-            width=120,
-            command=self.delete_employee,
-            fg_color=COLOR_CRITICAL
+            action_frame, text=f"🗑️ {BTN_DELETE}", width=120, command=self.delete_employee, fg_color=COLOR_CRITICAL
         )
         delete_btn.pack(side="left", padx=5)
 
@@ -150,11 +128,7 @@ class EmployeeDetailView(BaseView):
         section.pack(fill="x", pady=(10, 5))
 
         # Section header
-        header = ctk.CTkLabel(
-            section,
-            text=f"👤 {SECTION_INFO}",
-            font=("Arial", 14, "bold")
-        )
+        header = ctk.CTkLabel(section, text=f"👤 {SECTION_INFO}", font=("Arial", 14, "bold"))
         header.pack(pady=10, padx=10, anchor="w")
 
         # Info grid
@@ -184,22 +158,11 @@ class EmployeeDetailView(BaseView):
         row.pack(fill="x", padx=10, pady=5)
 
         # Label
-        label_widget = ctk.CTkLabel(
-            row,
-            text=label,
-            font=("Arial", 11),
-            anchor="w",
-            width=150
-        )
+        label_widget = ctk.CTkLabel(row, text=label, font=("Arial", 11), anchor="w", width=150)
         label_widget.pack(side="left", padx=10)
 
         # Value
-        value_widget = ctk.CTkLabel(
-            row,
-            text=value,
-            font=("Arial", 11),
-            anchor="w"
-        )
+        value_widget = ctk.CTkLabel(row, text=value, font=("Arial", 11), anchor="w")
         value_widget.pack(side="left", padx=10)
 
     def create_caces_section(self, parent):
@@ -212,19 +175,10 @@ class EmployeeDetailView(BaseView):
         header_frame = ctk.CTkFrame(section, fg_color="transparent")
         header_frame.pack(fill="x", padx=10, pady=10)
 
-        header = ctk.CTkLabel(
-            header_frame,
-            text=f"🔧 {SECTION_CACES}",
-            font=("Arial", 14, "bold")
-        )
+        header = ctk.CTkLabel(header_frame, text=f"🔧 {SECTION_CACES}", font=("Arial", 14, "bold"))
         header.pack(side="left")
 
-        add_btn = ctk.CTkButton(
-            header_frame,
-            text=f"+ {BTN_ADD}",
-            width=100,
-            command=self.add_caces
-        )
+        add_btn = ctk.CTkButton(header_frame, text=f"+ {BTN_ADD}", width=100, command=self.add_caces)
         add_btn.pack(side="right")
 
         # Load CACES
@@ -236,11 +190,7 @@ class EmployeeDetailView(BaseView):
                 self.create_caces_item(section, caces)
         else:
             # Empty message
-            empty_label = ctk.CTkLabel(
-                section,
-                text=EMPTY_NO_CACES,
-                text_color="gray"
-            )
+            empty_label = ctk.CTkLabel(section, text=EMPTY_NO_CACES, text_color="gray")
             empty_label.pack(padx=10, pady=(0, 10))
 
     def create_caces_item(self, parent, caces: Caces):
@@ -250,22 +200,12 @@ class EmployeeDetailView(BaseView):
         item.pack(fill="x", padx=10, pady=5)
 
         # Type and date
-        type_label = ctk.CTkLabel(
-            item,
-            text=f"{caces.kind}",
-            font=("Arial", 12, "bold"),
-            anchor="w"
-        )
+        type_label = ctk.CTkLabel(item, text=f"{caces.kind}", font=("Arial", 12, "bold"), anchor="w")
         type_label.pack(side="left", padx=10, pady=5)
 
         # Expiration info
         expiration_text = f"Expire le {caces.expiration_date.strftime(DATE_FORMAT)}"
-        expiration_label = ctk.CTkLabel(
-            item,
-            text=expiration_text,
-            font=("Arial", 11),
-            anchor="w"
-        )
+        expiration_label = ctk.CTkLabel(item, text=expiration_text, font=("Arial", 11), anchor="w")
         expiration_label.pack(side="left", padx=10)
 
         # Status badge
@@ -283,32 +223,18 @@ class EmployeeDetailView(BaseView):
             status_text = EXPIRATION_STATUS_VALID
             status_color = COLOR_SUCCESS
 
-        status_label = ctk.CTkLabel(
-            item,
-            text=status_text,
-            font=("Arial", 10, "bold"),
-            text_color=status_color
-        )
+        status_label = ctk.CTkLabel(item, text=status_text, font=("Arial", 10, "bold"), text_color=status_color)
         status_label.pack(side="left", padx=10)
 
         # Actions
         action_frame = ctk.CTkFrame(item, fg_color="transparent")
         action_frame.pack(side="right", padx=10)
 
-        edit_btn = ctk.CTkButton(
-            action_frame,
-            text="✏️",
-            width=40,
-            command=lambda: self.edit_caces(caces)
-        )
+        edit_btn = ctk.CTkButton(action_frame, text="✏️", width=40, command=lambda: self.edit_caces(caces))
         edit_btn.pack(side="left", padx=2)
 
         delete_btn = ctk.CTkButton(
-            action_frame,
-            text="🗑️",
-            width=40,
-            command=lambda: self.delete_caces(caces),
-            fg_color=COLOR_CRITICAL
+            action_frame, text="🗑️", width=40, command=lambda: self.delete_caces(caces), fg_color=COLOR_CRITICAL
         )
         delete_btn.pack(side="left", padx=2)
 
@@ -322,19 +248,10 @@ class EmployeeDetailView(BaseView):
         header_frame = ctk.CTkFrame(section, fg_color="transparent")
         header_frame.pack(fill="x", padx=10, pady=10)
 
-        header = ctk.CTkLabel(
-            header_frame,
-            text=f"🏥 {SECTION_MEDICAL}",
-            font=("Arial", 14, "bold")
-        )
+        header = ctk.CTkLabel(header_frame, text=f"🏥 {SECTION_MEDICAL}", font=("Arial", 14, "bold"))
         header.pack(side="left")
 
-        add_btn = ctk.CTkButton(
-            header_frame,
-            text=f"+ {BTN_ADD}",
-            width=100,
-            command=self.add_medical_visit
-        )
+        add_btn = ctk.CTkButton(header_frame, text=f"+ {BTN_ADD}", width=100, command=self.add_medical_visit)
         add_btn.pack(side="right")
 
         # Load visits
@@ -346,11 +263,7 @@ class EmployeeDetailView(BaseView):
                 self.create_medical_item(section, visit)
         else:
             # Empty message
-            empty_label = ctk.CTkLabel(
-                section,
-                text=EMPTY_NO_VISITS,
-                text_color="gray"
-            )
+            empty_label = ctk.CTkLabel(section, text=EMPTY_NO_VISITS, text_color="gray")
             empty_label.pack(padx=10, pady=(0, 10))
 
     def create_medical_item(self, parent, visit: MedicalVisit):
@@ -360,33 +273,18 @@ class EmployeeDetailView(BaseView):
         item.pack(fill="x", padx=10, pady=5)
 
         # Type and date
-        type_label = ctk.CTkLabel(
-            item,
-            text=f"{visit.visit_type}",
-            font=("Arial", 12, "bold"),
-            anchor="w"
-        )
+        type_label = ctk.CTkLabel(item, text=f"{visit.visit_type}", font=("Arial", 12, "bold"), anchor="w")
         type_label.pack(side="left", padx=10, pady=5)
 
         # Date
         date_text = f"Visite du {visit.visit_date.strftime(DATE_FORMAT)}"
-        date_label = ctk.CTkLabel(
-            item,
-            text=date_text,
-            font=("Arial", 11),
-            anchor="w"
-        )
+        date_label = ctk.CTkLabel(item, text=date_text, font=("Arial", 11), anchor="w")
         date_label.pack(side="left", padx=10)
 
         # Expiration information
         if visit.expiration_date:
             exp_text = f"Expiration: {visit.expiration_date.strftime(DATE_FORMAT)}"
-            exp_label = ctk.CTkLabel(
-                item,
-                text=exp_text,
-                font=("Arial", 11),
-                anchor="w"
-            )
+            exp_label = ctk.CTkLabel(item, text=exp_text, font=("Arial", 11), anchor="w")
             exp_label.pack(side="left", padx=10)
 
             # Status badge based on expiration
@@ -404,32 +302,18 @@ class EmployeeDetailView(BaseView):
                 status_text = EXPIRATION_STATUS_VALID
                 status_color = COLOR_SUCCESS
 
-            status_label = ctk.CTkLabel(
-                item,
-                text=status_text,
-                font=("Arial", 10, "bold"),
-                text_color=status_color
-            )
+            status_label = ctk.CTkLabel(item, text=status_text, font=("Arial", 10, "bold"), text_color=status_color)
             status_label.pack(side="left", padx=10)
 
         # Actions
         action_frame = ctk.CTkFrame(item, fg_color="transparent")
         action_frame.pack(side="right", padx=10)
 
-        edit_btn = ctk.CTkButton(
-            action_frame,
-            text="✏️",
-            width=40,
-            command=lambda: self.edit_medical_visit(visit)
-        )
+        edit_btn = ctk.CTkButton(action_frame, text="✏️", width=40, command=lambda: self.edit_medical_visit(visit))
         edit_btn.pack(side="left", padx=2)
 
         delete_btn = ctk.CTkButton(
-            action_frame,
-            text="🗑️",
-            width=40,
-            command=lambda: self.delete_medical_visit(visit),
-            fg_color=COLOR_CRITICAL
+            action_frame, text="🗑️", width=40, command=lambda: self.delete_medical_visit(visit), fg_color=COLOR_CRITICAL
         )
         delete_btn.pack(side="left", padx=2)
 
@@ -443,19 +327,11 @@ class EmployeeDetailView(BaseView):
         header_frame = ctk.CTkFrame(section, fg_color="transparent")
         header_frame.pack(fill="x", padx=10, pady=10)
 
-        header = ctk.CTkLabel(
-            header_frame,
-            text=f"📚 {SECTION_TRAININGS}",
-            font=("Arial", 14, "bold")
-        )
+        header = ctk.CTkLabel(header_frame, text=f"📚 {SECTION_TRAININGS}", font=("Arial", 14, "bold"))
         header.pack(side="left")
 
         # Placeholder for future implementation
-        placeholder_label = ctk.CTkLabel(
-            section,
-            text="Fonctionnalité à venir",
-            text_color="gray"
-        )
+        placeholder_label = ctk.CTkLabel(section, text="Fonctionnalité à venir", text_color="gray")
         placeholder_label.pack(padx=10, pady=(0, 10))
 
     # ===== Action Methods =====
@@ -498,8 +374,7 @@ class EmployeeDetailView(BaseView):
 
             # Confirm deletion
             confirm = messagebox.askyesno(
-                "Confirmer la suppression",
-                f"{CONFIRM_DELETE_EMPLOYEE}\n\n{CONFIRM_DELETE_WARNING}"
+                "Confirmer la suppression", f"{CONFIRM_DELETE_EMPLOYEE}\n\n{CONFIRM_DELETE_WARNING}"
             )
 
             if confirm:
@@ -572,8 +447,7 @@ class EmployeeDetailView(BaseView):
 
             # Confirm deletion
             confirm = messagebox.askyesno(
-                "Confirm Deletion",
-                f"{CONFIRM_DELETE_CACES}\n\nType: {caces.kind}\nEmployee: {self.employee.full_name}"
+                "Confirm Deletion", f"{CONFIRM_DELETE_CACES}\n\nType: {caces.kind}\nEmployee: {self.employee.full_name}"
             )
 
             if confirm:
@@ -631,7 +505,7 @@ class EmployeeDetailView(BaseView):
             # Confirm deletion
             confirm = messagebox.askyesno(
                 "Confirm Deletion",
-                f"{CONFIRM_DELETE_VISIT}\n\nType: {visit_type_label}\nDate: {visit.visit_date.strftime(DATE_FORMAT)}\nEmployee: {self.employee.full_name}"
+                f"{CONFIRM_DELETE_VISIT}\n\nType: {visit_type_label}\nDate: {visit.visit_date.strftime(DATE_FORMAT)}\nEmployee: {self.employee.full_name}",
             )
 
             if confirm:
@@ -650,6 +524,7 @@ class EmployeeDetailView(BaseView):
         """Show error message to user."""
         try:
             import tkinter.messagebox as messagebox
+
             messagebox.showerror("Erreur", message)
         except:
             print(f"[ERROR] {message}")
@@ -658,6 +533,7 @@ class EmployeeDetailView(BaseView):
         """Show info message to user."""
         try:
             import tkinter.messagebox as messagebox
+
             messagebox.showinfo("Information", message)
         except:
             print(f"[INFO] {message}")

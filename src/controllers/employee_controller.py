@@ -65,25 +65,25 @@ class EmployeeController:
         caces_valid = sum(1 for c in caces if not c.is_expired)
         caces_score = min(caces_valid * 30, 30) if caces else 0
 
-        medical_valid = sum(1 for v in visits if not v.is_expired and v.result == 'fit')
+        medical_valid = sum(1 for v in visits if not v.is_expired and v.result == "fit")
         medical_score = min(medical_valid * 30, 30) if visits else 0
 
         training_valid = sum(1 for t in trainings if not t.is_expired)
         training_score = min(training_valid * 40, 40) if trainings else 0
 
         breakdown = {
-            'caces': caces_score,
-            'medical': medical_score,
-            'training': training_score,
+            "caces": caces_score,
+            "medical": medical_score,
+            "training": training_score,
         }
 
         return {
-            'employee': emp,
-            'compliance_score': score_data['score'],
-            'score_breakdown': breakdown,
-            'caces_list': caces,
-            'medical_visits': visits,
-            'trainings': trainings,
+            "employee": emp,
+            "compliance_score": score_data["score"],
+            "score_breakdown": breakdown,
+            "caces_list": caces,
+            "medical_visits": visits,
+            "trainings": trainings,
         }
 
     def get_all_employees(self) -> list:

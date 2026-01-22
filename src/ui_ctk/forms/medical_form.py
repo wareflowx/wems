@@ -1,33 +1,30 @@
 """Medical visit form dialog for creating and editing medical visits."""
 
-import customtkinter as ctk
 from datetime import date, datetime
-from pathlib import Path
 from typing import Optional
 
+import customtkinter as ctk
+
 from employee.models import MedicalVisit
-from ui_ctk.forms.base_form import BaseFormDialog
 from ui_ctk.constants import (
-    VISIT_TYPE_CHOICES,
-    VISIT_RESULT_CHOICES,
-    VISIT_TYPES,
-    VISIT_RESULTS,
+    BTN_CANCEL,
+    BTN_SAVE,
     DATE_FORMAT,
     DATE_PLACEHOLDER,
-    BTN_SAVE,
-    BTN_CANCEL,
-    FORM_MEDICAL_TYPE,
-    FORM_MEDICAL_DATE,
-    FORM_MEDICAL_RESULT,
-    FORM_MEDICAL_EXPIRATION_DATE,
-    FORM_MEDICAL_DOCUMENT,
-    VALIDATION_DATE_REQUIRED,
-    VALIDATION_DATE_INVALID,
-    VALIDATION_REQUIRED_FIELD,
-    SUCCESS_VISIT_CREATED,
-    SUCCESS_VISIT_UPDATED,
     ERROR_SAVE_VISIT,
+    FORM_MEDICAL_DATE,
+    FORM_MEDICAL_DOCUMENT,
+    FORM_MEDICAL_EXPIRATION_DATE,
+    FORM_MEDICAL_RESULT,
+    FORM_MEDICAL_TYPE,
+    VALIDATION_DATE_INVALID,
+    VALIDATION_DATE_REQUIRED,
+    VISIT_RESULT_CHOICES,
+    VISIT_RESULTS,
+    VISIT_TYPE_CHOICES,
+    VISIT_TYPES,
 )
+from ui_ctk.forms.base_form import BaseFormDialog
 
 
 class MedicalVisitFormDialog(BaseFormDialog):
@@ -52,7 +49,7 @@ class MedicalVisitFormDialog(BaseFormDialog):
         """
         self.employee = employee
         self.visit = visit
-        self.is_edit_mode = (visit is not None)
+        self.is_edit_mode = visit is not None
 
         # Form variables
         self.visit_type_var = ctk.StringVar()
@@ -82,20 +79,11 @@ class MedicalVisitFormDialog(BaseFormDialog):
 
         # Form title
         title = "Edit Medical Visit" if self.is_edit_mode else "New Medical Visit"
-        title_label = ctk.CTkLabel(
-            form_frame,
-            text=title,
-            font=("Arial", 18, "bold")
-        )
+        title_label = ctk.CTkLabel(form_frame, text=title, font=("Arial", 18, "bold"))
         title_label.pack(pady=(0, 20))
 
         # Required fields notice
-        notice_label = ctk.CTkLabel(
-            form_frame,
-            text="* Required fields",
-            font=("Arial", 10),
-            text_color="gray"
-        )
+        notice_label = ctk.CTkLabel(form_frame, text="* Required fields", font=("Arial", 10), text_color="gray")
         notice_label.pack(pady=(0, 10))
 
         # Form fields
@@ -117,12 +105,7 @@ class MedicalVisitFormDialog(BaseFormDialog):
 
         # Create French labels dropdown
         type_labels = [VISIT_TYPES[t] for t in VISIT_TYPE_CHOICES]
-        self.type_dropdown = ctk.CTkOptionMenu(
-            type_row,
-            values=type_labels,
-            command=self.on_type_changed,
-            width=300
-        )
+        self.type_dropdown = ctk.CTkOptionMenu(type_row, values=type_labels, command=self.on_type_changed, width=300)
         self.type_dropdown.pack(side="right", padx=10)
 
         # Visit Date (required)
@@ -130,10 +113,7 @@ class MedicalVisitFormDialog(BaseFormDialog):
         date_row.pack(fill="x", pady=5)
         self.create_required_field_label(date_row, FORM_MEDICAL_DATE)
         self.date_entry = ctk.CTkEntry(
-            date_row,
-            placeholder_text=DATE_PLACEHOLDER,
-            textvariable=self.visit_date_var,
-            width=300
+            date_row, placeholder_text=DATE_PLACEHOLDER, textvariable=self.visit_date_var, width=300
         )
         self.date_entry.pack(side="right", padx=10)
 
@@ -144,11 +124,7 @@ class MedicalVisitFormDialog(BaseFormDialog):
 
         # Create French labels dropdown
         result_labels = [VISIT_RESULTS[r] for r in VISIT_RESULT_CHOICES]
-        self.result_dropdown = ctk.CTkOptionMenu(
-            result_row,
-            values=result_labels,
-            width=300
-        )
+        self.result_dropdown = ctk.CTkOptionMenu(result_row, values=result_labels, width=300)
         self.result_dropdown.pack(side="right", padx=10)
 
         # Expiration Date (display only, calculated)
@@ -159,28 +135,19 @@ class MedicalVisitFormDialog(BaseFormDialog):
             text=f"{FORM_MEDICAL_EXPIRATION_DATE} (auto-calculated):",
             font=("Arial", 11),
             width=280,
-            anchor="w"
+            anchor="w",
         )
         exp_label.pack(side="left", padx=10)
 
         self.expiration_label = ctk.CTkLabel(
-            exp_row,
-            text="Select type and date first",
-            font=("Arial", 11),
-            text_color="gray"
+            exp_row, text="Select type and date first", font=("Arial", 11), text_color="gray"
         )
         self.expiration_label.pack(side="left", padx=10)
 
         # Document Path (optional)
         doc_row = ctk.CTkFrame(field_container, fg_color="transparent")
         doc_row.pack(fill="x", pady=5)
-        doc_label = ctk.CTkLabel(
-            doc_row,
-            text=f"{FORM_MEDICAL_DOCUMENT}:",
-            font=("Arial", 11),
-            width=180,
-            anchor="w"
-        )
+        doc_label = ctk.CTkLabel(doc_row, text=f"{FORM_MEDICAL_DOCUMENT}:", font=("Arial", 11), width=180, anchor="w")
         doc_label.pack(side="left", padx=10)
 
         doc_frame = ctk.CTkFrame(doc_row, fg_color="transparent")
@@ -190,16 +157,11 @@ class MedicalVisitFormDialog(BaseFormDialog):
             doc_frame,
             placeholder_text="Optional - Path to certificate PDF",
             textvariable=self.document_path_var,
-            width=200
+            width=200,
         )
         self.doc_entry.pack(side="left")
 
-        browse_btn = ctk.CTkButton(
-            doc_frame,
-            text="Browse...",
-            width=80,
-            command=self.browse_document
-        )
+        browse_btn = ctk.CTkButton(doc_frame, text="Browse...", width=80, command=self.browse_document)
         browse_btn.pack(side="left", padx=5)
 
         # Info text
@@ -209,19 +171,13 @@ class MedicalVisitFormDialog(BaseFormDialog):
             info_row,
             text="ℹ️ Initial/Periodic: 2 years validity | Recovery: 1 year validity",
             font=("Arial", 9),
-            text_color="gray"
+            text_color="gray",
         )
         info_text.pack(padx=10)
 
     def create_required_field_label(self, parent, text: str):
         """Create a required field label with asterisk."""
-        label = ctk.CTkLabel(
-            parent,
-            text=f"{text}: *",
-            font=("Arial", 11),
-            width=180,
-            anchor="w"
-        )
+        label = ctk.CTkLabel(parent, text=f"{text}: *", font=("Arial", 11), width=180, anchor="w")
         label.pack(side="left", padx=10)
 
     def create_buttons(self, parent):
@@ -229,20 +185,10 @@ class MedicalVisitFormDialog(BaseFormDialog):
         button_frame = ctk.CTkFrame(parent, fg_color="transparent")
         button_frame.pack(fill="x", pady=(20, 0))
 
-        cancel_btn = ctk.CTkButton(
-            button_frame,
-            text=BTN_CANCEL,
-            width=120,
-            command=self.on_cancel
-        )
+        cancel_btn = ctk.CTkButton(button_frame, text=BTN_CANCEL, width=120, command=self.on_cancel)
         cancel_btn.pack(side="right", padx=5)
 
-        save_btn = ctk.CTkButton(
-            button_frame,
-            text=BTN_SAVE,
-            width=120,
-            command=self.on_save
-        )
+        save_btn = ctk.CTkButton(button_frame, text=BTN_SAVE, width=120, command=self.on_save)
         save_btn.pack(side="right", padx=5)
 
     def on_type_changed(self, value):
@@ -262,18 +208,12 @@ class MedicalVisitFormDialog(BaseFormDialog):
                 visit_date = self.parse_date(date_str)
                 if visit_date:
                     expiration = MedicalVisit.calculate_expiration(visit_type, visit_date)
-                    self.expiration_label.configure(
-                        text=expiration.strftime(DATE_FORMAT),
-                        text_color="black"
-                    )
+                    self.expiration_label.configure(text=expiration.strftime(DATE_FORMAT), text_color="black")
                     return
             except Exception:
                 pass
 
-        self.expiration_label.configure(
-            text="Select type and date first",
-            text_color="gray"
-        )
+        self.expiration_label.configure(text="Select type and date first", text_color="gray")
 
     def _get_type_key_from_label(self, label: str) -> str:
         """Convert French label back to visit type key."""
@@ -293,9 +233,9 @@ class MedicalVisitFormDialog(BaseFormDialog):
         """Open file browser to select document."""
         try:
             from tkinter import filedialog
+
             file_path = filedialog.askopenfilename(
-                title="Select Medical Certificate PDF",
-                filetypes=[("PDF files", "*.pdf"), ("All files", "*.*")]
+                title="Select Medical Certificate PDF", filetypes=[("PDF files", "*.pdf"), ("All files", "*.*")]
             )
             if file_path:
                 self.document_path_var.set(file_path)
@@ -419,7 +359,7 @@ class MedicalVisitFormDialog(BaseFormDialog):
                     visit_date=visit_date,
                     expiration_date=expiration_date,
                     result=result,
-                    document_path=document_path
+                    document_path=document_path,
                 )
                 print(f"[OK] Medical visit created: {visit_type} for {self.employee.full_name}")
 

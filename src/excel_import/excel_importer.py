@@ -1,29 +1,22 @@
 """Excel import logic for bulk employee import."""
 
-import threading
-from pathlib import Path
-from datetime import date, datetime
-from typing import List, Dict, Any, Optional, Callable, Tuple
 from dataclasses import dataclass, field
+from datetime import date, datetime
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 try:
     from openpyxl import load_workbook
     from openpyxl.utils import get_column_letter
 except ImportError:
-    raise ImportError(
-        "openpyxl is required for Excel import. "
-        "Install it with: pip install openpyxl"
-    )
+    raise ImportError("openpyxl is required for Excel import. Install it with: pip install openpyxl")
 
 from database.connection import database
 from employee.models import Employee
 from ui_ctk.constants import (
-    WORKSPACE_ZONES,
-    ROLE_CHOICES,
     CONTRACT_TYPE_CHOICES,
-    STATUS_ACTIVE,
-    STATUS_INACTIVE,
-    DATE_FORMAT,
+    ROLE_CHOICES,
+    WORKSPACE_ZONES,
 )
 
 
@@ -40,6 +33,7 @@ class ImportError:
         message: Human-readable error message
         severity: Error severity (critical, warning, info)
     """
+
     row_num: int
     column: str
     value: Any
@@ -65,6 +59,7 @@ class ImportResult:
         duration: Import duration in seconds
         file_path: Path to imported file
     """
+
     total_rows: int = 0
     successful: int = 0
     failed: int = 0
@@ -101,22 +96,10 @@ class ExcelImporter:
     """
 
     # Required columns in Excel file
-    REQUIRED_COLUMNS = [
-        "First Name",
-        "Last Name",
-        "Status",
-        "Workspace",
-        "Role",
-        "Contract",
-        "Entry Date"
-    ]
+    REQUIRED_COLUMNS = ["First Name", "Last Name", "Status", "Workspace", "Role", "Contract", "Entry Date"]
 
     # Optional columns
-    OPTIONAL_COLUMNS = [
-        "Email",
-        "Phone",
-        "External ID"
-    ]
+    OPTIONAL_COLUMNS = ["Email", "Phone", "External ID"]
 
     # Batch size for transaction commits
     BATCH_SIZE = 100
@@ -153,7 +136,7 @@ class ExcelImporter:
             return False, f"File not found: {self.file_path}"
 
         # Check extension
-        if self.file_path.suffix.lower() != '.xlsx':
+        if self.file_path.suffix.lower() != ".xlsx":
             return False, "File must be .xlsx format"
 
         # Try to open file
@@ -175,8 +158,7 @@ class ExcelImporter:
 
         # Load headers from first row
         self.headers = [
-            self._get_cell_value(row_idx=1, col_idx=col_idx)
-            for col_idx in range(1, self.worksheet.max_column + 1)
+            self._get_cell_value(row_idx=1, col_idx=col_idx) for col_idx in range(1, self.worksheet.max_column + 1)
         ]
 
         # Check for required columns
@@ -244,11 +226,7 @@ class ExcelImporter:
 
             # Only include rows that have at least some data
             if row_data:
-                rows.append({
-                    'row_num': row_idx,
-                    'data': row_data,
-                    'raw_row': raw_row
-                })
+                rows.append({"row_num": row_idx, "data": row_data, "raw_row": raw_row})
 
         self.data_rows = rows
         return rows
@@ -281,20 +259,17 @@ class ExcelImporter:
         # Check for empty required fields in sample
         for row in sample_data:
             for col in self.REQUIRED_COLUMNS:
-                if col not in row['data'] or not row['data'][col]:
+                if col not in row["data"] or not row["data"][col]:
                     issues.append(f"Row {row['row_num']}: Missing '{col}'")
 
         return {
-            'total_rows': len(self.data_rows),
-            'columns': self.headers,
-            'sample_data': sample_data,
-            'detected_issues': issues
+            "total_rows": len(self.data_rows),
+            "columns": self.headers,
+            "sample_data": sample_data,
+            "detected_issues": issues,
         }
 
-    def import_employees(
-        self,
-        progress_callback: Optional[Callable[[int, int], None]] = None
-    ) -> ImportResult:
+    def import_employees(self, progress_callback: Optional[Callable[[int, int], None]] = None) -> ImportResult:
         """
         Import employees from parsed Excel data.
 
@@ -345,14 +320,16 @@ class ExcelImporter:
                 # Count all rows in batch as failed
                 result.failed += len(batch)
                 for row_info in batch:
-                    result.errors.append(ImportError(
-                        row_num=row_info['row_num'],
-                        column="multiple",
-                        value="N/A",
-                        error_type="database",
-                        message=f"Batch failed: {str(e)}",
-                        severity="critical"
-                    ))
+                    result.errors.append(
+                        ImportError(
+                            row_num=row_info["row_num"],
+                            column="multiple",
+                            value="N/A",
+                            error_type="database",
+                            message=f"Batch failed: {str(e)}",
+                            severity="critical",
+                        )
+                    )
                 break
 
         # Calculate duration
@@ -364,10 +341,7 @@ class ExcelImporter:
 
         return result
 
-    def _import_single_row(
-        self,
-        row_info: Dict[str, Any]
-    ) -> Tuple[bool, Optional[ImportError]]:
+    def _import_single_row(self, row_info: Dict[str, Any]) -> Tuple[bool, Optional[ImportError]]:
         """
         Import a single row of employee data.
 
@@ -377,8 +351,8 @@ class ExcelImporter:
         Returns:
             Tuple of (success, error_object)
         """
-        row_num = row_info['row_num']
-        data = row_info['data']
+        row_num = row_info["row_num"]
+        data = row_info["data"]
 
         try:
             # Map row data to employee fields
@@ -390,10 +364,8 @@ class ExcelImporter:
                 return False, error
 
             # Check for duplicate external_id
-            if employee_data.get('external_id'):
-                dup_error = self._check_duplicate_external_id(
-                    employee_data['external_id']
-                )
+            if employee_data.get("external_id"):
+                dup_error = self._check_duplicate_external_id(employee_data["external_id"])
                 if dup_error:
                     return False, dup_error
 
@@ -409,13 +381,10 @@ class ExcelImporter:
                 value=str(data),
                 error_type="exception",
                 message=str(e),
-                severity="critical"
+                severity="critical",
             )
 
-    def _map_row_to_employee(
-        self,
-        row_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _map_row_to_employee(self, row_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Map Excel row data to Employee model fields.
 
@@ -429,39 +398,35 @@ class ExcelImporter:
         employee_data = {}
 
         # Name fields
-        employee_data['first_name'] = self._clean_string(row_data.get('First Name'))
-        employee_data['last_name'] = self._clean_string(row_data.get('Last Name'))
+        employee_data["first_name"] = self._clean_string(row_data.get("First Name"))
+        employee_data["last_name"] = self._clean_string(row_data.get("Last Name"))
 
         # Contact fields (optional)
-        employee_data['email'] = self._clean_string(row_data.get('Email'))
-        employee_data['phone'] = self._clean_string(row_data.get('Phone'))
+        employee_data["email"] = self._clean_string(row_data.get("Email"))
+        employee_data["phone"] = self._clean_string(row_data.get("Phone"))
 
         # External ID (optional)
-        employee_data['external_id'] = self._clean_string(row_data.get('External ID'))
+        employee_data["external_id"] = self._clean_string(row_data.get("External ID"))
 
         # Status - Map French to English
-        status_str = self._clean_string(row_data.get('Status', 'Actif'))
-        employee_data['current_status'] = 'active' if status_str == 'Actif' else 'inactive'
+        status_str = self._clean_string(row_data.get("Status", "Actif"))
+        employee_data["current_status"] = "active" if status_str == "Actif" else "inactive"
 
         # Workspace
-        employee_data['workspace'] = self._clean_string(row_data.get('Workspace'))
+        employee_data["workspace"] = self._clean_string(row_data.get("Workspace"))
 
         # Role
-        employee_data['role'] = self._clean_string(row_data.get('Role'))
+        employee_data["role"] = self._clean_string(row_data.get("Role"))
 
         # Contract type
-        employee_data['contract_type'] = self._clean_string(row_data.get('Contract'))
+        employee_data["contract_type"] = self._clean_string(row_data.get("Contract"))
 
         # Entry date
-        employee_data['entry_date'] = self._parse_date(row_data.get('Entry Date'))
+        employee_data["entry_date"] = self._parse_date(row_data.get("Entry Date"))
 
         return employee_data
 
-    def _validate_row(
-        self,
-        row_num: int,
-        employee_data: Dict[str, Any]
-    ) -> Optional[ImportError]:
+    def _validate_row(self, row_num: int, employee_data: Dict[str, Any]) -> Optional[ImportError]:
         """
         Validate a single row of employee data.
 
@@ -473,109 +438,102 @@ class ExcelImporter:
             ImportError if invalid, None if valid
         """
         # Check required fields
-        if not employee_data.get('first_name'):
+        if not employee_data.get("first_name"):
             return ImportError(
                 row_num=row_num,
-                column='First Name',
+                column="First Name",
                 value=None,
-                error_type='required',
-                message="First name is required"
+                error_type="required",
+                message="First name is required",
             )
 
-        if not employee_data.get('last_name'):
+        if not employee_data.get("last_name"):
             return ImportError(
-                row_num=row_num,
-                column='Last Name',
-                value=None,
-                error_type='required',
-                message="Last name is required"
+                row_num=row_num, column="Last Name", value=None, error_type="required", message="Last name is required"
             )
 
         # Validate status
-        if employee_data.get('current_status') not in ['active', 'inactive']:
+        if employee_data.get("current_status") not in ["active", "inactive"]:
             return ImportError(
                 row_num=row_num,
-                column='Status',
-                value=employee_data.get('current_status'),
-                error_type='validation',
-                message=f"Status must be 'Actif' or 'Inactif', got '{employee_data.get('current_status')}'"
+                column="Status",
+                value=employee_data.get("current_status"),
+                error_type="validation",
+                message=f"Status must be 'Actif' or 'Inactif', got '{employee_data.get('current_status')}'",
             )
 
         # Validate workspace
-        if employee_data.get('workspace') not in WORKSPACE_ZONES:
+        if employee_data.get("workspace") not in WORKSPACE_ZONES:
             return ImportError(
                 row_num=row_num,
-                column='Workspace',
-                value=employee_data.get('workspace'),
-                error_type='validation',
-                message=f"Invalid workspace. Must be one of: {', '.join(WORKSPACE_ZONES)}"
+                column="Workspace",
+                value=employee_data.get("workspace"),
+                error_type="validation",
+                message=f"Invalid workspace. Must be one of: {', '.join(WORKSPACE_ZONES)}",
             )
 
         # Validate role
-        if employee_data.get('role') not in ROLE_CHOICES:
+        if employee_data.get("role") not in ROLE_CHOICES:
             return ImportError(
                 row_num=row_num,
-                column='Role',
-                value=employee_data.get('role'),
-                error_type='validation',
-                message=f"Invalid role. Must be one of: {', '.join(ROLE_CHOICES)}"
+                column="Role",
+                value=employee_data.get("role"),
+                error_type="validation",
+                message=f"Invalid role. Must be one of: {', '.join(ROLE_CHOICES)}",
             )
 
         # Validate contract type
-        if employee_data.get('contract_type') not in CONTRACT_TYPE_CHOICES:
+        if employee_data.get("contract_type") not in CONTRACT_TYPE_CHOICES:
             return ImportError(
                 row_num=row_num,
-                column='Contract',
-                value=employee_data.get('contract_type'),
-                error_type='validation',
-                message=f"Invalid contract type. Must be one of: {', '.join(CONTRACT_TYPE_CHOICES)}"
+                column="Contract",
+                value=employee_data.get("contract_type"),
+                error_type="validation",
+                message=f"Invalid contract type. Must be one of: {', '.join(CONTRACT_TYPE_CHOICES)}",
             )
 
         # Validate entry date
-        if not employee_data.get('entry_date'):
+        if not employee_data.get("entry_date"):
             return ImportError(
                 row_num=row_num,
-                column='Entry Date',
+                column="Entry Date",
                 value=None,
-                error_type='required',
-                message="Entry date is required"
+                error_type="required",
+                message="Entry date is required",
             )
 
         # Date range validation
-        if employee_data['entry_date'].year < 2000:
+        if employee_data["entry_date"].year < 2000:
             return ImportError(
                 row_num=row_num,
-                column='Entry Date',
-                value=employee_data['entry_date'],
-                error_type='validation',
-                message="Entry date seems too old (before 2000)"
+                column="Entry Date",
+                value=employee_data["entry_date"],
+                error_type="validation",
+                message="Entry date seems too old (before 2000)",
             )
 
-        if employee_data['entry_date'] > date.today():
+        if employee_data["entry_date"] > date.today():
             return ImportError(
                 row_num=row_num,
-                column='Entry Date',
-                value=employee_data['entry_date'],
-                error_type='validation',
-                message="Entry date cannot be in the future"
+                column="Entry Date",
+                value=employee_data["entry_date"],
+                error_type="validation",
+                message="Entry date cannot be in the future",
             )
 
         # Optional fields (email, phone) - less strict
-        if employee_data.get('email') and '@' not in employee_data['email']:
+        if employee_data.get("email") and "@" not in employee_data["email"]:
             return ImportError(
                 row_num=row_num,
-                column='Email',
-                value=employee_data['email'],
-                error_type='warning',
-                message="Email format looks invalid (will be set to None)"
+                column="Email",
+                value=employee_data["email"],
+                error_type="warning",
+                message="Email format looks invalid (will be set to None)",
             )
 
         return None
 
-    def _check_duplicate_external_id(
-        self,
-        external_id: str
-    ) -> Optional[ImportError]:
+    def _check_duplicate_external_id(self, external_id: str) -> Optional[ImportError]:
         """
         Check if external_id already exists in database.
 
@@ -590,10 +548,10 @@ class ExcelImporter:
             if existing:
                 return ImportError(
                     row_num=0,  # Will be set by caller
-                    column='External ID',
+                    column="External ID",
                     value=external_id,
-                    error_type='duplicate',
-                    message=f"External ID '{external_id}' already exists (employee: {existing.full_name})"
+                    error_type="duplicate",
+                    message=f"External ID '{external_id}' already exists (employee: {existing.full_name})",
                 )
         except Exception:
             pass
@@ -646,7 +604,7 @@ class ExcelImporter:
         if not isinstance(date_str, str):
             date_str = str(date_str)
 
-        date_formats = ['%d/%m/%Y', '%Y-%m-%d']
+        date_formats = ["%d/%m/%Y", "%Y-%m-%d"]
 
         for fmt in date_formats:
             try:

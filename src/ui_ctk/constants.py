@@ -17,9 +17,9 @@ DEFAULT_MODE = "System"  # System, Dark, Light
 
 # Colors (for custom coloring)
 COLOR_CRITICAL = "#DC3545"  # Red
-COLOR_WARNING = "#FFC107"   # Yellow
-COLOR_SUCCESS = "#28A745"   # Green
-COLOR_INFO = "#17A2B8"     # Blue
+COLOR_WARNING = "#FFC107"  # Yellow
+COLOR_SUCCESS = "#28A745"  # Green
+COLOR_INFO = "#17A2B8"  # Blue
 COLOR_INACTIVE = "#6C757D"  # Gray
 
 # Status Text (French)

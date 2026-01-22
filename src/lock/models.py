@@ -1,8 +1,9 @@
 """Lock mechanism data models."""
 
 import uuid
-from peewee import *
 from datetime import datetime, timedelta
+
+from peewee import *
 
 from database.connection import database
 
@@ -19,7 +20,7 @@ class AppLock(Model):
 
     # Lock holder identification
     hostname = CharField(index=True)  # Machine name
-    username = CharField(null=True)   # Optional: user name
+    username = CharField(null=True)  # Optional: user name
 
     # Timestamps
     locked_at = DateTimeField(default=datetime.now, index=True)
@@ -33,7 +34,7 @@ class AppLock(Model):
 
     class Meta:
         database = database
-        table_name = 'app_locks'
+        table_name = "app_locks"
 
     # ========== COMPUTED PROPERTIES ==========
 
@@ -65,8 +66,7 @@ class AppLock(Model):
     # ========== CLASS METHODS ==========
 
     @classmethod
-    def acquire(cls, hostname: str, username: str | None, pid: int,
-               app_version: str | None = None) -> 'AppLock':
+    def acquire(cls, hostname: str, username: str | None, pid: int, app_version: str | None = None) -> "AppLock":
         """
         Acquire application lock.
 
@@ -90,19 +90,13 @@ class AppLock(Model):
             if not existing.is_stale:
                 # Lock is active and held by another process
                 raise RuntimeError(
-                    f"Lock is held by {existing.hostname} "
-                    f"(since {existing.locked_at.strftime('%H:%M:%S')})"
+                    f"Lock is held by {existing.hostname} (since {existing.locked_at.strftime('%H:%M:%S')})"
                 )
             # Lock is stale, delete it
             existing.delete_instance()
 
         # Create new lock
-        return cls.create(
-            hostname=hostname,
-            username=username,
-            process_id=pid,
-            app_version=app_version
-        )
+        return cls.create(hostname=hostname, username=username, process_id=pid, app_version=app_version)
 
     @classmethod
     def release(cls, hostname: str, pid: int) -> bool:
@@ -152,7 +146,7 @@ class AppLock(Model):
         return True
 
     @classmethod
-    def get_active_lock(cls) -> 'AppLock | None':
+    def get_active_lock(cls) -> "AppLock | None":
         """
         Get current active lock, or None if no active lock exists.
 

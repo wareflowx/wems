@@ -1,10 +1,9 @@
 """Lock acquisition, heartbeat, and release management."""
 
+import os
+import socket
 import threading
 import time
-import socket
-import os
-from datetime import datetime, timedelta
 
 from lock.models import AppLock
 
@@ -12,11 +11,22 @@ from lock.models import AppLock
 # Simple logger for now (will be replaced in Phase 3)
 class Logger:
     """Simple placeholder logger."""
-    def debug(self, msg): pass  # Suppress debug messages for cleaner output
-    def info(self, msg): print(f"[INFO] {msg}")
-    def warning(self, msg): print(f"[WARNING] {msg}")
-    def error(self, msg): print(f"[ERROR] {msg}")
-    def critical(self, msg): print(f"[CRITICAL] {msg}")
+
+    def debug(self, msg):
+        pass  # Suppress debug messages for cleaner output
+
+    def info(self, msg):
+        print(f"[INFO] {msg}")
+
+    def warning(self, msg):
+        print(f"[WARNING] {msg}")
+
+    def error(self, msg):
+        print(f"[ERROR] {msg}")
+
+    def critical(self, msg):
+        print(f"[CRITICAL] {msg}")
+
 
 logger = Logger()
 
@@ -60,8 +70,7 @@ class LockManager:
 
     # ========== INITIALIZATION ==========
 
-    def __init__(self, hostname: str, username: str | None, pid: int,
-                 heartbeat_interval: int = 30):
+    def __init__(self, hostname: str, username: str | None, pid: int, heartbeat_interval: int = 30):
         """
         Initialize lock manager with process identification.
 
@@ -107,11 +116,7 @@ class LockManager:
         """
         with LockManager._acquisition_lock:  # Prevent race conditions (class-level lock)
             # Use existing acquire() logic from AppLock model
-            self._lock = AppLock.acquire(
-                hostname=self.hostname,
-                username=self.username,
-                pid=self.pid
-            )
+            self._lock = AppLock.acquire(hostname=self.hostname, username=self.username, pid=self.pid)
 
         # Start heartbeat thread after successful acquisition
         self._start_heartbeat()
@@ -136,10 +141,7 @@ class LockManager:
 
         # Release lock
         if self._lock:
-            success = AppLock.release(
-                hostname=self.hostname,
-                pid=self.pid
-            )
+            success = AppLock.release(hostname=self.hostname, pid=self.pid)
             self._lock = None
             return success
 
@@ -190,10 +192,7 @@ class LockManager:
             while not self._stop_event.is_set():
                 try:
                     # Attempt to refresh heartbeat
-                    success = AppLock.refresh_heartbeat(
-                        self.hostname,
-                        self.pid
-                    )
+                    success = AppLock.refresh_heartbeat(self.hostname, self.pid)
 
                     if not success:
                         # Lock was lost (stolen, deleted, etc.)
@@ -221,7 +220,7 @@ class LockManager:
                             break
 
                         # Exponential backoff: 1s, 2s, 4s, max 10s
-                        wait_time = min(2 ** retry_count, 10)
+                        wait_time = min(2**retry_count, 10)
                         self._stop_event.wait(timeout=wait_time)
                         continue
                     else:
@@ -260,7 +259,7 @@ class LockManager:
         self._heartbeat_thread = threading.Thread(
             target=self._heartbeat_loop,
             daemon=True,  # Critical: won't block process exit
-            name=f"Heartbeat-{self.hostname}-{self.pid}"
+            name=f"Heartbeat-{self.hostname}-{self.pid}",
         )
 
         self._heartbeat_thread.start()
@@ -315,9 +314,7 @@ class LockManager:
         # Verify lock still exists in database
         try:
             active = AppLock.get_active_lock()
-            return (active is not None and
-                    active.hostname == self.hostname and
-                    active.process_id == self.pid)
+            return active is not None and active.hostname == self.hostname and active.process_id == self.pid
         except Exception:
             return False
 
@@ -348,6 +345,7 @@ class LockManager:
 
 # ========== HELPER FUNCTIONS ==========
 
+
 def get_process_info() -> tuple[str, str | None, int]:
     """
     Get process identification information.
@@ -360,6 +358,6 @@ def get_process_info() -> tuple[str, str | None, int]:
         manager = LockManager(hostname, username, pid)
     """
     hostname = socket.gethostname()
-    username = os.environ.get('USERNAME') or os.environ.get('USER')
+    username = os.environ.get("USERNAME") or os.environ.get("USER")
     pid = os.getpid()
     return hostname, username, pid

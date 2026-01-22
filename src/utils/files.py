@@ -1,9 +1,9 @@
 """File operations utilities."""
 
-import shutil
-from pathlib import Path
-from datetime import date
 import re
+import shutil
+from datetime import date
+from pathlib import Path
 
 
 def copy_document_to_storage(
@@ -12,7 +12,7 @@ def copy_document_to_storage(
     employee_external_id: str,
     document_date: date,
     title: str,
-    storage_root: Path = Path("documents")
+    storage_root: Path = Path("documents"),
 ) -> Path:
     """
     Copy uploaded document to standardized storage location.
@@ -52,7 +52,7 @@ def copy_document_to_storage(
         raise FileNotFoundError(f"Source file not found: {source_path}")
 
     # Validate category
-    valid_categories = ['caces', 'medical', 'training']
+    valid_categories = ["caces", "medical", "training"]
     if category not in valid_categories:
         raise ValueError(f"Invalid category. Must be one of: {valid_categories}")
 
@@ -62,7 +62,7 @@ def copy_document_to_storage(
         employee_external_id=employee_external_id,
         document_date=document_date,
         title=title,
-        extension=source_path.suffix
+        extension=source_path.suffix,
     )
 
     # Create target path
@@ -117,13 +117,13 @@ def sanitize_filename(filename: str) -> str:
     filename = filename.replace(" ", "_")
 
     # Remove unsafe characters (keep only alphanumeric, hyphen, underscore, dot)
-    filename = re.sub(r'[^\w\-.]', '', filename)
+    filename = re.sub(r"[^\w\-.]", "", filename)
 
     # Replace multiple consecutive underscores with single underscore
-    filename = re.sub(r'_+', '_', filename)
+    filename = re.sub(r"_+", "_", filename)
 
     # Remove leading/trailing underscores that may have been created
-    filename = filename.strip('_')
+    filename = filename.strip("_")
 
     # Ensure filename is not empty
     if not filename:
@@ -133,11 +133,7 @@ def sanitize_filename(filename: str) -> str:
 
 
 def generate_document_name(
-    category: str,
-    employee_external_id: str,
-    document_date: date,
-    title: str,
-    extension: str = ".pdf"
+    category: str, employee_external_id: str, document_date: date, title: str, extension: str = ".pdf"
 ) -> str:
     """
     Generate standardized document name.
@@ -172,8 +168,8 @@ def generate_document_name(
     date_str = document_date.strftime("%Y%m%d")
 
     # Ensure extension has leading dot
-    if extension and not extension.startswith('.'):
-        extension = '.' + extension
+    if extension and not extension.startswith("."):
+        extension = "." + extension
 
     # Combine parts
     filename = f"{employee_external_id}_{category}_{date_str}_{sanitized_title}{extension}"
@@ -216,8 +212,8 @@ def validate_file_type(file_path: Path, allowed_extensions: list[str]) -> bool:
     # Normalize extensions (ensure they start with dot)
     normalized_allowed = []
     for ext in allowed_extensions:
-        if not ext.startswith('.'):
-            ext = '.' + ext
+        if not ext.startswith("."):
+            ext = "." + ext
         normalized_allowed.append(ext.lower())
 
     # Get file extension and normalize
@@ -324,7 +320,7 @@ def get_document_category_from_path(file_path: Path) -> str | None:
         >>> get_document_category_from_path(Path("documents/other/file.pdf"))
         None
     """
-    valid_categories = ['caces', 'medical', 'training']
+    valid_categories = ["caces", "medical", "training"]
 
     # Check if parent directory name is a valid category
     if file_path.parent.name in valid_categories:

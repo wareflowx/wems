@@ -1,39 +1,18 @@
 """Configuration JSON loader."""
 
-import json
 import copy
+import json
 from pathlib import Path
 from typing import Any
 
-
 # Default configuration values
 DEFAULT_CONFIG = {
-    "alerts": {
-        "critical_days": 7,
-        "warning_days": 30
-    },
-    "lock": {
-        "timeout_minutes": 2,
-        "heartbeat_interval_seconds": 30
-    },
+    "alerts": {"critical_days": 7, "warning_days": 30},
+    "lock": {"timeout_minutes": 2, "heartbeat_interval_seconds": 30},
     "organization": {
-        "roles": [
-            "Cariste",
-            "Préparateur",
-            "Magasinier",
-            "Réceptionnaire",
-            "Gestionnaire",
-            "Chef d'équipe"
-        ],
-        "workspaces": [
-            "Quai",
-            "Zone A",
-            "Zone B",
-            "Zone C",
-            "Bureau",
-            "Stockage"
-        ]
-    }
+        "roles": ["Cariste", "Préparateur", "Magasinier", "Réceptionnaire", "Gestionnaire", "Chef d'équipe"],
+        "workspaces": ["Quai", "Zone A", "Zone B", "Zone C", "Bureau", "Stockage"],
+    },
 }
 
 
@@ -65,7 +44,7 @@ def load_config(config_path: Path = Path("config.json")) -> dict[str, Any]:
     # Try to load user configuration
     try:
         if config_path.exists():
-            with open(config_path, 'r', encoding='utf-8') as f:
+            with open(config_path, "r", encoding="utf-8") as f:
                 user_config = json.load(f)
 
             # Merge user config with defaults (deep merge for nested dicts)
@@ -125,12 +104,9 @@ def get_alert_thresholds(config: dict[str, Any]) -> dict[str, int]:
         >>> thresholds = get_alert_thresholds(config)
         >>> print(f"Warning at {thresholds['warning_days']} days")
     """
-    alerts = config.get('alerts', {})
+    alerts = config.get("alerts", {})
 
-    return {
-        'critical_days': alerts.get('critical_days', 7),
-        'warning_days': alerts.get('warning_days', 30)
-    }
+    return {"critical_days": alerts.get("critical_days", 7), "warning_days": alerts.get("warning_days", 30)}
 
 
 def get_lock_timeout(config: dict[str, Any]) -> int:
@@ -148,8 +124,8 @@ def get_lock_timeout(config: dict[str, Any]) -> int:
         >>> timeout = get_lock_timeout(config)
         >>> print(f"Lock timeout: {timeout} minutes")
     """
-    lock = config.get('lock', {})
-    return lock.get('timeout_minutes', 2)
+    lock = config.get("lock", {})
+    return lock.get("timeout_minutes", 2)
 
 
 def get_lock_heartbeat_interval(config: dict[str, Any]) -> int:
@@ -167,8 +143,8 @@ def get_lock_heartbeat_interval(config: dict[str, Any]) -> int:
         >>> interval = get_lock_heartbeat_interval(config)
         >>> print(f"Heartbeat every {interval} seconds")
     """
-    lock = config.get('lock', {})
-    return lock.get('heartbeat_interval_seconds', 30)
+    lock = config.get("lock", {})
+    return lock.get("heartbeat_interval_seconds", 30)
 
 
 def get_roles(config: dict[str, Any]) -> list[str]:
@@ -186,8 +162,8 @@ def get_roles(config: dict[str, Any]) -> list[str]:
         >>> roles = get_roles(config)
         >>> print(f"Available roles: {roles}")
     """
-    org = config.get('organization', {})
-    return org.get('roles', [])
+    org = config.get("organization", {})
+    return org.get("roles", [])
 
 
 def get_workspaces(config: dict[str, Any]) -> list[str]:
@@ -205,8 +181,8 @@ def get_workspaces(config: dict[str, Any]) -> list[str]:
         >>> workspaces = get_workspaces(config)
         >>> print(f"Available workspaces: {workspaces}")
     """
-    org = config.get('organization', {})
-    return org.get('workspaces', [])
+    org = config.get("organization", {})
+    return org.get("workspaces", [])
 
 
 def validate_config(config: dict[str, Any]) -> tuple[bool, list[str]]:
@@ -238,59 +214,62 @@ def validate_config(config: dict[str, Any]) -> tuple[bool, list[str]]:
     errors = []
 
     # Validate alerts section
-    if 'alerts' in config:
-        alerts = config['alerts']
+    if "alerts" in config:
+        alerts = config["alerts"]
 
         # Check critical_days
-        if 'critical_days' in alerts:
-            critical_days = alerts['critical_days']
+        if "critical_days" in alerts:
+            critical_days = alerts["critical_days"]
             if not isinstance(critical_days, int):
                 errors.append("alerts.critical_days must be an integer")
             elif critical_days <= 0:
                 errors.append("alerts.critical_days must be positive")
 
         # Check warning_days
-        if 'warning_days' in alerts:
-            warning_days = alerts['warning_days']
+        if "warning_days" in alerts:
+            warning_days = alerts["warning_days"]
             if not isinstance(warning_days, int):
                 errors.append("alerts.warning_days must be an integer")
             elif warning_days <= 0:
                 errors.append("alerts.warning_days must be positive")
 
         # Check logical consistency
-        if ('critical_days' in alerts and 'warning_days' in alerts and
-            isinstance(alerts['critical_days'], int) and
-            isinstance(alerts['warning_days'], int)):
-            if alerts['critical_days'] > alerts['warning_days']:
+        if (
+            "critical_days" in alerts
+            and "warning_days" in alerts
+            and isinstance(alerts["critical_days"], int)
+            and isinstance(alerts["warning_days"], int)
+        ):
+            if alerts["critical_days"] > alerts["warning_days"]:
                 errors.append("alerts.critical_days should not be greater than alerts.warning_days")
 
     # Validate lock section
-    if 'lock' in config:
-        lock = config['lock']
+    if "lock" in config:
+        lock = config["lock"]
 
         # Check timeout_minutes
-        if 'timeout_minutes' in lock:
-            timeout = lock['timeout_minutes']
+        if "timeout_minutes" in lock:
+            timeout = lock["timeout_minutes"]
             if not isinstance(timeout, int):
                 errors.append("lock.timeout_minutes must be an integer")
             elif timeout <= 0:
                 errors.append("lock.timeout_minutes must be positive")
 
         # Check heartbeat_interval_seconds
-        if 'heartbeat_interval_seconds' in lock:
-            interval = lock['heartbeat_interval_seconds']
+        if "heartbeat_interval_seconds" in lock:
+            interval = lock["heartbeat_interval_seconds"]
             if not isinstance(interval, int):
                 errors.append("lock.heartbeat_interval_seconds must be an integer")
             elif interval <= 0:
                 errors.append("lock.heartbeat_interval_seconds must be positive")
 
     # Validate organization section
-    if 'organization' in config:
-        org = config['organization']
+    if "organization" in config:
+        org = config["organization"]
 
         # Check roles
-        if 'roles' in org:
-            roles = org['roles']
+        if "roles" in org:
+            roles = org["roles"]
             if not isinstance(roles, list):
                 errors.append("organization.roles must be a list")
             elif len(roles) == 0:
@@ -299,8 +278,8 @@ def validate_config(config: dict[str, Any]) -> tuple[bool, list[str]]:
                 errors.append("organization.roles must contain only strings")
 
         # Check workspaces
-        if 'workspaces' in org:
-            workspaces = org['workspaces']
+        if "workspaces" in org:
+            workspaces = org["workspaces"]
             if not isinstance(workspaces, list):
                 errors.append("organization.workspaces must be a list")
             elif len(workspaces) == 0:
@@ -338,7 +317,7 @@ def save_config(config: dict[str, Any], config_path: Path = Path("config.json"))
     config_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Write to file with nice formatting
-    with open(config_path, 'w', encoding='utf-8') as f:
+    with open(config_path, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
 
 

@@ -1,18 +1,15 @@
 """Alerts view showing expiring certifications and visits."""
 
-import customtkinter as ctk
 from typing import List
 
+import customtkinter as ctk
+
 from employee.alerts import Alert, AlertQuery, AlertType, UrgencyLevel
-from ui_ctk.views.base_view import BaseView
 from ui_ctk.constants import (
-    COLOR_CRITICAL,
-    COLOR_WARNING,
-    COLOR_SUCCESS,
-    COLOR_INACTIVE,
-    DATE_FORMAT,
     BTN_REFRESH,
+    DATE_FORMAT,
 )
+from ui_ctk.views.base_view import BaseView
 
 
 class AlertsView(BaseView):
@@ -53,11 +50,7 @@ class AlertsView(BaseView):
         control_frame.pack_propagate(False)
 
         # Type filter
-        type_label = ctk.CTkLabel(
-            control_frame,
-            text="Type:",
-            font=("Arial", 12)
-        )
+        type_label = ctk.CTkLabel(control_frame, text="Type:", font=("Arial", 12))
         type_label.pack(side="left", padx=(10, 5))
 
         self.type_menu = ctk.CTkOptionMenu(
@@ -65,16 +58,12 @@ class AlertsView(BaseView):
             values=["Tous", "CACES", "Visites médicales"],
             variable=self.type_filter_var,
             command=self.on_filter_changed,
-            width=150
+            width=150,
         )
         self.type_menu.pack(side="left", padx=5)
 
         # Days filter
-        days_label = ctk.CTkLabel(
-            control_frame,
-            text="Jours:",
-            font=("Arial", 12)
-        )
+        days_label = ctk.CTkLabel(control_frame, text="Jours:", font=("Arial", 12))
         days_label.pack(side="left", padx=(20, 5))
 
         self.days_menu = ctk.CTkOptionMenu(
@@ -82,41 +71,26 @@ class AlertsView(BaseView):
             values=["30 jours", "60 jours", "90 jours", "Toutes"],
             variable=self.days_filter_var,
             command=self.on_filter_changed,
-            width=120
+            width=120,
         )
         self.days_menu.pack(side="left", padx=5)
 
         # Summary label
-        self.summary_label = ctk.CTkLabel(
-            control_frame,
-            text="Chargement...",
-            font=("Arial", 11)
-        )
+        self.summary_label = ctk.CTkLabel(control_frame, text="Chargement...", font=("Arial", 11))
         self.summary_label.pack(side="left", padx=20)
 
         # Refresh button
         button_frame = ctk.CTkFrame(control_frame, fg_color="transparent")
         button_frame.pack(side="right", padx=10)
 
-        refresh_btn = ctk.CTkButton(
-            button_frame,
-            text=BTN_REFRESH,
-            width=120,
-            command=self.refresh_alerts
-        )
+        refresh_btn = ctk.CTkButton(button_frame, text=BTN_REFRESH, width=120, command=self.refresh_alerts)
         refresh_btn.pack(side="left", padx=5)
 
     def create_alerts_list(self):
         """Create alerts list container."""
         # Scrollable frame for alerts
         self.alerts_frame = ctk.CTkScrollableFrame(self)
-        self.alerts_frame.pack(
-            side="top",
-            fill="both",
-            expand=True,
-            padx=10,
-            pady=(5, 10)
-        )
+        self.alerts_frame.pack(side="top", fill="both", expand=True, padx=10, pady=(5, 10))
 
     def refresh_alerts(self):
         """Load alerts from database."""
@@ -126,9 +100,7 @@ class AlertsView(BaseView):
 
         # Query alerts
         self.alerts = AlertQuery.get_all_alerts(
-            alert_types=alert_types,
-            days_threshold=days_threshold,
-            include_expired=True
+            alert_types=alert_types, days_threshold=days_threshold, include_expired=True
         )
 
         # Refresh display
@@ -177,12 +149,7 @@ class AlertsView(BaseView):
             empty_frame = ctk.CTkFrame(self.alerts_frame)
             empty_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
-            empty_label = ctk.CTkLabel(
-                empty_frame,
-                text="Aucune alerte",
-                font=("Arial", 16),
-                text_color="gray"
-            )
+            empty_label = ctk.CTkLabel(empty_frame, text="Aucune alerte", font=("Arial", 16), text_color="gray")
             empty_label.pack()
 
             self.alert_widgets.append(empty_frame)
@@ -209,10 +176,7 @@ class AlertsView(BaseView):
 
         # Card frame with colored border
         card = ctk.CTkFrame(
-            self.alerts_frame,
-            fg_color=("gray95", "gray25"),
-            border_width=2,
-            border_color=urgency_color
+            self.alerts_frame, fg_color=("gray95", "gray25"), border_width=2, border_color=urgency_color
         )
 
         # Content frame
@@ -225,30 +189,17 @@ class AlertsView(BaseView):
 
         # Type icon and description
         icon = self._get_alert_icon(alert.alert_type)
-        desc_label = ctk.CTkLabel(
-            top_row,
-            text=f"{icon} {alert.description}",
-            font=("Arial", 14, "bold"),
-            anchor="w"
-        )
+        desc_label = ctk.CTkLabel(top_row, text=f"{icon} {alert.description}", font=("Arial", 14, "bold"), anchor="w")
         desc_label.pack(side="left", padx=(0, 20))
 
         # Urgency badge
         urgency_badge = ctk.CTkLabel(
-            top_row,
-            text=alert.urgency_text,
-            font=("Arial", 11, "bold"),
-            text_color=urgency_color
+            top_row, text=alert.urgency_text, font=("Arial", 11, "bold"), text_color=urgency_color
         )
         urgency_badge.pack(side="right")
 
         # Employee name
-        emp_label = ctk.CTkLabel(
-            top_row,
-            text=f"• {alert.employee.full_name}",
-            font=("Arial", 13),
-            anchor="w"
-        )
+        emp_label = ctk.CTkLabel(top_row, text=f"• {alert.employee.full_name}", font=("Arial", 13), anchor="w")
         emp_label.pack(side="left")
 
         # Bottom row: expiration date, view detail button
@@ -257,12 +208,7 @@ class AlertsView(BaseView):
 
         # Expiration date
         exp_text = f"Expire le {alert.expiration_date.strftime(DATE_FORMAT)}"
-        exp_label = ctk.CTkLabel(
-            bottom_row,
-            text=exp_text,
-            font=("Arial", 11),
-            text_color="gray"
-        )
+        exp_label = ctk.CTkLabel(bottom_row, text=exp_text, font=("Arial", 11), text_color="gray")
         exp_label.pack(side="left", padx=(0, 20))
 
         # View detail button
@@ -271,7 +217,7 @@ class AlertsView(BaseView):
             text="Voir détail",
             width=100,
             height=28,
-            command=lambda: self.show_employee_detail(alert.employee)
+            command=lambda: self.show_employee_detail(alert.employee),
         )
         detail_btn.pack(side="right")
 

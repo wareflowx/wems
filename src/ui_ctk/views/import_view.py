@@ -1,27 +1,24 @@
 """Excel import view for bulk employee import."""
 
-import customtkinter as ctk
 import threading
 from pathlib import Path
 from typing import Optional
-from datetime import datetime
 
-from ui_ctk.views.base_view import BaseView
+import customtkinter as ctk
+
 from ui_ctk.constants import (
-    IMPORT_TITLE,
-    IMPORT_DESCRIPTION,
-    IMPORT_BUTTON_CHOOSE,
-    IMPORT_BUTTON_TEMPLATE,
-    IMPORT_BUTTON_IMPORT,
-    IMPORT_PROGRESS,
-    IMPORT_COMPLETE,
-    IMPORT_ERROR_NO_FILE,
-    IMPORT_ERROR_INVALID_FORMAT,
-    DATE_FORMAT,
-    COLOR_SUCCESS,
     COLOR_CRITICAL,
+    COLOR_SUCCESS,
     COLOR_WARNING,
+    IMPORT_BUTTON_CHOOSE,
+    IMPORT_BUTTON_IMPORT,
+    IMPORT_BUTTON_TEMPLATE,
+    IMPORT_COMPLETE,
+    IMPORT_DESCRIPTION,
+    IMPORT_PROGRESS,
+    IMPORT_TITLE,
 )
+from ui_ctk.views.base_view import BaseView
 
 
 class ImportView(BaseView):
@@ -54,20 +51,11 @@ class ImportView(BaseView):
     def create_instructions(self):
         """Create instructions section."""
         instructions_frame = ctk.CTkFrame(self, height=80)
-        instructions_frame.pack(
-            side="top",
-            fill="x",
-            padx=10,
-            pady=(10, 5)
-        )
+        instructions_frame.pack(side="top", fill="x", padx=10, pady=(10, 5))
         instructions_frame.pack_propagate(False)
 
         # Title
-        title_label = ctk.CTkLabel(
-            instructions_frame,
-            text=IMPORT_DESCRIPTION,
-            font=("Arial", 12)
-        )
+        title_label = ctk.CTkLabel(instructions_frame, text=IMPORT_DESCRIPTION, font=("Arial", 12))
         title_label.pack(pady=(15, 5))
 
         # Steps
@@ -75,19 +63,14 @@ class ImportView(BaseView):
             instructions_frame,
             text="1. TélEcharger le modEle  2. Remplir les donnEes  3. Choisir le fichier  4. Importer",
             font=("Arial", 10),
-            text_color="gray"
+            text_color="gray",
         )
         steps_label.pack(pady=5)
 
     def create_actions(self):
         """Create action buttons section."""
         actions_frame = ctk.CTkFrame(self, height=60)
-        actions_frame.pack(
-            side="top",
-            fill="x",
-            padx=10,
-            pady=5
-        )
+        actions_frame.pack(side="top", fill="x", padx=10, pady=5)
         actions_frame.pack_propagate(False)
 
         # Left side: file selection
@@ -95,12 +78,7 @@ class ImportView(BaseView):
         left_frame.pack(side="left", padx=10, pady=10)
 
         # Choose file button
-        self.choose_btn = ctk.CTkButton(
-            left_frame,
-            text=IMPORT_BUTTON_CHOOSE,
-            width=180,
-            command=self.choose_file
-        )
+        self.choose_btn = ctk.CTkButton(left_frame, text=IMPORT_BUTTON_CHOOSE, width=180, command=self.choose_file)
         self.choose_btn.pack(side="left", padx=5)
 
         # Template button
@@ -109,7 +87,7 @@ class ImportView(BaseView):
             text=IMPORT_BUTTON_TEMPLATE,
             width=180,
             fg_color=("gray70", "gray30"),
-            command=self.download_template
+            command=self.download_template,
         )
         template_btn.pack(side="left", padx=5)
 
@@ -118,34 +96,19 @@ class ImportView(BaseView):
         right_frame.pack(side="right", padx=10, pady=10)
 
         self.import_btn = ctk.CTkButton(
-            right_frame,
-            text=IMPORT_BUTTON_IMPORT,
-            width=150,
-            state="disabled",
-            command=self.start_import
+            right_frame, text=IMPORT_BUTTON_IMPORT, width=150, state="disabled", command=self.start_import
         )
         self.import_btn.pack()
 
         # Selected file label
-        self.file_label = ctk.CTkLabel(
-            actions_frame,
-            text="",
-            font=("Arial", 10),
-            text_color="gray"
-        )
+        self.file_label = ctk.CTkLabel(actions_frame, text="", font=("Arial", 10), text_color="gray")
         self.file_label.pack(side="bottom", pady=(5, 10))
 
     def create_status(self):
         """Create status and results section."""
         # Status container
         self.status_container = ctk.CTkScrollableFrame(self)
-        self.status_container.pack(
-            side="top",
-            fill="both",
-            expand=True,
-            padx=10,
-            pady=(5, 10)
-        )
+        self.status_container.pack(side="top", fill="both", expand=True, padx=10, pady=(5, 10))
 
         # Welcome message
         welcome_frame = ctk.CTkFrame(self.status_container)
@@ -155,7 +118,7 @@ class ImportView(BaseView):
             welcome_frame,
             text="Sélectionnez un fichier Excel pour commencer l'import",
             font=("Arial", 14),
-            text_color="gray"
+            text_color="gray",
         )
         welcome_label.pack()
 
@@ -165,10 +128,7 @@ class ImportView(BaseView):
 
         file_path = filedialog.askopenfilename(
             title="Sélectionner un fichier Excel",
-            filetypes=[
-                ("Fichiers Excel", "*.xlsx"),
-                ("Tous les fichiers", "*.*")
-            ]
+            filetypes=[("Fichiers Excel", "*.xlsx"), ("Tous les fichiers", "*.*")],
         )
 
         if file_path:
@@ -189,24 +149,18 @@ class ImportView(BaseView):
             widget.destroy()
 
         # Show loading
-        loading_label = ctk.CTkLabel(
-            self.status_container,
-            text="Chargement de l'aperçu...",
-            font=("Arial", 12)
-        )
+        loading_label = ctk.CTkLabel(self.status_container, text="Chargement de l'aperçu...", font=("Arial", 12))
         loading_label.pack(padx=20, pady=20)
 
         # Load preview in background thread
-        threading.Thread(
-            target=self._load_preview,
-            daemon=True
-        ).start()
+        threading.Thread(target=self._load_preview, daemon=True).start()
 
     def _load_preview(self):
         """Load preview data (runs in background thread)."""
         try:
             import sys
-            sys.path.insert(0, 'src')
+
+            sys.path.insert(0, "src")
 
             from excel_import import ExcelImporter
 
@@ -242,48 +196,39 @@ class ImportView(BaseView):
 
         # Row count
         rows_label = ctk.CTkLabel(
-            info_frame,
-            text=f"Nombre de lignes: {preview['total_rows']}",
-            font=("Arial", 12, "bold")
+            info_frame, text=f"Nombre de lignes: {preview['total_rows']}", font=("Arial", 12, "bold")
         )
         rows_label.pack(side="left", padx=10, pady=10)
 
         # Columns
         cols_text = f"Colonnes: {', '.join(preview['columns'][:5])}"
-        if len(preview['columns']) > 5:
+        if len(preview["columns"]) > 5:
             cols_text += f"... (+{len(preview['columns']) - 5})"
-        cols_label = ctk.CTkLabel(
-            info_frame,
-            text=cols_text,
-            font=("Arial", 10),
-            text_color="gray"
-        )
+        cols_label = ctk.CTkLabel(info_frame, text=cols_text, font=("Arial", 10), text_color="gray")
         cols_label.pack(side="left", padx=10)
 
         # Issues warning
-        if preview.get('detected_issues'):
+        if preview.get("detected_issues"):
             issues_label = ctk.CTkLabel(
                 info_frame,
                 text=f"⚠️ {len(preview['detected_issues'])} problèmes détectés",
                 font=("Arial", 10),
-                text_color=COLOR_WARNING
+                text_color=COLOR_WARNING,
             )
             issues_label.pack(side="right", padx=10)
 
         # Sample data frame
-        if preview.get('sample_data'):
+        if preview.get("sample_data"):
             sample_frame = ctk.CTkFrame(self.status_container)
             sample_frame.pack(fill="both", expand=True, padx=10, pady=5)
 
             sample_title = ctk.CTkLabel(
-                sample_frame,
-                text="Aperçu des données (3 premières lignes):",
-                font=("Arial", 11, "bold")
+                sample_frame, text="Aperçu des données (3 premières lignes):", font=("Arial", 11, "bold")
             )
             sample_title.pack(pady=(10, 5), padx=10, anchor="w")
 
             # Display sample rows
-            for i, row_data in enumerate(preview['sample_data'], 1):
+            for i, row_data in enumerate(preview["sample_data"], 1):
                 row_frame = ctk.CTkFrame(sample_frame, fg_color=("gray90", "gray20"))
                 row_frame.pack(fill="x", padx=10, pady=(0, 5))
 
@@ -291,53 +236,46 @@ class ImportView(BaseView):
                     row_frame,
                     text=f"Ligne {row_data['row_num']}: {self._format_sample_row(row_data)}",
                     font=("Arial", 9),
-                    anchor="w"
+                    anchor="w",
                 )
                 row_label.pack(padx=10, pady=5, anchor="w")
 
         # Issues frame
-        if preview.get('detected_issues'):
+        if preview.get("detected_issues"):
             issues_frame = ctk.CTkFrame(self.status_container)
             issues_frame.pack(fill="x", padx=10, pady=5)
 
             issues_title = ctk.CTkLabel(
-                issues_frame,
-                text="⚠️ Problèmes détectés:",
-                font=("Arial", 11, "bold"),
-                text_color=COLOR_WARNING
+                issues_frame, text="⚠️ Problèmes détectés:", font=("Arial", 11, "bold"), text_color=COLOR_WARNING
             )
             issues_title.pack(pady=(10, 5), padx=10, anchor="w")
 
-            for issue in preview['detected_issues'][:10]:  # Max 10 issues
+            for issue in preview["detected_issues"][:10]:  # Max 10 issues
                 issue_label = ctk.CTkLabel(
-                    issues_frame,
-                    text=f"• {issue}",
-                    font=("Arial", 9),
-                    text_color=COLOR_WARNING,
-                    anchor="w"
+                    issues_frame, text=f"• {issue}", font=("Arial", 9), text_color=COLOR_WARNING, anchor="w"
                 )
                 issue_label.pack(padx=20, pady=2, anchor="w")
 
-            if len(preview['detected_issues']) > 10:
+            if len(preview["detected_issues"]) > 10:
                 more_label = ctk.CTkLabel(
                     issues_frame,
                     text=f"... et {len(preview['detected_issues']) - 10} autres",
                     font=("Arial", 9),
                     text_color="gray",
-                    anchor="w"
+                    anchor="w",
                 )
                 more_label.pack(padx=20, pady=(5, 10), anchor="w")
 
     def _format_sample_row(self, row_data):
         """Format sample row for display."""
-        data = row_data.get('data', {})
+        data = row_data.get("data", {})
         parts = []
 
-        for key in ['First Name', 'Last Name', 'Email', 'Status', 'Workspace']:
+        for key in ["First Name", "Last Name", "Email", "Status", "Workspace"]:
             if key in data:
                 parts.append(f"{key}={data[key]}")
 
-        return ', '.join(parts) if parts else "(données vides)"
+        return ", ".join(parts) if parts else "(données vides)"
 
     def _show_validation_error(self, error_msg):
         """Show file validation error."""
@@ -348,10 +286,7 @@ class ImportView(BaseView):
         error_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
         error_label = ctk.CTkLabel(
-            error_frame,
-            text=f"❌ Erreur de validation\n\n{error_msg}",
-            font=("Arial", 12),
-            text_color=COLOR_CRITICAL
+            error_frame, text=f"❌ Erreur de validation\n\n{error_msg}", font=("Arial", 12), text_color=COLOR_CRITICAL
         )
         error_label.pack()
 
@@ -363,12 +298,7 @@ class ImportView(BaseView):
         error_frame = ctk.CTkFrame(self.status_container)
         error_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
-        error_label = ctk.CTkLabel(
-            error_frame,
-            text=f"❌ {message}",
-            font=("Arial", 12),
-            text_color=COLOR_CRITICAL
-        )
+        error_label = ctk.CTkLabel(error_frame, text=f"❌ {message}", font=("Arial", 12), text_color=COLOR_CRITICAL)
         error_label.pack()
 
     def start_import(self):
@@ -388,41 +318,29 @@ class ImportView(BaseView):
         self.progress_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
         # Progress label
-        self.progress_label = ctk.CTkLabel(
-            self.progress_frame,
-            text=IMPORT_PROGRESS,
-            font=("Arial", 12)
-        )
+        self.progress_label = ctk.CTkLabel(self.progress_frame, text=IMPORT_PROGRESS, font=("Arial", 12))
         self.progress_label.pack(pady=(10, 5))
 
         # Progress bar
-        self.progress_bar = ctk.CTkProgressBar(
-            self.progress_frame,
-            width=400
-        )
+        self.progress_bar = ctk.CTkProgressBar(self.progress_frame, width=400)
         self.progress_bar.pack(pady=10)
         self.progress_bar.set(0)
 
         # Status label
         self.status_label = ctk.CTkLabel(
-            self.progress_frame,
-            text="Préparation...",
-            font=("Arial", 10),
-            text_color="gray"
+            self.progress_frame, text="Préparation...", font=("Arial", 10), text_color="gray"
         )
         self.status_label.pack(pady=(0, 10))
 
         # Start import in background
-        threading.Thread(
-            target=self._run_import,
-            daemon=True
-        ).start()
+        threading.Thread(target=self._run_import, daemon=True).start()
 
     def _run_import(self):
         """Run import process (background thread)."""
         try:
             import sys
-            sys.path.insert(0, 'src')
+
+            sys.path.insert(0, "src")
 
             from excel_import import ExcelImporter
 
@@ -472,10 +390,7 @@ class ImportView(BaseView):
         header_color = COLOR_SUCCESS if result.success_rate >= 50 else COLOR_WARNING
 
         header_label = ctk.CTkLabel(
-            results_frame,
-            text=header_text,
-            font=("Arial", 14, "bold"),
-            text_color=header_color
+            results_frame, text=header_text, font=("Arial", 14, "bold"), text_color=header_color
         )
         header_label.pack(pady=(10, 15))
 
@@ -485,39 +400,25 @@ class ImportView(BaseView):
 
         # Success
         success_label = ctk.CTkLabel(
-            stats_frame,
-            text=f"✓ Réussies: {result.successful}",
-            font=("Arial", 12),
-            text_color=COLOR_SUCCESS
+            stats_frame, text=f"✓ Réussies: {result.successful}", font=("Arial", 12), text_color=COLOR_SUCCESS
         )
         success_label.pack(side="left", padx=15, pady=10)
 
         # Failed
         failed_label = ctk.CTkLabel(
-            stats_frame,
-            text=f"✗ Échouées: {result.failed}",
-            font=("Arial", 12),
-            text_color=COLOR_CRITICAL
+            stats_frame, text=f"✗ Échouées: {result.failed}", font=("Arial", 12), text_color=COLOR_CRITICAL
         )
         failed_label.pack(side="left", padx=15, pady=10)
 
         # Skipped
         skipped_label = ctk.CTkLabel(
-            stats_frame,
-            text=f"⊘ Ignorées: {result.skipped}",
-            font=("Arial", 12),
-            text_color="gray"
+            stats_frame, text=f"⊘ Ignorées: {result.skipped}", font=("Arial", 12), text_color="gray"
         )
         skipped_label.pack(side="left", padx=15, pady=10)
 
         # Duration
         duration_text = f"Durée: {result.duration:.1f}s"
-        duration_label = ctk.CTkLabel(
-            stats_frame,
-            text=duration_text,
-            font=("Arial", 10),
-            text_color="gray"
-        )
+        duration_label = ctk.CTkLabel(stats_frame, text=duration_text, font=("Arial", 10), text_color="gray")
         duration_label.pack(side="right", padx=15, pady=10)
 
         # Errors section
@@ -529,7 +430,7 @@ class ImportView(BaseView):
                 errors_frame,
                 text=f"Erreurs ({len(result.errors)}):",
                 font=("Arial", 11, "bold"),
-                text_color=COLOR_CRITICAL
+                text_color=COLOR_CRITICAL,
             )
             errors_title.pack(pady=(10, 5), anchor="w", padx=10)
 
@@ -540,11 +441,7 @@ class ImportView(BaseView):
             for error in result.errors[:50]:  # Max 50 errors
                 error_text = str(error)
                 error_label = ctk.CTkLabel(
-                    error_scroll,
-                    text=f"• {error_text}",
-                    font=("Arial", 9),
-                    text_color=COLOR_CRITICAL,
-                    anchor="w"
+                    error_scroll, text=f"• {error_text}", font=("Arial", 9), text_color=COLOR_CRITICAL, anchor="w"
                 )
                 error_label.pack(anchor="w", pady=2)
 
@@ -554,7 +451,7 @@ class ImportView(BaseView):
                     text=f"... et {len(result.errors) - 50} autres erreurs",
                     font=("Arial", 9),
                     text_color="gray",
-                    anchor="w"
+                    anchor="w",
                 )
                 more_label.pack(anchor="w", pady=(5, 0))
 
@@ -566,7 +463,7 @@ class ImportView(BaseView):
             self.import_btn.configure(state="normal")
 
             # Trigger employee list refresh
-            if hasattr(self.master_window, 'refresh_employee_list'):
+            if hasattr(self.master_window, "refresh_employee_list"):
                 self.master_window.refresh_employee_list()
 
             print(f"[INFO] Import completed: {self.import_result.successful} employees imported")
@@ -582,16 +479,14 @@ class ImportView(BaseView):
             title="Enregistrer le modèle",
             defaultextension=".xlsx",
             initialfile="employee_import_template.xlsx",
-            filetypes=[
-                ("Fichiers Excel", "*.xlsx"),
-                ("Tous les fichiers", "*.*")
-            ]
+            filetypes=[("Fichiers Excel", "*.xlsx"), ("Tous les fichiers", "*.*")],
         )
 
         if file_path:
             try:
                 import sys
-                sys.path.insert(0, 'src')
+
+                sys.path.insert(0, "src")
 
                 from excel_import import ExcelTemplateGenerator
 
@@ -618,20 +513,11 @@ class ImportView(BaseView):
         dialog.geometry(f"400x150+{x}+{y}")
 
         # Message
-        msg_label = ctk.CTkLabel(
-            dialog,
-            text=f"✓ Modèle généré avec succès!\n\n{file_path.name}",
-            font=("Arial", 12)
-        )
+        msg_label = ctk.CTkLabel(dialog, text=f"✓ Modèle généré avec succès!\n\n{file_path.name}", font=("Arial", 12))
         msg_label.pack(pady=30, padx=20)
 
         # Close button
-        close_btn = ctk.CTkButton(
-            dialog,
-            text="Fermer",
-            width=100,
-            command=dialog.destroy
-        )
+        close_btn = ctk.CTkButton(dialog, text="Fermer", width=100, command=dialog.destroy)
         close_btn.pack(pady=10)
 
     def refresh(self):
@@ -658,6 +544,6 @@ class ImportView(BaseView):
             welcome_frame,
             text="Sélectionnez un fichier Excel pour commencer l'import",
             font=("Arial", 14),
-            text_color="gray"
+            text_color="gray",
         )
         welcome_label.pack()

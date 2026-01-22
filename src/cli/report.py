@@ -1,15 +1,15 @@
 """Report and export commands."""
 
-import typer
 from pathlib import Path
 from typing import Optional
 
-from employee.models import Employee
-from employee import queries, calculations
-from export import excel
-from database.connection import database as db
+import typer
 
-from cli.utils import format_dashboard, format_alerts
+from cli.utils import format_alerts, format_dashboard
+from database.connection import database as db
+from employee import calculations, queries
+from employee.models import Employee
+from export import excel
 
 app = typer.Typer(help="Rapports et exports")
 
@@ -19,7 +19,7 @@ def dashboard():
     """Afficher le tableau de bord avec statistiques."""
     # Calculate statistics
     total_employees = Employee.select().count()
-    active_employees = Employee.select().where(Employee.current_status == 'active').count()
+    active_employees = Employee.select().where(Employee.current_status == "active").count()
 
     # Count expiring items
     expired_caces = 0
@@ -36,7 +36,7 @@ def dashboard():
         for caces in emp.caces:
             if caces.is_expired:
                 expired_caces += 1
-            elif caces.status == 'critical':
+            elif caces.status == "critical":
                 critical_caces += 1
 
         # Medical visits
@@ -54,22 +54,18 @@ def dashboard():
                 elif training.days_until_expiration < 30:
                     critical_trainings += 1
 
-    unfit_count = len([
-        v for e in employees
-        for v in e.medical_visits
-        if v.result == 'unfit'
-    ])
+    unfit_count = len([v for e in employees for v in e.medical_visits if v.result == "unfit"])
 
     stats = {
-        'total_employees': total_employees,
-        'active_employees': active_employees,
-        'expired_caces': expired_caces,
-        'critical_caces': critical_caces,
-        'expired_visits': expired_visits,
-        'critical_visits': critical_visits,
-        'expired_trainings': expired_trainings,
-        'critical_trainings': critical_trainings,
-        'unfit_count': unfit_count,
+        "total_employees": total_employees,
+        "active_employees": active_employees,
+        "expired_caces": expired_caces,
+        "critical_caces": critical_caces,
+        "expired_visits": expired_visits,
+        "critical_visits": critical_visits,
+        "expired_trainings": expired_trainings,
+        "critical_trainings": critical_trainings,
+        "unfit_count": unfit_count,
     }
 
     typer.echo(format_dashboard(stats))
@@ -78,7 +74,7 @@ def dashboard():
 @app.command()
 def alerts(
     critical_days: int = typer.Option(7, "--critical-days", help="Jours pour alerte critique"),
-    warning_days: int = typer.Option(30, "--warning-days", help="Jours pour alerte warning")
+    warning_days: int = typer.Option(30, "--warning-days", help="Jours pour alerte warning"),
 ):
     """Afficher les alertes d'items expirants."""
     employees = [e for e in Employee.select()]
@@ -90,7 +86,9 @@ def export(
     output_path: Path = typer.Argument(..., help="Chemin de sortie du fichier Excel"),
     include_caces: bool = typer.Option(True, "--include-caces/--no-caces", help="Inclure feuille CACES"),
     include_visits: bool = typer.Option(True, "--include-visits/--no-visits", help="Inclure feuille visites"),
-    include_trainings: bool = typer.Option(True, "--include-trainings/--no-trainings", help="Inclure feuille formations"),
+    include_trainings: bool = typer.Option(
+        True, "--include-trainings/--no-trainings", help="Inclure feuille formations"
+    ),
 ):
     """Exporter les données vers un fichier Excel."""
     # Validate output path
@@ -105,6 +103,7 @@ def export(
 
     try:
         import time
+
         start_time = time.time()
 
         # Export
@@ -113,7 +112,7 @@ def export(
             employees=employees,
             include_caces=include_caces,
             include_visits=include_visits,
-            include_trainings=include_trainings
+            include_trainings=include_trainings,
         )
 
         elapsed = time.time() - start_time
@@ -146,7 +145,7 @@ def export(
 def stats():
     """Afficher les statistiques globales."""
     total = Employee.select().count()
-    active = Employee.select().where(Employee.current_status == 'active').count()
+    active = Employee.select().where(Employee.current_status == "active").count()
 
     # Count by role
     roles = {}
@@ -182,11 +181,8 @@ def unfit():
     unfit_visits = []
     for emp in Employee.select():
         for visit in emp.medical_visits:
-            if visit.result == 'unfit':
-                unfit_visits.append({
-                    'employee': emp,
-                    'visit': visit
-                })
+            if visit.result == "unfit":
+                unfit_visits.append({"employee": emp, "visit": visit})
 
     if not unfit_visits:
         typer.echo("✅ Aucun employé inapte")
@@ -196,8 +192,8 @@ def unfit():
     typer.echo("")
 
     for item in unfit_visits:
-        emp = item['employee']
-        visit = item['visit']
+        emp = item["employee"]
+        visit = item["visit"]
         typer.echo(f"  {emp.external_id}: {emp.full_name}")
         typer.echo(f"    Poste: {emp.role or 'N/A'}")
         typer.echo(f"    Visite: {visit.visit_type} le {visit.visit_date}")
@@ -218,11 +214,11 @@ def compliance_summary():
 
     for emp in employees:
         status = calculations.get_compliance_status(emp)
-        if status == 'compliant':
+        if status == "compliant":
             compliant_count += 1
-        elif status == 'warning':
+        elif status == "warning":
             warning_count += 1
-        elif status == 'critical':
+        elif status == "critical":
             critical_count += 1
 
     total = len(employees)

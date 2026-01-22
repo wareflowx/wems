@@ -1,9 +1,10 @@
 """Complex database queries for Employee entity."""
 
 from datetime import date, timedelta
-from peewee import prefetch, fn
 
-from employee.models import Employee, Caces, MedicalVisit, OnlineTraining
+from peewee import prefetch
+
+from employee.models import Caces, Employee, MedicalVisit, OnlineTraining
 
 
 def get_employees_with_expiring_items(days=30):
@@ -34,10 +35,7 @@ def get_employees_with_expiring_items(days=30):
     caces_employees = (
         Employee.select(Employee.id)
         .join(Caces)
-        .where(
-            (Caces.expiration_date >= date.today()) &
-            (Caces.expiration_date <= threshold)
-        )
+        .where((Caces.expiration_date >= date.today()) & (Caces.expiration_date <= threshold))
     )
     employee_ids.update(emp.id for emp in caces_employees)
 
@@ -45,10 +43,7 @@ def get_employees_with_expiring_items(days=30):
     visit_employees = (
         Employee.select(Employee.id)
         .join(MedicalVisit)
-        .where(
-            (MedicalVisit.expiration_date >= date.today()) &
-            (MedicalVisit.expiration_date <= threshold)
-        )
+        .where((MedicalVisit.expiration_date >= date.today()) & (MedicalVisit.expiration_date <= threshold))
     )
     employee_ids.update(emp.id for emp in visit_employees)
 
@@ -57,9 +52,9 @@ def get_employees_with_expiring_items(days=30):
         Employee.select(Employee.id)
         .join(OnlineTraining)
         .where(
-            (OnlineTraining.expiration_date.is_null(False)) &
-            (OnlineTraining.expiration_date >= date.today()) &
-            (OnlineTraining.expiration_date <= threshold)
+            (OnlineTraining.expiration_date.is_null(False))
+            & (OnlineTraining.expiration_date >= date.today())
+            & (OnlineTraining.expiration_date <= threshold)
         )
     )
     employee_ids.update(emp.id for emp in training_employees)
@@ -71,12 +66,7 @@ def get_employees_with_expiring_items(days=30):
     all_employees = Employee.select().where(Employee.id.in_(employee_ids))
 
     # Prefetch related items to avoid N+1 queries
-    employees_with_prefetch = prefetch(
-        all_employees,
-        Caces,
-        MedicalVisit,
-        OnlineTraining
-    )
+    employees_with_prefetch = prefetch(all_employees, Caces, MedicalVisit, OnlineTraining)
 
     return list(employees_with_prefetch)
 
@@ -96,12 +86,7 @@ def get_employees_with_expired_caces():
         ...             print(f"{emp.full_name}: {caces.kind} expired on {caces.expiration_date}")
     """
     # Get employees with expired CACES
-    employees = (
-        Employee.select()
-        .join(Caces)
-        .where(Caces.expiration_date < date.today())
-        .distinct()
-    )
+    employees = Employee.select().join(Caces).where(Caces.expiration_date < date.today()).distinct()
 
     # Prefetch CACES to avoid N+1 queries
     employees_with_prefetch = prefetch(employees, Caces)
@@ -124,12 +109,7 @@ def get_employees_with_expired_medical_visits():
         ...             print(f"{emp.full_name}: Medical visit expired on {visit.expiration_date}")
     """
     # Get employees with expired medical visits
-    employees = (
-        Employee.select()
-        .join(MedicalVisit)
-        .where(MedicalVisit.expiration_date < date.today())
-        .distinct()
-    )
+    employees = Employee.select().join(MedicalVisit).where(MedicalVisit.expiration_date < date.today()).distinct()
 
     # Prefetch medical visits to avoid N+1 queries
     employees_with_prefetch = prefetch(employees, MedicalVisit)
@@ -154,7 +134,7 @@ def get_unfit_employees():
     # Get employees with unfit medical visits (most recent first)
     unfit_query = (
         MedicalVisit.select(MedicalVisit.employee)
-        .where(MedicalVisit.result == 'unfit')
+        .where(MedicalVisit.result == "unfit")
         .order_by(MedicalVisit.visit_date.desc())
         .distinct()
     )
@@ -198,41 +178,29 @@ def get_dashboard_statistics():
     total_employees = Employee.select().count()
 
     # Active employees
-    active_employees = Employee.select().where(Employee.current_status == 'active').count()
+    active_employees = Employee.select().where(Employee.current_status == "active").count()
 
     # Expiring CACES (within 30 days)
     expiring_caces = (
-        Caces.select()
-        .where(
-            (Caces.expiration_date >= today) &
-            (Caces.expiration_date <= threshold_30_days)
-        )
-        .count()
+        Caces.select().where((Caces.expiration_date >= today) & (Caces.expiration_date <= threshold_30_days)).count()
     )
 
     # Expiring medical visits (within 30 days)
     expiring_visits = (
         MedicalVisit.select()
-        .where(
-            (MedicalVisit.expiration_date >= today) &
-            (MedicalVisit.expiration_date <= threshold_30_days)
-        )
+        .where((MedicalVisit.expiration_date >= today) & (MedicalVisit.expiration_date <= threshold_30_days))
         .count()
     )
 
     # Unfit employees (most recent visit is unfit)
-    unfit_employees = (
-        MedicalVisit.select()
-        .where(MedicalVisit.result == 'unfit')
-        .count()
-    )
+    unfit_employees = MedicalVisit.select().where(MedicalVisit.result == "unfit").count()
 
     return {
-        'total_employees': total_employees,
-        'active_employees': active_employees,
-        'expiring_caces': expiring_caces,
-        'expiring_visits': expiring_visits,
-        'unfit_employees': unfit_employees,
+        "total_employees": total_employees,
+        "active_employees": active_employees,
+        "expiring_caces": expiring_caces,
+        "expiring_visits": expiring_visits,
+        "unfit_employees": unfit_employees,
     }
 
 
@@ -269,64 +237,51 @@ def get_expiring_items_by_type(days=30):
     result = {}
 
     # Get expiring CACES
-    expiring_caces = (
-        Caces.select()
-        .where(
-            (Caces.expiration_date >= today) &
-            (Caces.expiration_date <= threshold)
-        )
-    )
+    expiring_caces = Caces.select().where((Caces.expiration_date >= today) & (Caces.expiration_date <= threshold))
 
     for caces in expiring_caces:
         emp_id = caces.employee.id
         if emp_id not in result:
             result[emp_id] = {
-                'employee': caces.employee,
-                'caces': [],
-                'medical_visits': [],
-                'trainings': [],
+                "employee": caces.employee,
+                "caces": [],
+                "medical_visits": [],
+                "trainings": [],
             }
-        result[emp_id]['caces'].append(caces)
+        result[emp_id]["caces"].append(caces)
 
     # Get expiring medical visits
-    expiring_visits = (
-        MedicalVisit.select()
-        .where(
-            (MedicalVisit.expiration_date >= today) &
-            (MedicalVisit.expiration_date <= threshold)
-        )
+    expiring_visits = MedicalVisit.select().where(
+        (MedicalVisit.expiration_date >= today) & (MedicalVisit.expiration_date <= threshold)
     )
 
     for visit in expiring_visits:
         emp_id = visit.employee.id
         if emp_id not in result:
             result[emp_id] = {
-                'employee': visit.employee,
-                'caces': [],
-                'medical_visits': [],
-                'trainings': [],
+                "employee": visit.employee,
+                "caces": [],
+                "medical_visits": [],
+                "trainings": [],
             }
-        result[emp_id]['medical_visits'].append(visit)
+        result[emp_id]["medical_visits"].append(visit)
 
     # Get expiring trainings
-    expiring_trainings = (
-        OnlineTraining.select()
-        .where(
-            (OnlineTraining.expiration_date.is_null(False)) &
-            (OnlineTraining.expiration_date >= today) &
-            (OnlineTraining.expiration_date <= threshold)
-        )
+    expiring_trainings = OnlineTraining.select().where(
+        (OnlineTraining.expiration_date.is_null(False))
+        & (OnlineTraining.expiration_date >= today)
+        & (OnlineTraining.expiration_date <= threshold)
     )
 
     for training in expiring_trainings:
         emp_id = training.employee.id
         if emp_id not in result:
             result[emp_id] = {
-                'employee': training.employee,
-                'caces': [],
-                'medical_visits': [],
-                'trainings': [],
+                "employee": training.employee,
+                "caces": [],
+                "medical_visits": [],
+                "trainings": [],
             }
-        result[emp_id]['trainings'].append(training)
+        result[emp_id]["trainings"].append(training)
 
     return result
