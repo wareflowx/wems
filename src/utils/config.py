@@ -1,9 +1,18 @@
-"""Configuration JSON loader."""
+"""Configuration JSON loader with environment variable support."""
 
 import copy
 import json
+import os
 from pathlib import Path
 from typing import Any
+
+# Try to load dotenv
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not installed, use environment variables directly
 
 # Default configuration values
 DEFAULT_CONFIG = {
@@ -335,3 +344,102 @@ def get_default_config() -> dict[str, Any]:
         >>> save_config(default, Path("new_config.json"))
     """
     return copy.deepcopy(DEFAULT_CONFIG)
+
+
+# ===== Database Configuration =====
+
+def get_database_dir() -> Path:
+    """
+    Get database directory from environment variable or use default.
+
+    Environment variable: DATABASE_DIR (default: "data")
+
+    Returns:
+        Path to database directory
+
+    Example:
+        >>> os.environ['DATABASE_DIR'] = '/var/lib/wareflow'
+        >>> db_dir = get_database_dir()
+        >>> print(db_dir)
+        /var/lib/wareflow
+    """
+    db_dir = os.getenv("DATABASE_DIR", "data")
+    return Path(db_dir)
+
+
+def get_database_name() -> str:
+    """
+    Get database filename from environment variable or use default.
+
+    Environment variable: DATABASE_NAME (default: "employee_manager.db")
+
+    Returns:
+        Database filename
+
+    Example:
+        >>> name = get_database_name()
+        >>> print(name)
+        employee_manager.db
+    """
+    return os.getenv("DATABASE_NAME", "employee_manager.db")
+
+
+def get_database_path() -> Path:
+    """
+    Get full database path from environment variables or use default.
+
+    Environment variables:
+    - DATABASE_PATH (full path, takes precedence)
+    - DATABASE_DIR (directory, default: "data")
+    - DATABASE_NAME (filename, default: "employee_manager.db")
+
+    If DATABASE_PATH is set, it's used directly.
+    Otherwise, DATABASE_DIR/DATABASE_NAME is used.
+
+    Returns:
+        Path to database file
+
+    Example:
+        >>> # Default behavior
+        >>> path = get_database_path()
+        >>> print(path)
+        data/employee_manager.db
+
+        >>> # Custom directory
+        >>> os.environ['DATABASE_DIR'] = '/var/lib/wareflow'
+        >>> path = get_database_path()
+        >>> print(path)
+        /var/lib/wareflow/employee_manager.db
+
+        >>> # Full path override
+        >>> os.environ['DATABASE_PATH'] = '/opt/db/prod.db'
+        >>> path = get_database_path()
+        >>> print(path)
+        /opt/db/prod.db
+    """
+    # Check if full path is specified
+    db_path = os.getenv("DATABASE_PATH")
+    if db_path:
+        return Path(db_path)
+
+    # Use directory + filename
+    db_dir = get_database_dir()
+    db_name = get_database_name()
+
+    return db_dir / db_name
+
+
+def ensure_database_directory() -> Path:
+    """
+    Ensure database directory exists, creating it if necessary.
+
+    Returns:
+        Path to database directory
+
+    Raises:
+        OSError: If directory cannot be created
+    """
+    db_dir = get_database_dir()
+    db_dir.mkdir(parents=True, exist_ok=True)
+    return db_dir
+
