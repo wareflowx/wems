@@ -229,7 +229,7 @@ def log_file_operation(
     event_type = event_map.get(operation, f"file_{operation}")
 
     context = {
-        "filename": filename,
+        "file_name": filename,  # Renamed to avoid LogRecord conflicts
         "user_id": user_id,
         "operation": operation,
         "success": success,

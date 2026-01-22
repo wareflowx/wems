@@ -192,7 +192,7 @@ class TestRequirePermission:
         mock_user.id = "admin123"
         mock_user.is_admin.return_value = True
 
-        with patch("utils.security_logger.get_current_user", return_value=mock_user):
+        with patch("auth.session.get_current_user", return_value=mock_user):
             with caplog.at_level(logging.INFO):
 
                 @require_permission("employee.delete")
@@ -206,7 +206,7 @@ class TestRequirePermission:
 
     def test_require_permission_with_anonymous_user(self, caplog):
         """Test permission check with anonymous user."""
-        with patch("utils.security_logger.get_current_user", return_value=None):
+        with patch("auth.session.get_current_user", return_value=None):
             with caplog.at_level(logging.WARNING):
                 with pytest.raises(PermissionError, match="Authentication required"):
 
@@ -228,7 +228,7 @@ class TestRequirePermission:
         mock_user.can_manage_employees.return_value = False
         mock_user.can_delete_employees.return_value = False
 
-        with patch("utils.security_logger.get_current_user", return_value=mock_user):
+        with patch("auth.session.get_current_user", return_value=mock_user):
             with caplog.at_level(logging.WARNING):
                 with pytest.raises(PermissionError, match="Permission denied"):
 
@@ -285,7 +285,7 @@ class TestSecurityAuditLogger:
 
     def test_security_audit_logger_failure(self, caplog):
         """Test failed operation logging."""
-        with caplog.at_level(logging.ERROR):
+        with caplog.at_level(logging.INFO):  # Capture both INFO (start) and ERROR (failed)
             try:
                 with SecurityAuditLogger("data_import", "user456"):
                     raise ValueError("Import failed")
