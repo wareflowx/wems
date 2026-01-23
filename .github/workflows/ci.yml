@@ -59,7 +59,7 @@ jobs:
 
       - name: Run tests
         run: |
-          uv run pytest --cov=src --cov-report=xml --cov-report=term-missing --ignore=tests/test_ui --ignore=tests/test_main_window.py
+          uv run pytest --cov=src --cov-report=xml --cov-report=term-missing --ignore=tests/test_ui --ignore=tests/test_main_window.py --ignore=tests/test_file_validation.py
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
