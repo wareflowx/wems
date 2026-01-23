@@ -20,6 +20,22 @@ import os
 from pathlib import Path
 from typing import Tuple, Optional, Set
 
+# Try to import optional dependencies for enhanced validation
+# These are not required for basic functionality but provide better security
+try:
+    import magic
+    MAGIC_AVAILABLE = True
+except ImportError:
+    magic = None
+    MAGIC_AVAILABLE = False
+
+try:
+    import pypdf
+    PYPDF_AVAILABLE = True
+except ImportError:
+    pypdf = None
+    PYPDF_AVAILABLE = False
+
 
 class FileValidationError(Exception):
     """Raised when file validation fails."""
@@ -304,9 +320,18 @@ def validate_magic_number(
         ... else:
         ...     print(f"Error: {error}")
     """
-    try:
-        import magic
+    if not MAGIC_AVAILABLE:
+        # If python-magic is not available, log warning but don't fail
+        # (graceful degradation for environments where libmagic is not available)
+        import sys
+        print(
+            "[WARNING] python-magic not available, skipping magic number validation. "
+            "Install python-magic and libmagic for enhanced security.",
+            file=sys.stderr
+        )
+        return True, None
 
+    try:
         # Detect MIME type from file content
         mime = magic.Magic(mime=True)
         detected_mime = mime.from_file(str(file_path))
@@ -329,16 +354,6 @@ def validate_magic_number(
 
         return True, None
 
-    except ImportError:
-        # If python-magic is not available, log warning but don't fail
-        # (graceful degradation for environments where libmagic is not available)
-        import sys
-        print(
-            f"[WARNING] python-magic not available, skipping magic number validation. "
-            f"Install python-magic and libmagic for enhanced security.",
-            file=sys.stderr
-        )
-        return True, None
     except Exception as e:
         return False, f"Failed to validate file type: {e}"
 
@@ -361,9 +376,17 @@ def validate_pdf_structure(file_path: Path) -> Tuple[bool, Optional[str]]:
         >>> if is_valid:
         ...     print("PDF structure is valid")
     """
-    try:
-        import pypdf
+    if not PYPDF_AVAILABLE:
+        # If pypdf is not available, log warning but don't fail
+        import sys
+        print(
+            "[WARNING] pypdf not available, skipping PDF structure validation. "
+            "Install pypdf for enhanced PDF validation.",
+            file=sys.stderr
+        )
+        return True, None
 
+    try:
         with open(file_path, 'rb') as f:
             reader = pypdf.PdfReader(f)
 
@@ -377,15 +400,6 @@ def validate_pdf_structure(file_path: Path) -> Tuple[bool, Optional[str]]:
 
         return True, None
 
-    except ImportError:
-        # If pypdf is not available, log warning but don't fail
-        import sys
-        print(
-            f"[WARNING] pypdf not available, skipping PDF structure validation. "
-            f"Install pypdf for enhanced PDF validation.",
-            file=sys.stderr
-        )
-        return True, None
     except Exception as e:
         return False, f"Invalid PDF file: {e}"
 
