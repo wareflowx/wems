@@ -1,8 +1,10 @@
 """Tests for configuration utilities."""
 
+import os
 import pytest
 import json
 from pathlib import Path
+from unittest.mock import patch
 
 from utils import config
 
@@ -527,3 +529,84 @@ class TestConfigIntegration:
         assert cfg['alerts']['warning_days'] == 30
         assert 'lock' in cfg
         assert 'organization' in cfg
+
+
+class TestDatabaseConfiguration:
+    """Tests for database configuration functions."""
+
+    def test_get_database_dir_default(self):
+        """Should return default database directory."""
+        with patch.dict(os.environ, {}, clear=True):
+            db_dir = config.get_database_dir()
+
+            assert db_dir == Path("data")
+
+    def test_get_database_dir_from_env(self):
+        """Should return database directory from environment variable."""
+        with patch.dict(os.environ, {"DATABASE_DIR": "/var/lib/wareflow"}):
+            db_dir = config.get_database_dir()
+
+            assert db_dir == Path("/var/lib/wareflow")
+
+    def test_get_database_name_default(self):
+        """Should return default database name."""
+        with patch.dict(os.environ, {}, clear=True):
+            db_name = config.get_database_name()
+
+            assert db_name == "employee_manager.db"
+
+    def test_get_database_name_from_env(self):
+        """Should return database name from environment variable."""
+        with patch.dict(os.environ, {"DATABASE_NAME": "custom.db"}):
+            db_name = config.get_database_name()
+
+            assert db_name == "custom.db"
+
+    def test_get_database_path_default(self):
+        """Should return default database path."""
+        with patch.dict(os.environ, {}, clear=True):
+            db_path = config.get_database_path()
+
+            assert db_path == Path("data/employee_manager.db")
+
+    def test_get_database_path_from_dir_and_name(self):
+        """Should return database path from dir and name env vars."""
+        with patch.dict(os.environ, {"DATABASE_DIR": "/var/lib/wareflow", "DATABASE_NAME": "prod.db"}):
+            db_path = config.get_database_path()
+
+            assert db_path == Path("/var/lib/wareflow/prod.db")
+
+    def test_get_database_path_full_path_override(self):
+        """DATABASE_PATH should take precedence over dir and name."""
+        with patch.dict(
+            os.environ,
+            {
+                "DATABASE_PATH": "/opt/db/prod.db",
+                "DATABASE_DIR": "/var/lib/wareflow",
+                "DATABASE_NAME": "other.db",
+            },
+        ):
+            db_path = config.get_database_path()
+
+            assert db_path == Path("/opt/db/prod.db")
+
+    def test_ensure_database_directory_creates_directory(self, tmp_path):
+        """Should create database directory if it doesn't exist."""
+        db_dir = tmp_path / "data" / "subdir"
+
+        with patch.dict(os.environ, {"DATABASE_DIR": str(db_dir)}):
+            result = config.ensure_database_directory()
+
+            assert result == db_dir
+            assert db_dir.exists()
+
+    def test_ensure_database_directory_handles_existing(self, tmp_path):
+        """Should handle existing database directory."""
+        db_dir = tmp_path / "data"
+        db_dir.mkdir(parents=True, exist_ok=True)
+
+        with patch.dict(os.environ, {"DATABASE_DIR": str(db_dir)}):
+            result = config.ensure_database_directory()
+
+            assert result == db_dir
+            assert db_dir.exists()
