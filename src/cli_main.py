@@ -6,7 +6,7 @@ All subcommands are organized into separate modules.
 
 import typer
 
-from cli import caces, employee, lock, medical, report, training
+from cli import caces, employee, lock, medical, report, rollback, training, upgrade
 
 # Main application
 app = typer.Typer(
@@ -23,6 +23,8 @@ app.add_typer(medical.app, name="medical", help="Gestion des visites médicales"
 app.add_typer(training.app, name="training", help="Gestion des formations en ligne")
 app.add_typer(report.app, name="report", help="Rapports et exports")
 app.add_typer(lock.app, name="lock", help="Gestion du verrou applicatif")
+app.add_typer(upgrade.app, name="upgrade", help="Database migration management")
+app.add_typer(rollback.app, name="rollback", help="Rollback database migrations")
 
 
 @app.command()

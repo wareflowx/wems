@@ -26,6 +26,7 @@ def init_database(db_path: Path) -> None:
     # Import all models here to avoid circular imports
     from employee.models import Caces, Employee, MedicalVisit, OnlineTraining
     from lock.models import AppLock
+    from database.migration_model import Migration
 
     # Create all tables
     database.create_tables(
@@ -35,6 +36,7 @@ def init_database(db_path: Path) -> None:
             MedicalVisit,
             OnlineTraining,
             AppLock,
+            Migration,
         ],
         safe=True,
     )
