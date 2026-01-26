@@ -1,6 +1,8 @@
 """Employee detail view with certifications and visits."""
 
 from datetime import date
+from pathlib import Path
+from typing import List, Optional
 
 import customtkinter as ctk
 
@@ -38,6 +40,7 @@ from ui_ctk.constants import (
     VISIT_TYPES,
 )
 from ui_ctk.views.base_view import BaseView
+from ui_ctk.widgets.export_button import ExportButton
 
 
 class EmployeeDetailView(BaseView):
@@ -95,6 +98,18 @@ class EmployeeDetailView(BaseView):
         # Action buttons
         action_frame = ctk.CTkFrame(header_frame, fg_color="transparent")
         action_frame.pack(side="right", padx=10)
+
+        # Export button
+        export_btn = ExportButton(
+            action_frame,
+            get_employees_func=lambda: [self.employee],
+            title=f"Export {self.employee.full_name} to Excel",
+            default_filename=f"employee_{self.employee.last_name}_{self.employee.first_name}.xlsx",
+            on_export_complete=self.on_export_complete,
+            text="Export",
+            width=100,
+        )
+        export_btn.pack(side="left", padx=5)
 
         edit_btn = ctk.CTkButton(action_frame, text=f"✏️ {BTN_EDIT}", width=120, command=self.edit_employee)
         edit_btn.pack(side="left", padx=5)
@@ -575,3 +590,17 @@ class EmployeeDetailView(BaseView):
             messagebox.showinfo("Information", message)
         except:
             print(f"[INFO] {message}")
+
+    def on_export_complete(self, success: bool, output_path: Optional[Path]) -> None:
+        """
+        Handle export completion.
+
+        Args:
+            success: Whether export succeeded
+            output_path: Path where file was saved, or None if failed
+        """
+        if success and output_path:
+            self.show_info(f"Employee exported successfully to:\n{output_path}")
+            print(f"[INFO] Export completed: {output_path}")
+        elif not success:
+            print(f"[WARN] Export failed or was cancelled")
