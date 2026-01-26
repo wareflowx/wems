@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import customtkinter as ctk
 
 from database.connection import database, init_database
+from database.migration_manager import get_migration_manager
 from employee.models import Caces, Employee, MedicalVisit, OnlineTraining
 from ui_ctk.constants import (
     APP_NAME,
@@ -96,6 +97,73 @@ def setup_database(db_path: str = None):
     except Exception as e:
         print(f"[ERROR] Database initialization failed: {e}")
         raise
+
+
+def check_and_perform_migrations():
+    """
+    Check for pending migrations and perform them if needed.
+
+    This function runs automatic migrations on application startup.
+    If migrations are needed, it will:
+    1. Create a pre-migration backup
+    2. Apply all pending migrations
+    3. Update version tracking
+
+    Returns:
+        True if migrations succeeded or no migrations were needed,
+        False if migrations failed
+    """
+    try:
+        from utils.config import get_database_path
+        from utils.backup_manager import BackupManager
+
+        # Get database path
+        db_file = get_database_path()
+
+        # Create backup manager
+        backup_manager = BackupManager(
+            database_path=db_file,
+            backup_dir=Path("backups"),
+            max_backups=30
+        )
+
+        # Get migration manager
+        migration_manager = get_migration_manager(backup_manager=backup_manager)
+
+        # Check migration plan first
+        plan = migration_manager.get_migration_plan()
+
+        if plan["pending_count"] == 0:
+            print("[OK] Database is up to date")
+            print(f"     Version: {plan['current_version']}")
+            return True
+
+        # Migrations are needed
+        print(f"\n[INFO] Database migration required")
+        print(f"       Current version: {plan['current_version']}")
+        print(f"       Target version: {plan['target_version']}")
+        print(f"       Pending migrations: {plan['pending_count']}")
+
+        for i, migration_name in enumerate(plan["migrations"], 1):
+            print(f"         {i}. {migration_name}")
+
+        # Perform automatic migration
+        print("\n[INFO] Starting automatic migration...")
+        success, message = migration_manager.check_and_migrate(auto_migrate=True)
+
+        if success:
+            print(f"[OK] {message}")
+            return True
+        else:
+            print(f"[ERROR] Migration failed: {message}")
+            print("[ERROR] Application cannot continue without migration")
+            print("[INFO] Please restore from backup and try again")
+            return False
+
+    except Exception as e:
+        print(f"[ERROR] Migration check failed: {e}")
+        logger.error(f"Migration check failed: {e}")
+        return False
 
 
 def create_startup_backup(db_path: str = None):
@@ -190,6 +258,12 @@ def main():
 
     # Step 2: Setup database
     setup_database()
+
+    # Step 2.3: Check and perform migrations
+    if not check_and_perform_migrations():
+        print("\n[ERROR] Migration failed. Application cannot start.")
+        print("[INFO] Please check the logs for details.")
+        sys.exit(1)
 
     # Step 2.5: Create startup backup
     create_startup_backup()
