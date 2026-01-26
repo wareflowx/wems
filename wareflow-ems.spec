@@ -6,11 +6,14 @@ It packages all dependencies, data files, and resources into a single file.
 """
 
 import os
+import sys
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 # Get project root directory
-project_root = Path(__file__).parent.resolve()
+# __file__ is not available in spec context, use sys.argv[0]
+spec_file_path = Path(sys.argv[0]).resolve() if len(sys.argv) > 0 else Path.cwd()
+project_root = spec_file_path.parent
 
 # Bundle all external data files
 datas = [
