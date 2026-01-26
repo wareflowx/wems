@@ -1,5 +1,6 @@
 """Tests for export dialog components."""
 
+from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -23,6 +24,7 @@ def sample_employees(db):
             role="Operator",
             contract_type="CDI",
             current_status="active",
+            entry_date=date.today(),
         )
         employees.append(emp)
     return employees
@@ -148,12 +150,20 @@ class TestExportButtonIntegration:
             last_name="Employee",
             email="active@example.com",
             current_status="active",
+            entry_date=date.today(),
+            workspace="Warehouse A",
+            role="Operator",
+            contract_type="CDI",
         )
         inactive_emp = Employee.create(
             first_name="Inactive",
             last_name="Employee",
             email="inactive@example.com",
             current_status="inactive",
+            entry_date=date.today(),
+            workspace="Warehouse A",
+            role="Operator",
+            contract_type="CDI",
         )
 
         # Return only active employees

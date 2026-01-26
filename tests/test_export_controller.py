@@ -1,6 +1,6 @@
 """Tests for export controller."""
 
-import tempfile
+from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -30,6 +30,7 @@ def sample_employees(db):
             role="Operator",
             contract_type="CDI",
             current_status="active",
+            entry_date=date.today(),
         )
         employees.append(emp)
     return employees
