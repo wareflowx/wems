@@ -27,7 +27,8 @@ class TrashView(BaseView):
         Args:
             master: Parent widget
         """
-        super().__init__(master, title="Trash")
+        # Call parent WITHOUT title to avoid duplicate header
+        super().__init__(master, title="")
 
         # Create UI
         self.create_header()
