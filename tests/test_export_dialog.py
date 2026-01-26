@@ -10,7 +10,7 @@ from ui_ctk.widgets.export_button import ExportButton
 
 
 @pytest.fixture
-def sample_employees(db_session):
+def sample_employees(db):
     """Create sample employees for testing."""
     employees = []
     for i in range(3):
