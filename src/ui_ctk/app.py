@@ -167,8 +167,11 @@ def show_main_application(app: ctk.CTk):
     print("=" * 50)
     print("\n[INFO] Press Ctrl+C or close window to exit\n")
 
-    # Create main window
+    # Create main window and store reference for closing checks
     main_window = create_main_window(app)
+
+    # Store reference globally for access in on_closing
+    app.main_window = main_window
 
 
 def main():
@@ -206,7 +209,18 @@ def main():
 
     # Step 5: Configure protocol for graceful shutdown
     def on_closing():
-        """Handle application closing."""
+        """Handle application closing with unsaved changes check."""
+        # Check for unsaved changes in main window
+        if hasattr(app, 'main_window'):
+            if app.main_window._check_current_view_unsaved():
+                response = app.main_window._prompt_unsaved_changes()
+
+                if response == 'cancel':
+                    return  # Cancel closing
+                elif response == 'save':
+                    if not app.main_window._save_current_view():
+                        return  # Save failed, cancel closing
+
         print("\n[INFO] Shutting down application...")
         logger.info("Application shutdown requested")
 
