@@ -31,23 +31,33 @@ def get_employees_with_expiring_items(days=30):
     # Collect employee IDs from all three sources
     employee_ids = set()
 
-    # Get employees with expiring CACES
+    # Get employees with expiring CACES (exclude soft-deleted)
     caces_employees = (
         Employee.select(Employee.id)
         .join(Caces)
-        .where((Caces.expiration_date >= date.today()) & (Caces.expiration_date <= threshold))
+        .where(
+            (Caces.expiration_date >= date.today())
+            & (Caces.expiration_date <= threshold)
+            & (Employee.deleted_at.is_null(True))  # Exclude soft-deleted employees
+            & (Caces.deleted_at.is_null(True))  # Exclude soft-deleted CACES
+        )
     )
     employee_ids.update(emp.id for emp in caces_employees)
 
-    # Get employees with expiring medical visits
+    # Get employees with expiring medical visits (exclude soft-deleted)
     visit_employees = (
         Employee.select(Employee.id)
         .join(MedicalVisit)
-        .where((MedicalVisit.expiration_date >= date.today()) & (MedicalVisit.expiration_date <= threshold))
+        .where(
+            (MedicalVisit.expiration_date >= date.today())
+            & (MedicalVisit.expiration_date <= threshold)
+            & (Employee.deleted_at.is_null(True))  # Exclude soft-deleted employees
+            & (MedicalVisit.deleted_at.is_null(True))  # Exclude soft-deleted visits
+        )
     )
     employee_ids.update(emp.id for emp in visit_employees)
 
-    # Get employees with expiring trainings
+    # Get employees with expiring trainings (exclude soft-deleted)
     training_employees = (
         Employee.select(Employee.id)
         .join(OnlineTraining)
@@ -55,6 +65,8 @@ def get_employees_with_expiring_items(days=30):
             (OnlineTraining.expiration_date.is_null(False))
             & (OnlineTraining.expiration_date >= date.today())
             & (OnlineTraining.expiration_date <= threshold)
+            & (Employee.deleted_at.is_null(True))  # Exclude soft-deleted employees
+            & (OnlineTraining.deleted_at.is_null(True))  # Exclude soft-deleted trainings
         )
     )
     employee_ids.update(emp.id for emp in training_employees)
@@ -62,11 +74,19 @@ def get_employees_with_expiring_items(days=30):
     if not employee_ids:
         return []
 
-    # Get all unique employees
-    all_employees = Employee.select().where(Employee.id.in_(employee_ids))
+    # Get all unique employees (exclude soft-deleted)
+    all_employees = Employee.select().where(
+        Employee.id.in_(employee_ids),
+        Employee.deleted_at.is_null(True)  # Exclude soft-deleted employees
+    )
 
-    # Prefetch related items to avoid N+1 queries
-    employees_with_prefetch = prefetch(all_employees, Caces, MedicalVisit, OnlineTraining)
+    # Prefetch related items to avoid N+1 queries (exclude soft-deleted)
+    employees_with_prefetch = prefetch(
+        all_employees,
+        Caces,  # Will need to filter in application code
+        MedicalVisit,
+        OnlineTraining
+    )
 
     return list(employees_with_prefetch)
 
@@ -77,6 +97,7 @@ def get_employees_with_expired_caces():
 
     Returns:
         List of Employee objects with prefetched expired CACES.
+        Excludes soft-deleted employees and CACES.
 
     Examples:
         >>> employees = get_employees_with_expired_caces()
@@ -85,8 +106,17 @@ def get_employees_with_expired_caces():
         ...         if caces.is_expired:
         ...             print(f"{emp.full_name}: {caces.kind} expired on {caces.expiration_date}")
     """
-    # Get employees with expired CACES
-    employees = Employee.select().join(Caces).where(Caces.expiration_date < date.today()).distinct()
+    # Get employees with expired CACES (exclude soft-deleted)
+    employees = (
+        Employee.select()
+        .join(Caces)
+        .where(
+            (Caces.expiration_date < date.today())
+            & (Employee.deleted_at.is_null(True))  # Exclude soft-deleted employees
+            & (Caces.deleted_at.is_null(True))  # Exclude soft-deleted CACES
+        )
+        .distinct()
+    )
 
     # Prefetch CACES to avoid N+1 queries
     employees_with_prefetch = prefetch(employees, Caces)
@@ -100,6 +130,7 @@ def get_employees_with_expired_medical_visits():
 
     Returns:
         List of Employee objects with prefetched expired medical visits.
+        Excludes soft-deleted employees and visits.
 
     Examples:
         >>> employees = get_employees_with_expired_medical_visits()
@@ -108,8 +139,17 @@ def get_employees_with_expired_medical_visits():
         ...         if visit.is_expired:
         ...             print(f"{emp.full_name}: Medical visit expired on {visit.expiration_date}")
     """
-    # Get employees with expired medical visits
-    employees = Employee.select().join(MedicalVisit).where(MedicalVisit.expiration_date < date.today()).distinct()
+    # Get employees with expired medical visits (exclude soft-deleted)
+    employees = (
+        Employee.select()
+        .join(MedicalVisit)
+        .where(
+            (MedicalVisit.expiration_date < date.today())
+            & (Employee.deleted_at.is_null(True))  # Exclude soft-deleted employees
+            & (MedicalVisit.deleted_at.is_null(True))  # Exclude soft-deleted visits
+        )
+        .distinct()
+    )
 
     # Prefetch medical visits to avoid N+1 queries
     employees_with_prefetch = prefetch(employees, MedicalVisit)
@@ -124,17 +164,22 @@ def get_unfit_employees():
     Returns:
         List of Employee objects with prefetched medical visits.
         Only includes employees whose most recent medical visit
-        has result='unfit'.
+        has result='unfit'. Excludes soft-deleted employees and visits.
 
     Examples:
         >>> employees = get_unfit_employees()
         >>> for emp in employees:
         ...     print(f"{emp.full_name} is currently unfit for work")
     """
-    # Get employees with unfit medical visits (most recent first)
+    # Get employees with unfit medical visits (most recent first, exclude soft-deleted)
     unfit_query = (
         MedicalVisit.select(MedicalVisit.employee)
-        .where(MedicalVisit.result == "unfit")
+        .where(
+            (MedicalVisit.result == "unfit")
+            & (MedicalVisit.deleted_at.is_null(True))  # Exclude soft-deleted visits
+        )
+        .join(Employee)
+        .where(Employee.deleted_at.is_null(True))  # Exclude soft-deleted employees
         .order_by(MedicalVisit.visit_date.desc())
         .distinct()
     )
@@ -145,8 +190,11 @@ def get_unfit_employees():
     if not employee_ids:
         return []
 
-    # Get full employee objects
-    employees = Employee.select().where(Employee.id.in_(employee_ids))
+    # Get full employee objects (exclude soft-deleted)
+    employees = Employee.select().where(
+        Employee.id.in_(employee_ids),
+        Employee.deleted_at.is_null(True)
+    )
 
     # Prefetch medical visits to avoid N+1 queries
     employees_with_prefetch = prefetch(employees, MedicalVisit)
@@ -160,11 +208,11 @@ def get_dashboard_statistics():
 
     Returns:
         Dictionary with key metrics:
-        - total_employees: Total number of employees
-        - active_employees: Number of active employees
-        - expiring_caces: Number of CACES expiring within 30 days
-        - expiring_visits: Number of medical visits expiring within 30 days
-        - unfit_employees: Number of employees with unfit status
+        - total_employees: Total number of employees (excluding soft-deleted)
+        - active_employees: Number of active employees (excluding soft-deleted)
+        - expiring_caces: Number of CACES expiring within 30 days (excluding soft-deleted)
+        - expiring_visits: Number of medical visits expiring within 30 days (excluding soft-deleted)
+        - unfit_employees: Number of employees with unfit status (excluding soft-deleted)
 
     Examples:
         >>> stats = get_dashboard_statistics()
@@ -174,26 +222,44 @@ def get_dashboard_statistics():
     today = date.today()
     threshold_30_days = today + timedelta(days=30)
 
-    # Total employees
-    total_employees = Employee.select().count()
+    # Total employees (exclude soft-deleted)
+    total_employees = Employee.select().where(Employee.deleted_at.is_null(True)).count()
 
-    # Active employees
-    active_employees = Employee.select().where(Employee.current_status == "active").count()
-
-    # Expiring CACES (within 30 days)
-    expiring_caces = (
-        Caces.select().where((Caces.expiration_date >= today) & (Caces.expiration_date <= threshold_30_days)).count()
-    )
-
-    # Expiring medical visits (within 30 days)
-    expiring_visits = (
-        MedicalVisit.select()
-        .where((MedicalVisit.expiration_date >= today) & (MedicalVisit.expiration_date <= threshold_30_days))
+    # Active employees (exclude soft-deleted)
+    active_employees = (
+        Employee.select()
+        .where((Employee.current_status == "active") & (Employee.deleted_at.is_null(True)))
         .count()
     )
 
-    # Unfit employees (most recent visit is unfit)
-    unfit_employees = MedicalVisit.select().where(MedicalVisit.result == "unfit").count()
+    # Expiring CACES (within 30 days, exclude soft-deleted)
+    expiring_caces = (
+        Caces.select()
+        .where(
+            (Caces.expiration_date >= today)
+            & (Caces.expiration_date <= threshold_30_days)
+            & (Caces.deleted_at.is_null(True))
+        )
+        .count()
+    )
+
+    # Expiring medical visits (within 30 days, exclude soft-deleted)
+    expiring_visits = (
+        MedicalVisit.select()
+        .where(
+            (MedicalVisit.expiration_date >= today)
+            & (MedicalVisit.expiration_date <= threshold_30_days)
+            & (MedicalVisit.deleted_at.is_null(True))
+        )
+        .count()
+    )
+
+    # Unfit employees (most recent visit is unfit, exclude soft-deleted)
+    unfit_employees = (
+        MedicalVisit.select()
+        .where((MedicalVisit.result == "unfit") & (MedicalVisit.deleted_at.is_null(True)))
+        .count()
+    )
 
     return {
         "total_employees": total_employees,
@@ -222,6 +288,7 @@ def get_expiring_items_by_type(days=30):
             }
         }
         Only includes employees who have at least one expiring item.
+        Excludes soft-deleted employees and items.
 
     Examples:
         >>> items = get_expiring_items_by_type(days=30)
@@ -236,8 +303,17 @@ def get_expiring_items_by_type(days=30):
 
     result = {}
 
-    # Get expiring CACES
-    expiring_caces = Caces.select().where((Caces.expiration_date >= today) & (Caces.expiration_date <= threshold))
+    # Get expiring CACES (exclude soft-deleted)
+    expiring_caces = (
+        Caces.select()
+        .where(
+            (Caces.expiration_date >= today)
+            & (Caces.expiration_date <= threshold)
+            & (Caces.deleted_at.is_null(True))
+        )
+        .join(Employee)
+        .where(Employee.deleted_at.is_null(True))
+    )
 
     for caces in expiring_caces:
         emp_id = caces.employee.id
@@ -250,9 +326,16 @@ def get_expiring_items_by_type(days=30):
             }
         result[emp_id]["caces"].append(caces)
 
-    # Get expiring medical visits
-    expiring_visits = MedicalVisit.select().where(
-        (MedicalVisit.expiration_date >= today) & (MedicalVisit.expiration_date <= threshold)
+    # Get expiring medical visits (exclude soft-deleted)
+    expiring_visits = (
+        MedicalVisit.select()
+        .where(
+            (MedicalVisit.expiration_date >= today)
+            & (MedicalVisit.expiration_date <= threshold)
+            & (MedicalVisit.deleted_at.is_null(True))
+        )
+        .join(Employee)
+        .where(Employee.deleted_at.is_null(True))
     )
 
     for visit in expiring_visits:
@@ -266,11 +349,17 @@ def get_expiring_items_by_type(days=30):
             }
         result[emp_id]["medical_visits"].append(visit)
 
-    # Get expiring trainings
-    expiring_trainings = OnlineTraining.select().where(
-        (OnlineTraining.expiration_date.is_null(False))
-        & (OnlineTraining.expiration_date >= today)
-        & (OnlineTraining.expiration_date <= threshold)
+    # Get expiring trainings (exclude soft-deleted)
+    expiring_trainings = (
+        OnlineTraining.select()
+        .where(
+            (OnlineTraining.expiration_date.is_null(False))
+            & (OnlineTraining.expiration_date >= today)
+            & (OnlineTraining.expiration_date <= threshold)
+            & (OnlineTraining.deleted_at.is_null(True))
+        )
+        .join(Employee)
+        .where(Employee.deleted_at.is_null(True))
     )
 
     for training in expiring_trainings:
