@@ -1,0 +1,121 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: 'pip'
+
+      - name: Install uv
+        run: |
+          pip install uv
+
+      - name: Install dependencies
+        run: |
+          uv sync --extra build
+
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          $VERSION = "${{ github.ref }}" -replace "refs/tags/v", ""
+          echo "VERSION=$VERSION" >> $env:GITHUB_ENV
+          echo "Version: $VERSION"
+
+      - name: Run tests
+        run: |
+          uv run pytest tests/ -v
+
+      - name: Build Windows executable with PyInstaller
+        run: |
+          uv run pyinstaller wareflow-ems.spec --clean --noconfirm
+
+      - name: Rename executable with version
+        run: |
+          $VERSION = "${{ env.VERSION }}"
+          if (Test-Path "dist\Wareflow EMS.exe") {
+            Move-Item "dist\Wareflow EMS.exe" "dist\Wareflow-EMS-$VERSION.exe"
+          }
+
+      - name: Get file size
+        id: file_size
+        run: |
+          $FILE = Get-Item "dist\*.exe"
+          $SIZE_MB = [math]::Round($FILE.Length / 1MB, 2)
+          echo "SIZE_MB=$SIZE_MB" >> $env:GITHUB_ENV
+          echo "File size: $SIZE_MB MB"
+
+      - name: Create checksum
+        run: |
+          $FILE = Get-Item "dist\*.exe"
+          $HASH = (Get-FileHash -Algorithm SHA256 $FILE).Hash
+          echo $HASH > "dist\Wareflow-EMS-${{ env.VERSION }}.exe.sha256"
+          echo "SHA256: $HASH"
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          $VERSION = "${{ env.VERSION }}"
+          $NOTES = @"
+          ## Wareflow EMS $VERSION
+
+          ### What's Included
+          - Windows executable (.exe) - ${{ env.SIZE_MB }} MB
+          - No Python installation required
+          - All dependencies bundled
+
+          ### How to Install
+          1. Download `Wareflow-EMS-$VERSION.exe` below
+          2. Run the executable
+          3. Application will create database on first launch
+
+          ### Checksum
+          SHA256: See `.exe.sha256` file below
+
+          ### System Requirements
+          - Windows 10 or later
+          - 100 MB free disk space
+          - No additional dependencies
+
+          ---
+          **Full Changelog**: https://github.com/wareflowx/wareflow-ems/compare/${{ github.event.release.previous_tag_name }}...v$VERSION
+          "@
+          $NOTES | Out-File -Encoding UTF8 "release_notes.md"
+          echo "Created release_notes.md"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Wareflow EMS ${{ env.VERSION }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+          files: |
+            dist/*.exe
+            dist/*.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wareflow-ems-${{ env.VERSION }}-windows
+          path: |
+            dist/*.exe
+            dist/*.sha256
+          retention-days: 90
