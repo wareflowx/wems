@@ -4,7 +4,7 @@ import pytest
 from datetime import date, timedelta
 
 from employee.models import Employee, Caces, MedicalVisit
-from ui.controllers.alerts_controller import AlertsController
+from controllers.alerts_controller import AlertsController
 
 
 class TestAlertsController:

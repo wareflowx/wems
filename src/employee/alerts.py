@@ -5,12 +5,8 @@ from datetime import date, timedelta
 from enum import Enum
 from typing import Dict, List, Optional
 
-from constants.alerts import (
-    ALERT_CRITICAL_DAYS,
-    ALERT_INFO_DAYS,
-    ALERT_WARNING_DAYS,
-    DEFAULT_ALERT_DAYS,
-)
+from constants.alerts import DEFAULT_ALERT_DAYS
+from employee.alert_settings import AlertSettingsManager
 from employee.models import Caces, Employee, MedicalVisit
 
 
@@ -25,10 +21,10 @@ class AlertType(Enum):
 class UrgencyLevel(Enum):
     """Urgency levels for coloring."""
 
-    CRITICAL = "critical"  # Red: < 30 days or expired
-    WARNING = "warning"  # Yellow: 30-60 days
-    INFO = "info"  # Green: 60-90 days
-    OK = "ok"  # Gray: > 90 days
+    CRITICAL = "critical"  # Red: Most urgent
+    WARNING = "warning"  # Yellow/Orange: Medium urgency
+    INFO = "info"  # Green: Low urgency
+    OK = "ok"  # Gray: No urgency
 
 
 @dataclass
@@ -42,7 +38,10 @@ class Alert:
         description: Alert description (ex: "CACES R489-1A")
         expiration_date: Date when it expires
         days_until: Days until expiration (negative if expired)
-        urgency: Urgency level for coloring
+        urgency: Urgency level for coloring (deprecated, use alert_level)
+        alert_level: Configurable alert level from settings
+        custom_color: Custom color from settings (optional)
+        custom_label: Custom label from settings (optional)
     """
 
     alert_type: AlertType
@@ -51,15 +50,26 @@ class Alert:
     expiration_date: date
     days_until: int
     urgency: UrgencyLevel
+    alert_level: Optional[str] = None  # "critical", "alert", "warning", "info"
+    custom_color: Optional[str] = None
+    custom_label: Optional[str] = None
 
     @property
     def urgency_text(self) -> str:
         """Get urgency text for display."""
+        # Use custom label if available
+        if self.custom_label:
+            if self.days_until < 0:
+                return f"{self.custom_label} - Expiré depuis {-self.days_until} jours"
+            else:
+                return f"{self.custom_label} ({self.days_until} jours restants)"
+
+        # Fallback to default text
         if self.days_until < 0:
             return f"Expiré depuis {-self.days_until} jours"
-        elif self.days_until < ALERT_CRITICAL_DAYS:
+        elif self.days_until < 30:
             return f"Urgent ({self.days_until} jours restants)"
-        elif self.days_until < ALERT_WARNING_DAYS:
+        elif self.days_until < 60:
             return f"Bientôt ({self.days_until} jours restants)"
         else:
             return f"Valide ({self.days_until} jours restants)"
@@ -67,6 +77,11 @@ class Alert:
     @property
     def urgency_color(self) -> str:
         """Get urgency color code."""
+        # Use custom color if available
+        if self.custom_color:
+            return self.custom_color
+
+        # Fallback to default colors
         if self.urgency == UrgencyLevel.CRITICAL:
             return "#DC3545"  # Red
         elif self.urgency == UrgencyLevel.WARNING:
@@ -80,14 +95,30 @@ class Alert:
 class AlertQuery:
     """Query builder for alerts."""
 
+    # Class-level settings manager (shared across all instances)
+    _settings_manager: Optional[AlertSettingsManager] = None
+
+    @classmethod
+    def get_settings_manager(cls) -> AlertSettingsManager:
+        """Get or create the shared settings manager."""
+        if cls._settings_manager is None:
+            cls._settings_manager = AlertSettingsManager()
+        return cls._settings_manager
+
+    @classmethod
+    def set_settings_manager(cls, settings_manager: AlertSettingsManager):
+        """Set a custom settings manager (for testing)."""
+        cls._settings_manager = settings_manager
+
     @staticmethod
-    def calculate_urgency(expiration_date: date, today: Optional[date] = None) -> UrgencyLevel:
+    def calculate_urgency(expiration_date: date, today: Optional[date] = None, category: str = "caces") -> UrgencyLevel:
         """
-        Calculate urgency level based on expiration date.
+        Calculate urgency level based on expiration date and configurable settings.
 
         Args:
             expiration_date: Date when certification expires
             today: Current date (defaults to today)
+            category: Document category for configurable thresholds
 
         Returns:
             Urgency level
@@ -97,13 +128,23 @@ class AlertQuery:
 
         days_until = (expiration_date - today).days
 
-        if days_until < ALERT_CRITICAL_DAYS:
-            return UrgencyLevel.CRITICAL
-        elif days_until < ALERT_WARNING_DAYS:
-            return UrgencyLevel.WARNING
-        elif days_until < ALERT_INFO_DAYS:
-            return UrgencyLevel.INFO
+        # Use configurable settings to determine urgency
+        settings_manager = AlertQuery.get_settings_manager()
+        alert_level = settings_manager.get_alert_level(category, days_until)
+
+        if alert_level:
+            # Map alert level label to urgency
+            label = alert_level.label.lower()
+            if "critical" in label:
+                return UrgencyLevel.CRITICAL
+            elif "alert" in label:
+                return UrgencyLevel.CRITICAL  # Alert level maps to critical urgency
+            elif "warning" in label:
+                return UrgencyLevel.WARNING
+            else:  # info
+                return UrgencyLevel.INFO
         else:
+            # No alert level configured, return OK
             return UrgencyLevel.OK
 
     @staticmethod
@@ -125,6 +166,7 @@ class AlertQuery:
 
         today = date.today()
         threshold_date = today + timedelta(days=days_threshold)
+        settings_manager = AlertQuery.get_settings_manager()
 
         # Query CACES expiring within threshold
         query = Caces.select(Caces, Employee).join(Employee).where(Caces.expiration_date <= threshold_date)
@@ -136,7 +178,10 @@ class AlertQuery:
         alerts = []
         for caces in query:
             days_until = (caces.expiration_date - today).days
-            urgency = AlertQuery.calculate_urgency(caces.expiration_date)
+            urgency = AlertQuery.calculate_urgency(caces.expiration_date, category="caces")
+
+            # Get configurable alert level info
+            alert_level_obj = settings_manager.get_alert_level("caces", days_until)
 
             alert = Alert(
                 alert_type=AlertType.CACES,
@@ -145,6 +190,9 @@ class AlertQuery:
                 expiration_date=caces.expiration_date,
                 days_until=days_until,
                 urgency=urgency,
+                alert_level=alert_level_obj.label if alert_level_obj else None,
+                custom_color=alert_level_obj.color if alert_level_obj else None,
+                custom_label=alert_level_obj.label if alert_level_obj else None,
             )
             alerts.append(alert)
 
@@ -172,6 +220,7 @@ class AlertQuery:
 
         today = date.today()
         threshold_date = today + timedelta(days=days_threshold)
+        settings_manager = AlertQuery.get_settings_manager()
 
         # Query medical visits with expiration_date within threshold
         query = (
@@ -187,7 +236,10 @@ class AlertQuery:
         alerts = []
         for visit in query:
             days_until = (visit.expiration_date - today).days
-            urgency = AlertQuery.calculate_urgency(visit.expiration_date)
+            urgency = AlertQuery.calculate_urgency(visit.expiration_date, category="medical")
+
+            # Get configurable alert level info
+            alert_level_obj = settings_manager.get_alert_level("medical", days_until)
 
             alert = Alert(
                 alert_type=AlertType.MEDICAL,
@@ -196,6 +248,9 @@ class AlertQuery:
                 expiration_date=visit.expiration_date,
                 days_until=days_until,
                 urgency=urgency,
+                alert_level=alert_level_obj.label if alert_level_obj else None,
+                custom_color=alert_level_obj.color if alert_level_obj else None,
+                custom_label=alert_level_obj.label if alert_level_obj else None,
             )
             alerts.append(alert)
 
