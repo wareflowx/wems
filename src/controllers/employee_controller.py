@@ -92,7 +92,7 @@ class EmployeeController:
             "trainings": trainings,
         }
 
-    def get_all_employees(self) -> list:
+    def get_all_employees(self) -> List[Employee]:
         """
         Get list of all employees for list view.
 
@@ -103,7 +103,7 @@ class EmployeeController:
                     .where(Employee.deleted_at.is_null())  # Exclude soft-deleted
                     .order_by(Employee.last_name, Employee.first_name))
 
-    def get_active_employees(self) -> list:
+    def get_active_employees(self) -> List[Employee]:
         """
         Get list of active employees.
 

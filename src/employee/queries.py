@@ -1,13 +1,14 @@
 """Complex database queries for Employee entity."""
 
 from datetime import date, timedelta
+from typing import List, Dict
 
 from peewee import prefetch
 
 from employee.models import Caces, Employee, MedicalVisit, OnlineTraining
 
 
-def get_employees_with_expiring_items(days=30):
+def get_employees_with_expiring_items(days: int = 30) -> List[Employee]:
     """
     Get employees with certifications expiring within X days.
 
@@ -91,7 +92,7 @@ def get_employees_with_expiring_items(days=30):
     return list(employees_with_prefetch)
 
 
-def get_employees_with_expired_caces():
+def get_employees_with_expired_caces() -> List[Employee]:
     """
     Get employees with expired CACES certifications.
 
@@ -124,7 +125,7 @@ def get_employees_with_expired_caces():
     return list(employees_with_prefetch)
 
 
-def get_employees_with_expired_medical_visits():
+def get_employees_with_expired_medical_visits() -> List[Employee]:
     """
     Get employees with expired medical visits.
 
@@ -157,7 +158,7 @@ def get_employees_with_expired_medical_visits():
     return list(employees_with_prefetch)
 
 
-def get_unfit_employees():
+def get_unfit_employees() -> List[Employee]:
     """
     Get employees with unfit medical status.
 
@@ -202,7 +203,7 @@ def get_unfit_employees():
     return list(employees_with_prefetch)
 
 
-def get_dashboard_statistics():
+def get_dashboard_statistics() -> Dict[str, int]:
     """
     Calculate aggregated statistics for dashboard.
 
@@ -270,7 +271,7 @@ def get_dashboard_statistics():
     }
 
 
-def get_expiring_items_by_type(days=30):
+def get_expiring_items_by_type(days: int = 30) -> Dict[int, Dict[str, object]]:
     """
     Get expiring items grouped by type and employee.
 
