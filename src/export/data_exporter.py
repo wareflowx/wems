@@ -19,8 +19,11 @@ from datetime import datetime
 from typing import List, Optional
 
 import openpyxl
-from openpyxl.styles import Font, Alignment, PatternFill
+from openpyxl.styles import Font, Alignment, PatternFill, Color
+from openpyxl.formatting.rule import ColorScaleRule
+from openpyxl.utils import get_column_letter
 from peewee import prefetch
+from datetime import date
 
 from employee.models import (
     Employee, Caces, MedicalVisit, OnlineTraining
@@ -143,6 +146,7 @@ class DataExporter:
             self._create_caces_sheet(wb)
             self._create_medical_visits_sheet(wb)
             self._create_training_sheet(wb)
+            self._create_summary_sheet(wb)
 
             # Save workbook
             wb.save(output_path)
@@ -199,15 +203,27 @@ class DataExporter:
         # Auto-width columns
         for column in ws.columns:
             max_length = 0
-            column_letter = column[0].column_letter
+            column_letter = None
             for cell in column:
+                # Skip merged cells and get column letter
+                if not hasattr(cell, 'column_letter'):
+                    if column_letter is None and len(column) > 0 and hasattr(column[0], 'column_letter'):
+                        column_letter = column[0].column_letter
+                    continue
+                if column_letter is None:
+                    column_letter = cell.column_letter
                 try:
                     if len(str(cell.value)) > max_length:
                         max_length = len(str(cell.value))
                 except (AttributeError, TypeError):
                     pass
-            adjusted_width = min(max_length + 2, 50)
-            ws.column_dimensions[column_letter].width = adjusted_width
+            if column_letter:
+                adjusted_width = min(max_length + 2, 50)
+                ws.column_dimensions[column_letter].width = adjusted_width
+
+        # Add freeze panes and auto-filter
+        ws.freeze_panes = "A2"
+        ws.auto_filter.ref = ws.dimensions
 
     def _create_caces_sheet(self, workbook):
         """Create CACES detail sheet."""
@@ -241,18 +257,33 @@ class DataExporter:
                 status,
             ])
 
+        # Add conditional formatting for expiration dates (column D)
+        self._add_expiration_conditional_formatting(ws, column_index=4)
+
         # Auto-width columns
         for column in ws.columns:
             max_length = 0
-            column_letter = column[0].column_letter
+            column_letter = None
             for cell in column:
+                # Skip merged cells and get column letter
+                if not hasattr(cell, 'column_letter'):
+                    if column_letter is None and len(column) > 0 and hasattr(column[0], 'column_letter'):
+                        column_letter = column[0].column_letter
+                    continue
+                if column_letter is None:
+                    column_letter = cell.column_letter
                 try:
                     if len(str(cell.value)) > max_length:
                         max_length = len(str(cell.value))
                 except (AttributeError, TypeError):
                     pass
-            adjusted_width = min(max_length + 2, 50)
-            ws.column_dimensions[column_letter].width = adjusted_width
+            if column_letter:
+                adjusted_width = min(max_length + 2, 50)
+                ws.column_dimensions[column_letter].width = adjusted_width
+
+        # Add freeze panes and auto-filter
+        ws.freeze_panes = "A2"
+        ws.auto_filter.ref = ws.dimensions
 
     def _create_medical_visits_sheet(self, workbook):
         """Create medical visits sheet."""
@@ -286,18 +317,33 @@ class DataExporter:
                 status,
             ])
 
+        # Add conditional formatting for expiration dates (column D)
+        self._add_expiration_conditional_formatting(ws, column_index=4)
+
         # Auto-width columns
         for column in ws.columns:
             max_length = 0
-            column_letter = column[0].column_letter
+            column_letter = None
             for cell in column:
+                # Skip merged cells and get column letter
+                if not hasattr(cell, 'column_letter'):
+                    if column_letter is None and len(column) > 0 and hasattr(column[0], 'column_letter'):
+                        column_letter = column[0].column_letter
+                    continue
+                if column_letter is None:
+                    column_letter = cell.column_letter
                 try:
                     if len(str(cell.value)) > max_length:
                         max_length = len(str(cell.value))
                 except (AttributeError, TypeError):
                     pass
-            adjusted_width = min(max_length + 2, 50)
-            ws.column_dimensions[column_letter].width = adjusted_width
+            if column_letter:
+                adjusted_width = min(max_length + 2, 50)
+                ws.column_dimensions[column_letter].width = adjusted_width
+
+        # Add freeze panes and auto-filter
+        ws.freeze_panes = "A2"
+        ws.auto_filter.ref = ws.dimensions
 
     def _create_training_sheet(self, workbook):
         """Create training sheet."""
@@ -331,18 +377,193 @@ class DataExporter:
                 status,
             ])
 
+        # Add conditional formatting for expiration dates (column D)
+        self._add_expiration_conditional_formatting(ws, column_index=4)
+
         # Auto-width columns
         for column in ws.columns:
             max_length = 0
-            column_letter = column[0].column_letter
+            column_letter = None
             for cell in column:
+                # Skip merged cells and get column letter
+                if not hasattr(cell, 'column_letter'):
+                    if column_letter is None and len(column) > 0 and hasattr(column[0], 'column_letter'):
+                        column_letter = column[0].column_letter
+                    continue
+                if column_letter is None:
+                    column_letter = cell.column_letter
                 try:
                     if len(str(cell.value)) > max_length:
                         max_length = len(str(cell.value))
                 except (AttributeError, TypeError):
                     pass
-            adjusted_width = min(max_length + 2, 50)
-            ws.column_dimensions[column_letter].width = adjusted_width
+            if column_letter:
+                adjusted_width = min(max_length + 2, 50)
+                ws.column_dimensions[column_letter].width = adjusted_width
+
+        # Add freeze panes and auto-filter
+        ws.freeze_panes = "A2"
+        ws.auto_filter.ref = ws.dimensions
+
+    def _add_expiration_conditional_formatting(self, worksheet, column_index: int):
+        """
+        Add conditional formatting to expiration date column.
+
+        Color coding:
+        - Red (< 30 days): Critical
+        - Orange (30-60 days): Warning
+        - Yellow (60-90 days): Info
+        - Green (> 90 days or no date): OK
+
+        Args:
+            worksheet: Excel worksheet
+            column_index: 1-based column index for expiration dates
+        """
+        if worksheet.max_row < 2:
+            return
+
+        column_letter = get_column_letter(column_index)
+        range_string = f"{column_letter}2:{column_letter}{worksheet.max_row}"
+
+        from openpyxl.formatting.rule import CellIsRule
+
+        # Red for expired or < 30 days
+        red_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+        red_rule = CellIsRule(
+            operator='lessThan',
+            formula=['=TODAY()+30'],
+            fill=red_fill
+        )
+        worksheet.conditional_formatting.add(range_string, red_rule)
+
+        # Orange for 30-60 days
+        orange_fill = PatternFill(start_color="FFD966", end_color="FFD966", fill_type="solid")
+        orange_rule = CellIsRule(
+            operator='between',
+            formula=['=TODAY()+30', '=TODAY()+60'],
+            fill=orange_fill
+        )
+        worksheet.conditional_formatting.add(range_string, orange_rule)
+
+        # Yellow for 60-90 days
+        yellow_fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
+        yellow_rule = CellIsRule(
+            operator='between',
+            formula=['=TODAY()+60', '=TODAY()+90'],
+            fill=yellow_fill
+        )
+        worksheet.conditional_formatting.add(range_string, yellow_rule)
+
+        # Green for > 90 days
+        green_fill = PatternFill(start_color="C6E0B4", end_color="C6E0B4", fill_type="solid")
+        green_rule = CellIsRule(
+            operator='greaterThan',
+            formula=['=TODAY()+90'],
+            fill=green_fill
+        )
+        worksheet.conditional_formatting.add(range_string, green_rule)
+
+    def _create_summary_sheet(self, workbook):
+        """Create summary statistics sheet."""
+        ws = workbook.create_sheet("Résumé", 0)  # First sheet
+
+        # Title
+        ws.append(["Tableau de Bord Employés"])
+        ws.merge_cells('A1:B1')
+        title_cell = ws['A1']
+        title_cell.font = Font(bold=True, size=14)
+        title_cell.alignment = Alignment(horizontal='center')
+
+        ws.append([])  # Empty row
+
+        # Employee counts by status
+        ws.append(["Employés par Statut"])
+        ws.append(["Statut", "Nombre"])
+
+        active_count = Employee.select().where(Employee.current_status == "Actif").count()
+        inactive_count = Employee.select().where(Employee.current_status == "Inactif").count()
+        total_count = Employee.select().count()
+
+        ws.append(["Actif", active_count])
+        ws.append(["Inactif", inactive_count])
+        ws.append(["Total", total_count])
+
+        ws.append([])  # Empty row
+
+        # Employee counts by workspace
+        ws.append(["Employés par Zone"])
+        ws.append(["Zone", "Nombre"])
+
+        for workspace in Employee.select(Employee.workspace).distinct():
+            if workspace.workspace:
+                count = Employee.select().where(Employee.workspace == workspace.workspace).count()
+                ws.append([workspace.workspace, count])
+
+        ws.append([])  # Empty row
+
+        # Employee counts by role
+        ws.append(["Employés par Poste"])
+        ws.append(["Poste", "Nombre"])
+
+        for role in Employee.select(Employee.role).distinct():
+            if role.role:
+                count = Employee.select().where(Employee.role == role.role).count()
+                ws.append([role.role, count])
+
+        ws.append([])  # Empty row
+
+        # Certification counts
+        ws.append(["Certifications"])
+        ws.append(["Type", "Total", "Expirés", "Valides"])
+
+        # CACES
+        total_caces = Caces.select().count()
+        expired_caces = Caces.select().where(Caces.is_expired == True).count()
+        valid_caces = total_caces - expired_caces
+        ws.append(["CACES", total_caces, expired_caces, valid_caces])
+
+        # Medical visits
+        total_visits = MedicalVisit.select().count()
+        expired_visits = MedicalVisit.select().where(MedicalVisit.is_expired == True).count()
+        valid_visits = total_visits - expired_visits
+        ws.append(["Visites Médicales", total_visits, expired_visits, valid_visits])
+
+        # Training
+        total_training = OnlineTraining.select().count()
+        expired_training = OnlineTraining.select().where(OnlineTraining.is_expired == True).count()
+        valid_training = total_training - expired_training
+        ws.append(["Formations", total_training, expired_training, valid_training])
+
+        ws.append([])  # Empty row
+        ws.append([f"Généré le: {datetime.now().strftime('%d/%m/%Y à %H:%M')}"])
+
+        # Apply formatting
+        for row in ws.iter_rows(min_row=1, max_row=ws.max_row):
+            for cell in row:
+                if cell.row in [1, 3, 8, 12, 17, 21]:
+                    cell.font = Font(bold=True)
+                    cell.fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+
+        # Auto-width columns
+        for column in ws.columns:
+            max_length = 0
+            column_letter = None
+            for cell in column:
+                # Skip merged cells and get column letter
+                if not hasattr(cell, 'column_letter'):
+                    if column_letter is None and len(column) > 0 and hasattr(column[0], 'column_letter'):
+                        column_letter = column[0].column_letter
+                    continue
+                if column_letter is None:
+                    column_letter = cell.column_letter
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except (AttributeError, TypeError):
+                    pass
+            if column_letter:
+                adjusted_width = min(max_length + 2, 50)
+                ws.column_dimensions[column_letter].width = adjusted_width
 
     def export_to_csv(
         self,
