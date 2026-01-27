@@ -13,6 +13,7 @@ import unicodedata
 from typing import Any, Optional, Tuple, List
 from datetime import datetime, date
 from enum import Enum
+from email_validator import validate_email, EmailNotValidError
 
 
 class ValidationError(Exception):
@@ -172,23 +173,20 @@ class InputValidator:
         if value == "":
             return ""
 
-        # Length check BEFORE sanitization
+        # Length check BEFORE validation
         if len(value) > InputValidator.MAX_LENGTH_EMAIL:
             raise ValidationError("email", f"Cannot exceed {InputValidator.MAX_LENGTH_EMAIL} characters")
 
-        # Sanitize
-        value = InputValidator.sanitize_string(value, InputValidator.MAX_LENGTH_EMAIL)
+        # Validate using email-validator library
+        try:
+            # Validate and normalize email
+            valid = validate_email(value, check_deliverability=False)
 
-        # Format validation (RFC 5322 basic)
-        email_pattern = re.compile(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$')
-        if not email_pattern.match(value):
-            raise ValidationError("email", "Invalid format", value)
-
-        # Check for suspicious patterns
-        if '..' in value or value.startswith('.') or value.endswith('.'):
-            raise ValidationError("email", "Invalid format", value)
-
-        return value.lower()  # Normalize to lowercase
+            # Return normalized form (lowercase)
+            return valid.normalized.lower()
+        except EmailNotValidError as e:
+            # Extract user-friendly error message
+            raise ValidationError("email", str(e), value)
 
     @staticmethod
     def validate_phone(value: str) -> str:
