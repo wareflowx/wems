@@ -60,6 +60,7 @@ class ContractFormDialog(BaseFormDialog):
         self.department_var = ctk.StringVar()
         self.gross_salary_var = ctk.StringVar()
         self.weekly_hours_var = ctk.StringVar(value="35.0")
+        self.document_path_var = ctk.StringVar()
 
         # Determine title
         if self.is_edit_mode:
@@ -79,6 +80,7 @@ class ContractFormDialog(BaseFormDialog):
         self.state_manager.track_variable("department", self.department_var)
         self.state_manager.track_variable("gross_salary", self.gross_salary_var)
         self.state_manager.track_variable("weekly_hours", self.weekly_hours_var)
+        self.state_manager.track_variable("document_path", self.document_path_var)
 
         # Load contract data if editing
         if self.is_edit_mode:
@@ -194,6 +196,24 @@ class ContractFormDialog(BaseFormDialog):
         )
         self.hours_entry.pack(side="right", padx=10)
 
+        # Document Path (optional)
+        doc_row = ctk.CTkFrame(field_container, fg_color="transparent")
+        doc_row.pack(fill="x", pady=5)
+        self.create_optional_field_label(doc_row, "Contract Document")
+        doc_frame = ctk.CTkFrame(doc_row, fg_color="transparent")
+        doc_frame.pack(side="right", padx=10)
+
+        self.doc_entry = ctk.CTkEntry(
+            doc_frame,
+            placeholder_text="Optional - Path to contract PDF",
+            textvariable=self.document_path_var,
+            width=200,
+        )
+        self.doc_entry.pack(side="left")
+
+        browse_btn = ctk.CTkButton(doc_frame, text="Browse...", width=80, command=self.browse_document)
+        browse_btn.pack(side="left", padx=5)
+
         # Info text
         info_row = ctk.CTkFrame(field_container, fg_color="transparent")
         info_row.pack(fill="x", pady=(15, 5))
@@ -262,6 +282,58 @@ class ContractFormDialog(BaseFormDialog):
         except Exception:
             pass
 
+    def browse_document(self):
+        """
+        Open file browser to select contract document with security validation.
+
+        This method:
+        1. Opens file dialog for user to select a file
+        2. Validates the file (extension, size, existence)
+        3. Copies file to secure documents/ directory
+        4. Stores the secure path in the form
+
+        Security:
+        - Prevents path traversal attacks
+        - Validates file type (PDF only)
+        - Limits file size (max 10MB)
+        - Copies to secure storage with version tracking
+        """
+        try:
+            from tkinter import filedialog
+            import tkinter.messagebox as messagebox
+
+            file_path = filedialog.askopenfilename(
+                title="Select Contract Document PDF",
+                filetypes=[("PDF files", "*.pdf"), ("All files", "*.*")]
+            )
+
+            if not file_path:
+                return  # User cancelled
+
+            # Validate and copy to secure storage
+            from utils.file_validation import validate_and_copy_document
+
+            success, error, secure_path = validate_and_copy_document(
+                file_path,
+                allowed_extensions={".pdf"},  # Only PDF for contracts
+                max_size_mb=10
+            )
+
+            if not success:
+                # Show error to user
+                messagebox.showerror("File Validation Error", error)
+                print(f"[SECURITY] File upload rejected: {error}")
+                return
+
+            # Store secure path in form
+            self.document_path_var.set(secure_path)
+            print(f"[OK] File validated and copied to secure storage: {secure_path}")
+
+        except Exception as e:
+            print(f"[ERROR] Failed to browse file: {e}")
+            import tkinter.messagebox as messagebox
+            messagebox.showerror("Error", f"Failed to select file: {e}")
+
     def parse_date(self, date_str: str) -> Optional[date]:
         """
         Parse date from French format.
@@ -300,6 +372,9 @@ class ContractFormDialog(BaseFormDialog):
 
             if self.contract.weekly_hours:
                 self.weekly_hours_var.set(str(float(self.contract.weekly_hours)))
+
+            if self.contract.contract_document_path:
+                self.document_path_var.set(self.contract.contract_document_path)
 
             # Update UI based on contract type
             self.on_contract_type_changed()
@@ -408,6 +483,7 @@ class ContractFormDialog(BaseFormDialog):
         department = self.department_var.get().strip()
         gross_salary_str = self.gross_salary_var.get().strip() or None
         weekly_hours_str = self.weekly_hours_var.get().strip()
+        document_path = self.document_path_var.get().strip() or None
 
         try:
             # Parse dates
@@ -433,6 +509,7 @@ class ContractFormDialog(BaseFormDialog):
                 self.contract.gross_salary = gross_salary
                 self.contract.weekly_hours = weekly_hours
                 self.contract.status = status
+                self.contract.contract_document_path = document_path
                 self.contract.save()
                 print(f"[OK] Contract updated: {contract_type} for {self.employee.full_name}")
             else:
@@ -448,6 +525,7 @@ class ContractFormDialog(BaseFormDialog):
                     gross_salary=gross_salary,
                     weekly_hours=weekly_hours,
                     status=status,
+                    contract_document_path=document_path,
                 )
                 print(f"[OK] Contract created: {contract_type} for {self.employee.full_name}")
 
