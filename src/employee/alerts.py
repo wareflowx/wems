@@ -5,9 +5,9 @@ from datetime import date, timedelta
 from enum import Enum
 from typing import Dict, List, Optional
 
-from constants.alerts import DEFAULT_ALERT_DAYS
+from constants.alerts import ALERT_CRITICAL_DAYS, DEFAULT_ALERT_DAYS
 from employee.alert_settings import AlertSettingsManager
-from employee.models import Caces, Employee, MedicalVisit
+from employee.models import Caces, Contract, Employee, MedicalVisit
 
 
 class AlertType(Enum):
@@ -16,6 +16,7 @@ class AlertType(Enum):
     CACES = "CACES"
     MEDICAL = "Visite médicale"
     TRAINING = "Formation"
+    CONTRACT = "Contrat"
 
 
 class UrgencyLevel(Enum):
@@ -260,6 +261,126 @@ class AlertQuery:
         return alerts
 
     @staticmethod
+    def get_contract_alerts(days_threshold: int = DEFAULT_ALERT_DAYS, include_expired: bool = True) -> List[Alert]:
+        """
+        Get all contract expiration alerts within threshold.
+
+        Args:
+            days_threshold: Maximum days until expiration (default: DEFAULT_ALERT_DAYS)
+            include_expired: Whether to include expired contracts (default: True)
+
+        Returns:
+            List of alerts for contracts expiring soon
+        """
+        from database.connection import database
+
+        if database.is_closed():
+            database.connect()
+
+        today = date.today()
+        threshold_date = today + timedelta(days=days_threshold)
+        settings_manager = AlertQuery.get_settings_manager()
+
+        # Query contracts with end_date within threshold (only CDD or temporary contracts)
+        query = (
+            Contract.select(Contract, Employee)
+            .join(Employee)
+            .where(
+                (Contract.end_date.is_null(False))
+                & (Contract.end_date <= threshold_date)
+                & (Contract.status == "active")
+            )
+        )
+
+        if not include_expired:
+            # Only future expirations
+            query = query.where(Contract.end_date >= today)
+
+        alerts = []
+        for contract in query:
+            days_until = (contract.end_date - today).days
+            urgency = AlertQuery.calculate_urgency(contract.end_date, category="contract")
+
+            # Get configurable alert level info
+            alert_level_obj = settings_manager.get_alert_level("contract", days_until)
+
+            alert = Alert(
+                alert_type=AlertType.CONTRACT,
+                employee=contract.employee,
+                description=f"Contrat {contract.contract_type}",
+                expiration_date=contract.end_date,
+                days_until=days_until,
+                urgency=urgency,
+                alert_level=alert_level_obj.label if alert_level_obj else None,
+                custom_color=alert_level_obj.color if alert_level_obj else None,
+                custom_label=alert_level_obj.label if alert_level_obj else None,
+            )
+            alerts.append(alert)
+
+        # Sort by days_until (ascending)
+        alerts.sort(key=lambda a: a.days_until)
+
+        return alerts
+
+    @staticmethod
+    def get_trial_period_alerts(days_threshold: int = 7) -> List[Alert]:
+        """
+        Get all trial period ending alerts within threshold.
+
+        Args:
+            days_threshold: Maximum days until trial period ends (default: 7 days)
+
+        Returns:
+            List of alerts for trial periods ending soon
+        """
+        from database.connection import database
+
+        if database.is_closed():
+            database.connect()
+
+        today = date.today()
+        threshold_date = today + timedelta(days=days_threshold)
+        settings_manager = AlertQuery.get_settings_manager()
+
+        # Query contracts with trial_period_ending within threshold
+        query = (
+            Contract.select(Contract, Employee)
+            .join(Employee)
+            .where(
+                (Contract.trial_period_end.is_null(False))
+                & (Contract.trial_period_end <= threshold_date)
+                & (Contract.trial_period_end >= today)
+                & (Contract.status == "active")
+            )
+        )
+
+        alerts = []
+        for contract in query:
+            days_until = (contract.trial_period_end - today).days
+            urgency = AlertQuery.calculate_urgency(contract.trial_period_end, category="trial_period")
+
+            # Get configurable alert level info
+            alert_level_obj = settings_manager.get_alert_level("trial_period", days_until)
+
+            alert = Alert(
+                alert_type=AlertType.CONTRACT,
+                employee=contract.employee,
+                description=f"Période d'essai {contract.contract_type}",
+                expiration_date=contract.trial_period_end,
+                days_until=days_until,
+                urgency=urgency,
+                alert_level=alert_level_obj.label if alert_level_obj else None,
+                custom_color=alert_level_obj.color if alert_level_obj else None,
+                custom_label=alert_level_obj.label if alert_level_obj else None,
+            )
+            alerts.append(alert)
+
+        # Sort by days_until (ascending)
+        alerts.sort(key=lambda a: a.days_until)
+
+        return alerts
+
+    @staticmethod
     def get_all_alerts(
         alert_types: Optional[List[AlertType]] = None, days_threshold: int = DEFAULT_ALERT_DAYS, include_expired: bool = True
     ) -> List[Alert]:
@@ -283,6 +404,10 @@ class AlertQuery:
         # Add medical alerts
         if alert_types is None or AlertType.MEDICAL in alert_types:
             alerts.extend(AlertQuery.get_medical_alerts(days_threshold, include_expired))
+
+        # Add contract alerts
+        if alert_types is None or AlertType.CONTRACT in alert_types:
+            alerts.extend(AlertQuery.get_contract_alerts(days_threshold, include_expired))
 
         # Sort by days_until (ascending)
         alerts.sort(key=lambda a: a.days_until)
