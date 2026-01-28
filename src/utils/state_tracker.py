@@ -32,6 +32,20 @@ class FormStateManager:
         self.current_state: Dict[str, Any] = {}
         self.has_unsaved_changes: bool = False
         self._tracked_vars: Dict[str, ctk.Variable] = {}
+        self._explicitly_tracked: Dict[str, ctk.Variable] = {}
+
+    def track_variable(self, name: str, var: ctk.Variable) -> None:
+        """Explicitly track a form variable for change detection.
+
+        Args:
+            name: Variable name/identifier
+            var: The CustomTkinter variable (StringVar, IntVar, etc.)
+        """
+        self._explicitly_tracked[name] = var
+        try:
+            self.initial_state[name] = var.get()
+        except Exception:
+            self.initial_state[name] = None
 
     def capture_initial_state(self) -> None:
         """Capture the initial state of all tracked form variables.
@@ -39,12 +53,22 @@ class FormStateManager:
         This should be called after form fields are created but before
         any user interaction.
         """
-        self.initial_state = {}
-        self._tracked_vars = {}
+        # First, capture explicitly tracked variables
+        for name, var in self._explicitly_tracked.items():
+            try:
+                self.initial_state[name] = var.get()
+                self._tracked_vars[name] = var
+            except Exception:
+                # Variable might not be initialized yet, skip it
+                pass
 
-        # Find all tkinter variables in the form
+        # Then, auto-discover other tkinter variables in the form
         for attr_name in dir(self.form):
             if attr_name.startswith('_'):
+                continue
+
+            # Skip already explicitly tracked
+            if attr_name in self._tracked_vars:
                 continue
 
             attr = getattr(self.form, attr_name, None)
@@ -120,3 +144,4 @@ class FormStateManager:
         self.current_state = {}
         self.has_unsaved_changes = False
         self._tracked_vars = {}
+        self._explicitly_tracked = {}
