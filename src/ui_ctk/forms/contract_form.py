@@ -8,8 +8,8 @@ import customtkinter as ctk
 from employee.constants import (
     CONTRACT_AMENDMENT_TYPES,
     CONTRACT_END_REASONS,
-    CONTRACT_STATUS,
-    CONTRACT_TYPES,
+    ContractStatus,
+    ContractType,
     DEFAULT_DEPARTMENTS,
     DEFAULT_POSITIONS,
     TRIAL_PERIOD_DAYS,
@@ -122,7 +122,7 @@ class ContractFormDialog(BaseFormDialog):
         self.create_required_field_label(type_row, "Contract Type")
         self.type_dropdown = ctk.CTkOptionMenu(
             type_row,
-            values=list(CONTRACT_TYPES.keys()),
+            values=ContractType.ALL,
             variable=self.contract_type_var,
             command=self.on_contract_type_changed,
             width=300
@@ -398,7 +398,7 @@ class ContractFormDialog(BaseFormDialog):
         if not contract_type:
             return False, "Contract type is required"
 
-        if contract_type not in CONTRACT_TYPES:
+        if contract_type not in ContractType.ALL:
             return False, f"Invalid contract type: {contract_type}"
 
         # Validate start date
@@ -496,7 +496,7 @@ class ContractFormDialog(BaseFormDialog):
             weekly_hours = float(weekly_hours_str) if weekly_hours_str else 35.0
 
             # Determine status
-            status = CONTRACT_STATUS.ACTIVE
+            status = ContractStatus.ACTIVE
 
             if self.is_edit_mode:
                 # Update existing contract

@@ -57,6 +57,28 @@ class ContractAmendmentType:
     ALL = [SALARY_CHANGE, POSITION_CHANGE, DEPARTMENT_CHANGE, HOURS_CHANGE, CONTRACT_TYPE_CHANGE, OTHER]
 
 
+# Amendment types with display names
+CONTRACT_AMENDMENT_TYPES = {
+    "salary_change": "Salary Change",
+    "position_change": "Position Change",
+    "department_change": "Department Change",
+    "hours_change": "Hours Change",
+    "extension": "Contract Extension",
+    "other": "Other",
+}
+
+# Contract end reasons with display names
+CONTRACT_END_REASONS = {
+    "resignation": "Resignation",
+    "termination": "Termination",
+    "completion": "Contract Completion",
+    "mutual_agreement": "Mutual Agreement",
+    "retirement": "Retirement",
+    "death": "Death",
+    "other": "Other",
+}
+
+
 class VisitType:
     """Medical visit types."""
 
