@@ -9,6 +9,7 @@ from peewee import (
     CharField,
     DateField,
     DateTimeField,
+    DecimalField,
     ForeignKeyField,
     IntegerField,
     Model,
@@ -19,6 +20,9 @@ from peewee import (
 from database.connection import database
 from employee.constants import (
     CACES_VALIDITY_YEARS,
+    CONTRACT_EXPIRATION_CRITICAL_DAYS,
+    CONTRACT_EXPIRATION_WARNING_DAYS,
+    TRIAL_PERIOD_WARNING_DAYS,
     VISIT_VALIDITY_YEARS,
     EmployeeStatus,
 )
@@ -731,5 +735,330 @@ class OnlineTraining(Model):
 
     def save(self, force_insert=False, only=None):
         """Override save to calculate expiration_date automatically."""
+        self.before_save()
+        return super().save(force_insert=force_insert, only=only)
+
+
+class Contract(Model):
+    """
+    Employment contract with complete history tracking.
+
+    Tracks all employee contracts with start/end dates, position,
+    salary, department, and evolution over time.
+    """
+
+    id = UUIDField(primary_key=True, default=uuid.uuid4)
+    employee = ForeignKeyField(Employee, backref="contracts", on_delete="CASCADE")
+
+    # Contract Details
+    contract_type = CharField(index=True)  # CDI, CDD, Interim, etc.
+    start_date = DateField(index=True)
+    end_date = DateField(null=True, index=True)  # NULL for CDI (permanent)
+
+    # Trial Period
+    trial_period_end = DateField(null=True)
+
+    # Compensation
+    gross_salary = DecimalField(max_digits=10, decimal_places=2, null=True)
+    weekly_hours = DecimalField(max_digits=4, decimal_places=2, default=35.0)
+
+    # Position and Department
+    position = CharField(index=True)  # Job title
+    department = CharField(index=True)  # Department
+    manager = CharField(null=True)  # Manager's name
+
+    # Status
+    status = CharField(default="active")  # active, ended, cancelled, pending
+    end_reason = CharField(null=True)  # resignation, termination, completion, etc.
+
+    # Documents
+    contract_document_path = CharField(null=True)
+
+    # Metadata
+    created_at = DateTimeField(default=datetime.now)
+    updated_at = DateTimeField(default=datetime.now)
+    created_by = CharField(null=True)
+    notes = TextField(null=True)
+
+    class Meta:
+        database = database
+        table_name = "contracts"
+        indexes = (
+            (("employee", "start_date"), False),  # Chronological order per employee
+            ("end_date", False),  # Expiring contracts
+            ("status", False),  # Active contracts
+        )
+
+    # ========== COMPUTED PROPERTIES ==========
+
+    @property
+    def is_current(self) -> bool:
+        """
+        Check if this is the current active contract.
+
+        A contract is current if:
+        - Status is 'active'
+        - Start date is today or in the past
+        - No end date (CDI) OR end date is in the future
+        """
+        if self.status != "active":
+            return False
+
+        today = date.today()
+
+        # Hasn't started yet
+        if self.start_date > today:
+            return False
+
+        # Has end date and has passed
+        if self.end_date and self.end_date < today:
+            return False
+
+        return True
+
+    @property
+    def duration_days(self) -> int | None:
+        """
+        Calculate contract duration in days.
+
+        Returns:
+            Duration in days, or None if contract is ongoing (no end_date)
+        """
+        if not self.end_date:
+            return None  # Ongoing (CDI)
+        return (self.end_date - self.start_date).days
+
+    @property
+    def is_trial_period(self) -> bool:
+        """Check if currently in trial period."""
+        if not self.trial_period_end:
+            return False
+        return date.today() <= self.trial_period_end
+
+    @property
+    def days_until_trial_end(self) -> int | None:
+        """Days until trial period ends, or None if no trial period."""
+        if not self.trial_period_end:
+            return None
+        return (self.trial_period_end - date.today()).days
+
+    @property
+    def days_until_expiration(self) -> int | None:
+        """
+        Days until contract expires.
+
+        Returns:
+            Days until expiration, negative if expired, None for CDI (no expiration)
+        """
+        if not self.end_date:
+            return None  # CDI doesn't expire
+        return (self.end_date - date.today()).days
+
+    @property
+    def is_expiring_soon(self) -> bool:
+        """Check if contract expires within warning period."""
+        if not self.end_date:
+            return False
+
+        days_until = self.days_until_expiration
+        return 0 <= days_until <= CONTRACT_EXPIRATION_WARNING_DAYS
+
+    @property
+    def is_expiring_critical(self) -> bool:
+        """Check if contract expires within critical period."""
+        if not self.end_date:
+            return False
+
+        days_until = self.days_until_expiration
+        return 0 <= days_until <= CONTRACT_EXPIRATION_CRITICAL_DAYS
+
+    @property
+    def is_expired(self) -> bool:
+        """Check if contract has expired."""
+        if not self.end_date:
+            return False
+        return self.end_date < date.today()
+
+    # ========== CLASS METHODS ==========
+
+    @classmethod
+    def active(cls):
+        """Get all active contracts."""
+        return cls.select().where(cls.status == "active")
+
+    @classmethod
+    def expiring_soon(cls, days: int = 90):
+        """
+        Get contracts expiring within X days.
+
+        Args:
+            days: Number of days to look ahead
+
+        Returns:
+            Query of contracts expiring soon
+        """
+        threshold = date.today() + timedelta(days=days)
+        return cls.select().where(
+            (cls.end_date.is_null(False))
+            & (cls.end_date <= threshold)
+            & (cls.end_date >= date.today())
+            & (cls.status == "active")
+        )
+
+    @classmethod
+    def expired(cls):
+        """Get expired contracts that are still marked as active."""
+        return cls.select().where(
+            (cls.end_date.is_null(False))
+            & (cls.end_date < date.today())
+            & (cls.status == "active")
+        )
+
+    @classmethod
+    def trial_period_ending(cls, days: int = 7):
+        """
+        Get contracts with trial periods ending soon.
+
+        Args:
+            days: Number of days to look ahead
+
+        Returns:
+            Query of contracts with trial periods ending soon
+        """
+        threshold = date.today() + timedelta(days=days)
+        return cls.select().where(
+            (cls.trial_period_end.is_null(False))
+            & (cls.trial_period_end <= threshold)
+            & (cls.trial_period_end >= date.today())
+            & (cls.status == "active")
+        )
+
+    # ========== INSTANCE METHODS ==========
+
+    def end_contract(self, reason: str = None):
+        """
+        Mark contract as ended.
+
+        Args:
+            reason: Optional reason for ending (resignation, termination, etc.)
+        """
+        self.status = "ended"
+        self.end_reason = reason
+        if self.end_date is None:
+            self.end_date = date.today()
+        self.save()
+
+    # ========== HOOKS ==========
+
+    def before_save(self):
+        """Validate contract data before saving."""
+        from .validators import ValidationError as ModelValidationError
+        from .validators import validate_entry_date
+
+        # Validate start_date
+        if self.start_date:
+            try:
+                self.start_date = validate_entry_date(self.start_date)
+            except ModelValidationError as e:
+                raise ValueError(str(e))
+
+        # Validate end_date if provided
+        if self.end_date:
+            try:
+                self.end_date = validate_entry_date(self.end_date)
+            except ModelValidationError as e:
+                raise ValueError(str(e))
+
+            # End date must be after start date
+            if self.end_date < self.start_date:
+                raise ValueError("End date must be after start date")
+
+            # For CDI, end_date should typically be None
+            if self.contract_type == "CDI" and self.end_date:
+                # Warning but allow it (might be ending the CDI)
+                pass
+
+    def save(self, force_insert=False, only=None):
+        """Override save to update updated_at timestamp and validate."""
+        self.before_save()
+        self.updated_at = datetime.now()
+        return super().save(force_insert=force_insert, only=only)
+
+
+class ContractAmendment(Model):
+    """
+    Contract amendment for tracking changes during contract lifetime.
+
+    Records changes to salary, position, department, hours, etc.
+    """
+
+    id = UUIDField(primary_key=True, default=uuid.uuid4)
+    contract = ForeignKeyField(Contract, backref="amendments", on_delete="CASCADE")
+
+    # Amendment Details
+    amendment_date = DateField(index=True)
+    amendment_type = CharField()  # salary_change, position_change, etc.
+    description = TextField()
+
+    # Change Tracking
+    old_field_name = CharField()  # Which field was changed
+    old_value = CharField(null=True)  # Previous value
+    new_value = CharField(null=True)  # New value
+
+    # Document
+    document_path = CharField(null=True)
+
+    # Metadata
+    created_at = DateTimeField(default=datetime.now)
+    created_by = CharField(null=True)
+
+    class Meta:
+        database = database
+        table_name = "contract_amendments"
+        indexes = (
+            (("contract", "amendment_date"), False),  # Chronological per contract
+            ("amendment_type", False),  # By type
+        )
+
+    # ========== COMPUTED PROPERTIES ==========
+
+    @property
+    def is_recent(self) -> bool:
+        """Check if amendment was made in the last 30 days."""
+        return (date.today() - self.amendment_date).days <= 30
+
+    # ========== CLASS METHODS ==========
+
+    @classmethod
+    def by_contract(cls, contract: Contract):
+        """Get all amendments for a specific contract."""
+        return cls.select().where(cls.contract == contract).order_by(cls.amendment_date.desc())
+
+    @classmethod
+    def recent(cls, days: int = 30):
+        """Get amendments from the last X days."""
+        threshold = date.today() - timedelta(days=days)
+        return cls.select().where(cls.amendment_date >= threshold).order_by(cls.amendment_date.desc())
+
+    # ========== HOOKS ==========
+
+    def before_save(self):
+        """Validate amendment data before saving."""
+        from .validators import ValidationError as ModelValidationError
+        from .validators import validate_entry_date
+
+        # Validate amendment_date
+        if self.amendment_date:
+            try:
+                self.amendment_date = validate_entry_date(self.amendment_date)
+            except ModelValidationError as e:
+                raise ValueError(str(e))
+
+        # Require description
+        if not self.description or not self.description.strip():
+            raise ValueError("Description is required")
+
+    def save(self, force_insert=False, only=None):
+        """Override save to validate before saving."""
         self.before_save()
         return super().save(force_insert=force_insert, only=only)
