@@ -6,7 +6,7 @@ from typing import List, Optional
 
 import customtkinter as ctk
 
-from employee.models import Caces, Employee, MedicalVisit, OnlineTraining
+from employee.models import Caces, Contract, Employee, MedicalVisit, OnlineTraining
 from utils.undo_manager import record_delete
 from ui_ctk.constants import (
     BTN_ADD,
@@ -128,6 +128,9 @@ class EmployeeDetailView(BaseView):
         # Information section
         self.create_info_section(content)
 
+        # Contracts section
+        self.create_contracts_section(content)
+
         # CACES section
         self.create_caces_section(content)
 
@@ -180,6 +183,100 @@ class EmployeeDetailView(BaseView):
         # Value
         value_widget = ctk.CTkLabel(row, text=value, font=("Arial", 11), anchor="w")
         value_widget.pack(side="left", padx=10)
+
+    def create_contracts_section(self, parent):
+        """Create contracts history section."""
+        # Section frame
+        section = ctk.CTkFrame(parent)
+        section.pack(fill="x", pady=5)
+
+        # Section header with add button
+        header_frame = ctk.CTkFrame(section, fg_color="transparent")
+        header_frame.pack(fill="x", padx=10, pady=10)
+
+        header = ctk.CTkLabel(header_frame, text=f"📄 Contract History", font=("Arial", 14, "bold"))
+        header.pack(side="left")
+
+        add_btn = ctk.CTkButton(header_frame, text=f"+ {BTN_ADD}", width=100, command=self.add_contract)
+        add_btn.pack(side="right")
+
+        # Load contracts
+        contracts = list(
+            Contract.select()
+            .where(Contract.employee == self.employee)
+            .order_by(Contract.start_date.desc())
+        )
+
+        if contracts:
+            # Display contracts
+            for contract in contracts:
+                self.create_contract_item(section, contract)
+        else:
+            # Empty message
+            empty_label = ctk.CTkLabel(section, text="No contracts found", text_color="gray")
+            empty_label.pack(padx=10, pady=(0, 10))
+
+    def create_contract_item(self, parent, contract: Contract):
+        """Create a single contract item."""
+        # Item frame
+        item = ctk.CTkFrame(parent, fg_color=("gray95", "gray25"))
+        item.pack(fill="x", padx=10, pady=5)
+
+        # Contract type and status
+        type_label = ctk.CTkLabel(item, text=f"{contract.contract_type}", font=("Arial", 12, "bold"), anchor="w")
+        type_label.pack(side="left", padx=10, pady=5)
+
+        # Position and department
+        pos_dept_text = f"{contract.position} - {contract.department}"
+        pos_dept_label = ctk.CTkLabel(item, text=pos_dept_text, font=("Arial", 11), anchor="w")
+        pos_dept_label.pack(side="left", padx=10)
+
+        # Start date
+        start_text = f"From {contract.start_date.strftime(DATE_FORMAT)}"
+        start_label = ctk.CTkLabel(item, text=start_text, font=("Arial", 10), anchor="w")
+        start_label.pack(side="left", padx=10)
+
+        # End date (if exists)
+        if contract.end_date:
+            end_text = f"To {contract.end_date.strftime(DATE_FORMAT)}"
+            end_label = ctk.CTkLabel(item, text=end_text, font=("Arial", 10), anchor="w")
+            end_label.pack(side="left", padx=10)
+
+            # Status badge based on end date
+            days_until = (contract.end_date - date.today()).days
+            if days_until < 0:
+                status_text = "Expired"
+                status_color = COLOR_CRITICAL
+            elif days_until < 30:
+                status_text = f"Expiring soon ({days_until}d)"
+                status_color = COLOR_CRITICAL
+            elif days_until < 90:
+                status_text = f"Expiring ({days_until}d)"
+                status_color = COLOR_WARNING
+            else:
+                status_text = "Active"
+                status_color = COLOR_SUCCESS
+
+            status_label = ctk.CTkLabel(item, text=status_text, font=("Arial", 10, "bold"), text_color=status_color)
+            status_label.pack(side="left", padx=10)
+        elif contract.is_current:
+            # Current contract (no end date)
+            status_text = "Current"
+            status_color = COLOR_SUCCESS
+            status_label = ctk.CTkLabel(item, text=status_text, font=("Arial", 10, "bold"), text_color=status_color)
+            status_label.pack(side="left", padx=10)
+
+        # Actions
+        action_frame = ctk.CTkFrame(item, fg_color="transparent")
+        action_frame.pack(side="right", padx=10)
+
+        edit_btn = ctk.CTkButton(action_frame, text="✏️", width=40, command=lambda: self.edit_contract(contract))
+        edit_btn.pack(side="left", padx=2)
+
+        delete_btn = ctk.CTkButton(
+            action_frame, text="🗑️", width=40, command=lambda: self.delete_contract(contract), fg_color=COLOR_CRITICAL
+        )
+        delete_btn.pack(side="left", padx=2)
 
     def create_caces_section(self, parent):
         """Create CACES certifications section."""
@@ -572,6 +669,72 @@ class EmployeeDetailView(BaseView):
         except Exception as e:
             print(f"[ERROR] Failed to delete medical visit: {e}")
             self.show_error(f"{ERROR_DELETE_VISIT}: {e}")
+
+    def add_contract(self):
+        """Add new contract."""
+        try:
+            from ui_ctk.forms.contract_form import ContractFormDialog
+
+            dialog = ContractFormDialog(self, employee=self.employee)
+            self.wait_window(dialog)
+
+            if dialog.result:
+                # Reload employee data and refresh view
+                self.refresh_view()
+
+        except Exception as e:
+            print(f"[ERROR] Failed to add contract: {e}")
+            self.show_error(f"Failed to add contract: {e}")
+
+    def edit_contract(self, contract: Contract):
+        """Edit existing contract."""
+        try:
+            from ui_ctk.forms.contract_form import ContractFormDialog
+
+            dialog = ContractFormDialog(self, employee=self.employee, contract=contract)
+            self.wait_window(dialog)
+
+            if dialog.result:
+                # Reload employee data and refresh view
+                self.refresh_view()
+
+        except Exception as e:
+            print(f"[ERROR] Failed to edit contract: {e}")
+            self.show_error(f"Failed to edit contract: {e}")
+
+    def delete_contract(self, contract: Contract):
+        """Delete contract."""
+        try:
+            import tkinter.messagebox as messagebox
+
+            # Get contract details
+            contract_details = f"{contract.contract_type} - {contract.position}\n"
+            contract_details += f"From {contract.start_date.strftime(DATE_FORMAT)}"
+            if contract.end_date:
+                contract_details += f" to {contract.end_date.strftime(DATE_FORMAT)}"
+
+            # Confirm deletion
+            confirm = messagebox.askyesno(
+                "Delete Contract",
+                f"Delete this contract?\n\n"
+                f"{contract_details}\n\n"
+                f"Employee: {self.employee.full_name}\n\n"
+                f"Warning: This will permanently delete the contract history.",
+                icon="warning"
+            )
+
+            if confirm:
+                # Delete contract (CASCADE will delete amendments)
+                contract.delete_instance()
+
+                print(f"[OK] Contract deleted: {contract.contract_type}")
+
+                # Refresh view
+                self.refresh_view()
+
+        except Exception as e:
+            print(f"[ERROR] Failed to delete contract: {e}")
+            self.show_error(f"Failed to delete contract: {e}")
 
     def show_error(self, message: str):
         """Show error message to user."""
