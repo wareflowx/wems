@@ -707,6 +707,82 @@ def ensure_database_directory() -> Path:
     return db_dir
 
 
+def get_workspace_choices(config: dict[str, Any] | None = None) -> list[str]:
+    """
+    Get workspace choices from config or use defaults.
+
+    This function provides the workspace list for UI dropdowns and validation.
+    It first tries to load from config, then falls back to defaults.
+
+    Args:
+        config: Configuration dictionary (if None, loads from file)
+
+    Returns:
+        List of workspace names
+
+    Example:
+        >>> workspaces = get_workspace_choices()
+        >>> print(workspaces)
+        ['Quai', 'Zone A', 'Zone B', 'Bureau']
+    """
+    if config is None:
+        config = load_config()
+
+    return get_workspaces(config)
+
+
+def get_role_choices(config: dict[str, Any] | None = None) -> list[str]:
+    """
+    Get role choices from config or use defaults.
+
+    This function provides the role list for UI dropdowns and validation.
+    It first tries to load from config, then falls back to defaults.
+
+    Args:
+        config: Configuration dictionary (if None, loads from file)
+
+    Returns:
+        List of role names
+
+    Example:
+        >>> roles = get_role_choices()
+        >>> print(roles)
+        ['Cariste', 'Préparateur de commandes', 'Magasinier']
+    """
+    if config is None:
+        config = load_config()
+
+    return get_roles(config)
+
+
+def get_contract_type_choices(config: dict[str, Any] | None = None) -> list[str]:
+    """
+    Get contract type choices from config or use defaults.
+
+    Args:
+        config: Configuration dictionary (if None, loads from file)
+
+    Returns:
+        List of contract type names
+
+    Example:
+        >>> contracts = get_contract_type_choices()
+        >>> print(contracts)
+        ['CDI', 'CDD', 'Interim', 'Alternance']
+    """
+    if config is None:
+        config = load_config()
+
+    organization = config.get("organization", {})
+
+    # If contract types are defined in organization section, use them
+    if "contract_types" in organization:
+        return organization["contract_types"]
+
+    # Otherwise, use default contract types
+    return ["CDI", "CDD", "Interim", "Alternance", "Stage"]
+
+
 def ensure_default_config() -> Path | None:
     """
     Create default config.yaml if no config file exists.
