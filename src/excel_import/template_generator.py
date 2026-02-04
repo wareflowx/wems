@@ -12,13 +12,11 @@ except ImportError:
     raise ImportError("openpyxl is required for Excel template generation. Install it with: pip install openpyxl")
 
 from ui_ctk.constants import (
-    CONTRACT_TYPE_CHOICES,
     ROLE_CARISTE,
-    ROLE_CHOICES,
     STATUS_ACTIVE,
     STATUS_INACTIVE,
-    WORKSPACE_ZONES,
 )
+from utils.config import get_contract_type_choices, get_role_choices, get_workspace_choices
 
 
 class ExcelTemplateGenerator:
@@ -48,14 +46,19 @@ class ExcelTemplateGenerator:
         Args:
             output_path: Path where template will be saved
         """
+        # Load choices from config dynamically
+        workspace_choices = get_workspace_choices()
+        role_choices = get_role_choices()
+        contract_choices = get_contract_type_choices()
+
         workbook = Workbook()
         workbook.remove(workbook.active)  # Remove default sheet
 
         # Create instructions sheet
         self._create_instructions_sheet(workbook)
 
-        # Create data sheet
-        self._create_data_sheet(workbook)
+        # Create data sheet with dynamic choices
+        self._create_data_sheet(workbook, workspace_choices, role_choices, contract_choices)
 
         # Save workbook
         workbook.save(output_path)
@@ -126,7 +129,7 @@ class ExcelTemplateGenerator:
         # Auto-adjust column widths
         sheet.column_dimensions["A"].width = 80
 
-    def _create_data_sheet(self, workbook) -> None:
+    def _create_data_sheet(self, workbook, workspace_choices, role_choices, contract_choices) -> None:
         """Create data sheet with headers, validation, and example."""
         sheet = workbook.create_sheet("Data", 1)
 
@@ -168,19 +171,19 @@ class ExcelTemplateGenerator:
 
             # Workspace dropdown
             elif column_name == "Workspace":
-                dv = DataValidation(type="list", formula1=f'"{",".join(WORKSPACE_ZONES)}"', allow_blank=False)
+                dv = DataValidation(type="list", formula1=f'"{",".join(workspace_choices)}"', allow_blank=False)
                 sheet.add_data_validation(dv)
                 dv.add(f"{col_letter}{row_num + 1}:{col_letter}{row_num + 1000}")
 
             # Role dropdown
             elif column_name == "Role":
-                dv = DataValidation(type="list", formula1=f'"{",".join(ROLE_CHOICES)}"', allow_blank=False)
+                dv = DataValidation(type="list", formula1=f'"{",".join(role_choices)}"', allow_blank=False)
                 sheet.add_data_validation(dv)
                 dv.add(f"{col_letter}{row_num + 1}:{col_letter}{row_num + 1000}")
 
             # Contract dropdown
             elif column_name == "Contract":
-                dv = DataValidation(type="list", formula1=f'"{",".join(CONTRACT_TYPE_CHOICES)}"', allow_blank=False)
+                dv = DataValidation(type="list", formula1=f'"{",".join(contract_choices)}"', allow_blank=False)
                 sheet.add_data_validation(dv)
                 dv.add(f"{col_letter}{row_num + 1}:{col_letter}{row_num + 1000}")
 
@@ -229,6 +232,11 @@ class ExcelTemplateGenerator:
             output_path: Path to save sample file
             num_employees: Number of sample employees to generate
         """
+        # Load choices from config dynamically
+        workspace_choices = get_workspace_choices()
+        role_choices = get_role_choices()
+        contract_choices = get_contract_type_choices()
+
         workbook = Workbook()
         sheet = workbook.active
 
@@ -238,8 +246,8 @@ class ExcelTemplateGenerator:
             cell.value = column_name
             cell.font = Font(bold=True)
 
-        # Add sample data
-        sample_data = self._generate_sample_data(num_employees)
+        # Add sample data with dynamic choices
+        sample_data = self._generate_sample_data(num_employees, workspace_choices, role_choices, contract_choices)
         row_num = 2
 
         for employee in sample_data:
@@ -264,7 +272,7 @@ class ExcelTemplateGenerator:
         workbook.save(output_path)
         print(f"[OK] Sample file generated: {output_path} with {num_employees} employees")
 
-    def _generate_sample_data(self, count: int) -> List[Dict[str, str]]:
+    def _generate_sample_data(self, count: int, workspace_choices, role_choices, contract_choices) -> List[Dict[str, str]]:
         """Generate sample employee data for testing."""
         first_names = ["Jean", "Marie", "Pierre", "Sophie", "Thomas"]
         last_names = ["Dupont", "Martin", "Bernard", "Richard", "Petit"]
@@ -279,9 +287,9 @@ class ExcelTemplateGenerator:
                     "phone": f"06 12 34 5{i:02d}",
                     "external_id": f"WMS-{str(i + 1).zfill(3)}",
                     "status": STATUS_ACTIVE if i % 4 != 0 else STATUS_INACTIVE,
-                    "workspace": WORKSPACE_ZONES[i % len(WORKSPACE_ZONES)],
-                    "role": ROLE_CHOICES[i % len(ROLE_CHOICES)],
-                    "contract_type": CONTRACT_TYPE_CHOICES[i % len(CONTRACT_TYPE_CHOICES)],
+                    "workspace": workspace_choices[i % len(workspace_choices)],
+                    "role": role_choices[i % len(role_choices)],
+                    "contract_type": contract_choices[i % len(contract_choices)],
                     "entry_date": f"{15 + i:02d}/01/2025",
                 }
             )
