@@ -201,9 +201,9 @@ class ExcelTemplateGenerator:
             "Phone": "06 12 34 56 78",
             "External ID": "WMS-001",
             "Status": STATUS_ACTIVE,
-            "Workspace": "Zone A",
+            "Workspace": workspace_choices[0] if workspace_choices else "Zone A",
             "Role": ROLE_CARISTE,
-            "Contract": CONTRACT_TYPE_CHOICES[0],
+            "Contract": contract_choices[0] if contract_choices else "CDI",
             "Entry Date": "15/01/2025",
         }
 

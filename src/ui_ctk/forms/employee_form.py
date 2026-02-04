@@ -71,7 +71,7 @@ class EmployeeFormDialog(BaseFormDialog):
         self.status_var = ctk.StringVar(value=STATUS_ACTIVE)
         self.workspace_var = ctk.StringVar()
         self.role_var = ctk.StringVar()
-        self.contract_type_var = ctk.StringVar(value=CONTRACT_TYPE_CHOICES[0])
+        self.contract_type_var = ctk.StringVar(value=get_contract_type_choices()[0] if get_contract_type_choices() else "")
         self.entry_date_var = ctk.StringVar()
 
         # Initialize parent
