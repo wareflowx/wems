@@ -9,15 +9,14 @@ import customtkinter as ctk
 from employee.constants import EmployeeStatus
 from employee.models import Employee
 from controllers.employee_controller import EmployeeController
+from utils.config import get_contract_type_choices, get_role_choices, get_workspace_choices
 from utils.validation import InputValidator, ValidationError
 from ui_ctk.constants import (
     BTN_CANCEL,
     BTN_SAVE,
-    CONTRACT_TYPE_CHOICES,
     DATE_FORMAT,
     DATE_PLACEHOLDER,
     ERROR_SAVE_EMPLOYEE,
-    ROLE_CHOICES,
     STATUS_ACTIVE,
     STATUS_INACTIVE,
     VALIDATION_DATE_FUTURE,
@@ -30,7 +29,6 @@ from ui_ctk.constants import (
     VALIDATION_PHONE_INVALID,
     VALIDATION_ROLE_REQUIRED,
     VALIDATION_WORKSPACE_REQUIRED,
-    WORKSPACE_ZONES,
 )
 from ui_ctk.forms.base_form import BaseFormDialog
 
@@ -196,8 +194,8 @@ class EmployeeFormDialog(BaseFormDialog):
         label_widget = ctk.CTkLabel(container, text=f"{label} *", font=("Arial", 11, "bold"), anchor="w")
         label_widget.pack(fill="x", pady=(5, 2))
 
-        # Dropdown
-        dropdown = ctk.CTkOptionMenu(container, values=WORKSPACE_ZONES, variable=variable, width=200)
+        # Dropdown - Load workspaces from config dynamically
+        dropdown = ctk.CTkOptionMenu(container, values=get_workspace_choices(), variable=variable, width=200)
         dropdown.pack(fill="x", pady=(0, 5))
 
     def create_role_dropdown(self, parent, label: str, variable: ctk.StringVar, column: int):
@@ -210,8 +208,8 @@ class EmployeeFormDialog(BaseFormDialog):
         label_widget = ctk.CTkLabel(container, text=f"{label} *", font=("Arial", 11, "bold"), anchor="w")
         label_widget.pack(fill="x", pady=(5, 2))
 
-        # Dropdown
-        dropdown = ctk.CTkOptionMenu(container, values=ROLE_CHOICES, variable=variable, width=200)
+        # Dropdown - Load roles from config dynamically
+        dropdown = ctk.CTkOptionMenu(container, values=get_role_choices(), variable=variable, width=200)
         dropdown.pack(fill="x", pady=(0, 5))
 
     def create_contract_dropdown(self, parent, label: str, variable: ctk.StringVar, column: int):
@@ -224,8 +222,8 @@ class EmployeeFormDialog(BaseFormDialog):
         label_widget = ctk.CTkLabel(container, text=label, font=("Arial", 11), anchor="w")
         label_widget.pack(fill="x", pady=(5, 2))
 
-        # Dropdown
-        dropdown = ctk.CTkOptionMenu(container, values=CONTRACT_TYPE_CHOICES, variable=variable, width=200)
+        # Dropdown - Load contract types from config dynamically
+        dropdown = ctk.CTkOptionMenu(container, values=get_contract_type_choices(), variable=variable, width=200)
         dropdown.pack(fill="x", pady=(0, 5))
 
     def create_date_field(self, parent, label: str, variable: ctk.StringVar, column: int):
